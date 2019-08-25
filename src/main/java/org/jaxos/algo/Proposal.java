@@ -21,7 +21,7 @@ public class Proposal {
 
     }
 
-    public void onPrepareResponse(Event.PrepareResponse response){
+    public void onPrepareReply(Event.PrepareResponse response){
         logger.info("got PREPARE reply {}", response);
     }
 

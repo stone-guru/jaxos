@@ -8,6 +8,8 @@ import org.jaxos.JaxosConfig;
 import org.jaxos.algo.Event;
 import org.jaxos.network.CodingException;
 import org.jaxos.network.MessageCoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -16,6 +18,8 @@ import java.util.Map;
  * @sine 2019/8/25.
  */
 public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
+    private static Logger logger = LoggerFactory.getLogger(ProtoMessageCoder.class);
+
     private BiMap<PaxosMessage.Code, Event.Code> decodeMap;
     private Map<Event.Code, PaxosMessage.Code> encodeMap;
 
@@ -124,7 +128,8 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                     return decodeAcceptResponse(dataGram);
                 }
                 default: {
-                    throw new UnsupportedOperationException();
+                    logger.error("Unknown dataGram {}", dataGram);
+                    return null;
                 }
             }
         }

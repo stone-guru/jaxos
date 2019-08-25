@@ -18,7 +18,6 @@ public class EventCenter implements EventEntryPoint {
         this.acceptor = new Acceptor();
     }
 
-
     @Override
     public Event process(Event event) {
         switch (event.code()){
@@ -26,13 +25,15 @@ public class EventCenter implements EventEntryPoint {
                 return acceptor.prepare((Event.PrepareRequest)event);
             }
             case PREPARE_RESPONSE: {
-                proposal.onPrepareResponse((Event.PrepareResponse)event);
+                proposal.onPrepareReply((Event.PrepareResponse)event);
+                return null;
             }
             case ACCEPT: {
                 return acceptor.accept((Event.AcceptRequest)event);
             }
             case ACCEPT_RESPONSE:{
                 proposal.onAcceptReply((Event.AcceptResponse)event);
+                return null;
             }
         }
         return null;

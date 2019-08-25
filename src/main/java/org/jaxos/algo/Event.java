@@ -166,6 +166,16 @@ public interface Event {
         public byte[] value() {
             return this.value;
         }
+
+        @Override
+        public String toString() {
+            return "AcceptRequest{" +
+                    "sender=" + sender +
+                    ", instanceId=" + instanceId +
+                    ", ballot=" + ballot +
+                    ", value=" + Arrays.toString(value) +
+                    '}';
+        }
     }
 
     class AcceptResponse implements Event {
@@ -183,7 +193,7 @@ public interface Event {
 
         @Override
         public Code code() {
-            return Code.ACCEPT;
+            return Code.ACCEPT_RESPONSE;
         }
 
         @Override
@@ -202,6 +212,16 @@ public interface Event {
 
         public boolean accepted(){
             return this.accepted;
+        }
+
+        @Override
+        public String toString() {
+            return "AcceptResponse{" +
+                    "sender=" + sender +
+                    ", instanceId=" + instanceId +
+                    ", maxBallot=" + maxBallot +
+                    ", accepted=" + accepted +
+                    '}';
         }
     }
 }

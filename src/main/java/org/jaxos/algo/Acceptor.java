@@ -19,20 +19,26 @@ public class Acceptor {
     public Event.PrepareResponse prepare(Event.PrepareRequest request) {
         logger.info("do prepare {} ", request);
 
-        if(request.ballot() > this.maxBallot){
+        if (request.ballot() > this.maxBallot) {
             this.maxBallot = request.ballot();
         }
         return new Event.PrepareResponse(1, 1000, this.maxBallot == request.ballot(),
                 this.maxBallot, this.acceptedBallot, this.acceptedValue);
     }
 
-    public Event.AcceptResponse accept(Event.AcceptRequest request){
+    public Event.AcceptResponse accept(Event.AcceptRequest request) {
         boolean accepted = false;
-        if(request.ballot() > this.maxBallot){
+        if (request.ballot() >= this.maxBallot) {
             this.maxBallot = request.ballot();
             this.acceptedBallot = this.maxBallot;
             this.acceptedValue = Arrays.copyOf(request.value(), request.value().length);
             accepted = true;
+
+            String v = new String(this.acceptedValue);
+            logger.info("Accept new value ballot = {}, value = {}", this.acceptedBallot, v);
+        }
+        else {
+            logger.info("Reject accept ballot = {}, while my maxBallot={}", request.ballot(), this.maxBallot);
         }
 
         return new Event.AcceptResponse(1, 1000, this.maxBallot, accepted);

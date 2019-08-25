@@ -7,5 +7,5 @@ import org.jaxos.JaxosConfig;
  * @sine 2019/8/24.
  */
 public interface SenderFactory {
-    RequestSender createSender(JaxosConfig config);
+    RequestSender createSender();
 }

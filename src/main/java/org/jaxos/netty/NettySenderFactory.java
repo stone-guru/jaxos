@@ -13,6 +13,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jaxos.JaxosConfig;
 import org.jaxos.algo.Event;
+import org.jaxos.network.EventEntryPoint;
 import org.jaxos.network.RequestSender;
 import org.jaxos.network.SenderFactory;
 import org.jaxos.network.protobuff.PaxosMessage;
@@ -28,9 +29,18 @@ import java.net.InetSocketAddress;
  */
 public class NettySenderFactory implements SenderFactory {
     private static Logger logger = LoggerFactory.getLogger(NettySenderFactory.class);
+    private JaxosConfig config;
+    private ProtoMessageCoder coder;
+    private EventEntryPoint eventEntryPoint;
+
+    public NettySenderFactory(JaxosConfig config, EventEntryPoint eventEntryPoint) {
+        this.config = config;
+        this.coder = new ProtoMessageCoder(config);
+        this.eventEntryPoint = eventEntryPoint;
+    }
 
     @Override
-    public RequestSender createSender(JaxosConfig config) {
+    public RequestSender createSender() {
         EventLoopGroup worker = new NioEventLoopGroup();
         try {
             Bootstrap bootstrap = new Bootstrap()
@@ -53,7 +63,7 @@ public class NettySenderFactory implements SenderFactory {
 
             JaxosConfig.Peer peer = config.getPeer(0);
             ChannelFuture future = bootstrap.connect(new InetSocketAddress(peer.address(), peer.port())).sync();
-            return new NettySender(config, future.channel());
+            return new NettySender(future.channel());
         }
         catch (InterruptedException e) {
             logger.info("Interrupted");
@@ -62,22 +72,12 @@ public class NettySenderFactory implements SenderFactory {
     }
 
     private class JaxosClientHandler extends ChannelInboundHandlerAdapter {
-        Logger logger = LoggerFactory.getLogger(JaxosClientHandler.class);
-
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            try {
-                PaxosMessage.DataGram dataGram = (PaxosMessage.DataGram)msg;
-                switch(dataGram.getCode()) {
-                    case PREPARE_RES: {
-                        PaxosMessage.PrepareRes res = PaxosMessage.PrepareRes.parseFrom(dataGram.getBody());
-                        logger.info("prepare response, max ballot = {}, accepted ballot = {}, accepted value =",
-                                res.getMaxBallot(), res.getAcceptedBallot(), res.getAcceptedValue());
-                    }
-                }
-            }
-            catch (InvalidProtocolBufferException e) {
-                logger.error("error when get msg", e);
+            PaxosMessage.DataGram dataGram = (PaxosMessage.DataGram) msg;
+            Event event = coder.decode(dataGram);
+            if(event != null) {
+                eventEntryPoint.process(event);
             }
         }
 
@@ -90,18 +90,15 @@ public class NettySenderFactory implements SenderFactory {
 
     private class NettySender implements RequestSender {
         private Channel channel;
-        private JaxosConfig config;
-        private ProtoMessageCoder coder;
-        public NettySender(JaxosConfig config, Channel channel) {
-            this.config = config;
+
+        public NettySender(Channel channel) {
             this.channel = channel;
-            this.coder = new ProtoMessageCoder(this.config);
         }
 
         @Override
         public void broadcast(Event msg) {
-            PaxosMessage.DataGram dataGram = this.coder.encode(msg);
-            channel.writeAndFlush(dataGram);
+            PaxosMessage.DataGram dataGram = coder.encode(msg);
+            this.channel.writeAndFlush(dataGram);
         }
     }
 }
