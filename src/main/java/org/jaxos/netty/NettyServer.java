@@ -98,7 +98,7 @@ public class NettyServer {
     }
 
     public static void main(String[] args) {
-        NettyServer server = new NettyServer("localhost", 9999, 0);
+        NettyServer server = new NettyServer("192.168.43.35", 9999, 0);
         server.startup();
     }
 }
