@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Objects;
 
 /**
  * @author gaoyuan
@@ -74,10 +75,19 @@ public class NettySenderFactory implements SenderFactory {
     private class JaxosClientHandler extends ChannelInboundHandlerAdapter {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            PaxosMessage.DataGram dataGram = (PaxosMessage.DataGram) msg;
-            Event event = coder.decode(dataGram);
-            if(event != null) {
-                eventEntryPoint.process(event);
+            if(msg instanceof PaxosMessage.DataGram) {
+                PaxosMessage.DataGram dataGram = (PaxosMessage.DataGram) msg;
+                //this is an empty dataGram
+                if(dataGram.getCode() == PaxosMessage.Code.NONE){
+                    return;
+                }
+
+                Event event = coder.decode(dataGram);
+                if (event != null) {
+                    eventEntryPoint.process(event);
+                }
+            } else {
+                logger.error("Unknown received object {}", Objects.toString(msg));
             }
         }
 

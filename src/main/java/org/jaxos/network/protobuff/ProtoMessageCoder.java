@@ -64,6 +64,10 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
             }
         }
 
+        if(logger.isDebugEnabled()) {
+            logger.debug("encode {}", event);
+        }
+
         return PaxosMessage.DataGram.newBuilder()
                 .setSender(event.senderId())
                 .setCode(toProtoCode(event.code()))

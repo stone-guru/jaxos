@@ -10,25 +10,28 @@ import org.jaxos.netty.NettySenderFactory;
 import org.jaxos.network.RequestSender;
 
 public class ClientApp {
+    static final String PEER0 = "localhost";
+    static final String PEER1 = "192.168.1.164";
 
     public static void main(String[] args) throws Exception{
         JaxosConfig config = JaxosConfig.builder()
                 .setServerId(1)
                 .setPort(9999)
-                .addPeer(0, "localhost", 9999)
+                .addPeer(0, PEER0, 9999)
                 .build();
 
         NettySenderFactory factory = new NettySenderFactory(config, new EventCenter(config));
         RequestSender sender = factory.createSender();
 
-        byte[] s = "AreYouCrazy".getBytes("UTF-8");
+
         for(int i = 0; i < 10 ; i++) {
             int ballot = 10*(i + 1);
             Event.PrepareRequest prepare = new Event.PrepareRequest(config.serverId(), 1000, ballot);
             sender.broadcast(prepare);
-            //Event.AcceptRequest accept = new Event.AcceptRequest(config.serverId(), 1000, ballot, s);
-            //sender.broadcast(accept);
 
+            byte[] s = "AreYouCrazy".getBytes("UTF-8");
+            Event.AcceptRequest accept = new Event.AcceptRequest(config.serverId(), 1000, ballot, s);
+            sender.broadcast(accept);
             Thread.sleep(1000);
         }
     }

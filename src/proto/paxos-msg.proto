@@ -4,7 +4,7 @@ package  org.jaxos.network.protobuff;
 option java_outer_classname="PaxosMessage";
 
 enum Code {
-  NOOP = 0;
+  NONE = 0;
   
   HEARTBEAT_REQ = 1;
   HEARTBEAT_RES = 2;
@@ -13,6 +13,8 @@ enum Code {
   PREPARE_RES = 4;
   ACCEPT_REQ = 5;
   ACCEPT_RES = 6;
+
+  NOOP=10;
 }
 
 message DataGram {

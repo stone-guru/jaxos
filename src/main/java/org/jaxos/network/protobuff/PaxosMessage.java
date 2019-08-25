@@ -20,9 +20,9 @@ public final class PaxosMessage {
   public enum Code
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
-     * <code>NOOP = 0;</code>
+     * <code>NONE = 0;</code>
      */
-    NOOP(0),
+    NONE(0),
     /**
      * <code>HEARTBEAT_REQ = 1;</code>
      */
@@ -47,13 +47,17 @@ public final class PaxosMessage {
      * <code>ACCEPT_RES = 6;</code>
      */
     ACCEPT_RES(6),
+    /**
+     * <code>NOOP = 10;</code>
+     */
+    NOOP(10),
     UNRECOGNIZED(-1),
     ;
 
     /**
-     * <code>NOOP = 0;</code>
+     * <code>NONE = 0;</code>
      */
-    public static final int NOOP_VALUE = 0;
+    public static final int NONE_VALUE = 0;
     /**
      * <code>HEARTBEAT_REQ = 1;</code>
      */
@@ -78,6 +82,10 @@ public final class PaxosMessage {
      * <code>ACCEPT_RES = 6;</code>
      */
     public static final int ACCEPT_RES_VALUE = 6;
+    /**
+     * <code>NOOP = 10;</code>
+     */
+    public static final int NOOP_VALUE = 10;
 
 
     public final int getNumber() {
@@ -98,13 +106,14 @@ public final class PaxosMessage {
 
     public static Code forNumber(int value) {
       switch (value) {
-        case 0: return NOOP;
+        case 0: return NONE;
         case 1: return HEARTBEAT_REQ;
         case 2: return HEARTBEAT_RES;
         case 3: return PREPARE_REQ;
         case 4: return PREPARE_RES;
         case 5: return ACCEPT_REQ;
         case 6: return ACCEPT_RES;
+        case 10: return NOOP;
         default: return null;
       }
     }
@@ -343,7 +352,7 @@ public final class PaxosMessage {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (code_ != org.jaxos.network.protobuff.PaxosMessage.Code.NOOP.getNumber()) {
+      if (code_ != org.jaxos.network.protobuff.PaxosMessage.Code.NONE.getNumber()) {
         output.writeEnum(1, code_);
       }
       if (sender_ != 0) {
@@ -364,7 +373,7 @@ public final class PaxosMessage {
       if (size != -1) return size;
 
       size = 0;
-      if (code_ != org.jaxos.network.protobuff.PaxosMessage.Code.NOOP.getNumber()) {
+      if (code_ != org.jaxos.network.protobuff.PaxosMessage.Code.NONE.getNumber()) {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(1, code_);
       }
@@ -3143,11 +3152,11 @@ public final class PaxosMessage {
       "\001(\005\022\026\n\016acceptedBallot\030\003 \001(\005\022\025\n\racceptedV" +
       "alue\030\004 \001(\014\"*\n\tAcceptReq\022\016\n\006ballot\030\001 \001(\005\022" +
       "\r\n\005value\030\002 \001(\014\"/\n\tAcceptRes\022\017\n\007success\030\001" +
-      " \001(\010\022\021\n\tmaxBallot\030\002 \001(\005*x\n\004Code\022\010\n\004NOOP\020" +
-      "\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021\n\rHEARTBEAT_RES\020\002\022" +
-      "\017\n\013PREPARE_REQ\020\003\022\017\n\013PREPARE_RES\020\004\022\016\n\nACC" +
-      "EPT_REQ\020\005\022\016\n\nACCEPT_RES\020\006B\016B\014PaxosMessag" +
-      "eb\006proto3"
+      " \001(\010\022\021\n\tmaxBallot\030\002 \001(\005*\202\001\n\004Code\022\010\n\004NONE" +
+      "\020\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021\n\rHEARTBEAT_RES\020\002" +
+      "\022\017\n\013PREPARE_REQ\020\003\022\017\n\013PREPARE_RES\020\004\022\016\n\nAC" +
+      "CEPT_REQ\020\005\022\016\n\nACCEPT_RES\020\006\022\010\n\004NOOP\020\nB\016B\014" +
+      "PaxosMessageb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
