@@ -28,6 +28,12 @@ public class EventCenter implements EventEntryPoint {
             case PREPARE_RESPONSE: {
                 proposal.onPrepareResponse((Event.PrepareResponse)event);
             }
+            case ACCEPT: {
+                return acceptor.accept((Event.AcceptRequest)event);
+            }
+            case ACCEPT_RESPONSE:{
+                proposal.onAcceptReply((Event.AcceptResponse)event);
+            }
         }
         return null;
     }

@@ -22,6 +22,10 @@ public class Proposal {
     }
 
     public void onPrepareResponse(Event.PrepareResponse response){
-        logger.info("got response {}", response);
+        logger.info("got PREPARE reply {}", response);
+    }
+
+    public void onAcceptReply(Event.AcceptResponse event) {
+        logger.info("got ACCEPT reply {}", event);
     }
 }

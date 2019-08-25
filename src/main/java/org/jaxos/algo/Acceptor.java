@@ -3,6 +3,8 @@ package org.jaxos.algo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+
 /**
  * @author gaoyuan
  * @sine 2019/8/22.
@@ -25,6 +27,14 @@ public class Acceptor {
     }
 
     public Event.AcceptResponse accept(Event.AcceptRequest request){
-        return null;
+        boolean accepted = false;
+        if(request.ballot() > this.maxBallot){
+            this.maxBallot = request.ballot();
+            this.acceptedBallot = this.maxBallot;
+            this.acceptedValue = Arrays.copyOf(request.value(), request.value().length);
+            accepted = true;
+        }
+
+        return new Event.AcceptResponse(1, 1000, this.maxBallot, accepted);
     }
 }
