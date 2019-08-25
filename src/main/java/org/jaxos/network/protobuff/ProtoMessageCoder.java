@@ -47,6 +47,14 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 body = encodeBody((Event.PrepareResponse) event);
                 break;
             }
+            case ACCEPT: {
+                body = encodeBody((Event.AcceptRequest) event);
+                break;
+            }
+            case ACCEPT_RESPONSE: {
+                body = encodeBody((Event.AcceptResponse) event);
+                break;
+            }
             default: {
                 throw new UnsupportedOperationException();
             }
@@ -78,6 +86,22 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
 
     }
 
+    private ByteString encodeBody(Event.AcceptRequest req) {
+        return PaxosMessage.AcceptReq.newBuilder()
+                .setBallot(req.ballot())
+                .setValue(ByteString.copyFrom(req.value()))
+                .build()
+                .toByteString();
+    }
+
+    private ByteString encodeBody(Event.AcceptResponse resp) {
+        return PaxosMessage.AcceptRes.newBuilder()
+                .setMaxBallot(resp.maxBallot())
+                .setSuccess(resp.accepted())
+                .build()
+                .toByteString();
+    }
+
     private PaxosMessage.Code toProtoCode(Event.Code code) {
         return encodeMap.get(code);
     }
@@ -85,45 +109,48 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
 
     @Override
     public Event decode(PaxosMessage.DataGram dataGram) {
-        switch (dataGram.getCode()) {
-            case PREPARE_REQ: {
-                return decodePrepareReq(dataGram);
-            }
-            case PREPARE_RES: {
-                return decodePrepareResponse(dataGram);
-            }
-            default: {
-                throw new UnsupportedOperationException();
-            }
-        }
-    }
-
-    private Event.Code toEventCode(PaxosMessage.Code code) {
-        return decodeMap.get(code);
-    }
-
-    private Event decodePrepareReq(PaxosMessage.DataGram dataGram) {
-        PaxosMessage.PrepareReq prepareReq = null;
         try {
-            prepareReq = PaxosMessage.PrepareReq.parseFrom(dataGram.getBody());
+            switch (dataGram.getCode()) {
+                case PREPARE_REQ: {
+                    return decodePrepareReq(dataGram);
+                }
+                case PREPARE_RES: {
+                    return decodePrepareResponse(dataGram);
+                }
+                case ACCEPT_REQ:{
+                    return decodeAcceptReq(dataGram);
+                }
+                case ACCEPT_RES:{
+                    return decodeAcceptResponse(dataGram);
+                }
+                default: {
+                    throw new UnsupportedOperationException();
+                }
+            }
         }
         catch (InvalidProtocolBufferException e) {
             throw new CodingException(e);
         }
+    }
 
+    private Event decodePrepareReq(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
+        PaxosMessage.PrepareReq prepareReq = PaxosMessage.PrepareReq.parseFrom(dataGram.getBody());
         return new Event.PrepareRequest(dataGram.getSender(), dataGram.getInstanceId(), prepareReq.getBallot());
     }
 
-    private Event decodePrepareResponse(PaxosMessage.DataGram dataGram) {
-        PaxosMessage.PrepareRes res;
-        try {
-            res = PaxosMessage.PrepareRes.parseFrom(dataGram.getBody());
-        }
-        catch (InvalidProtocolBufferException e) {
-            throw new CodingException(e);
-        }
-
+    private Event decodePrepareResponse(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
+        PaxosMessage.PrepareRes res = PaxosMessage.PrepareRes.parseFrom(dataGram.getBody());
         return new Event.PrepareResponse(dataGram.getSender(), dataGram.getInstanceId(),
                 res.getSuccess(), res.getMaxBallot(), res.getAcceptedBallot(), res.getAcceptedValue().toByteArray());
+    }
+
+    private Event decodeAcceptReq(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
+        PaxosMessage.AcceptReq req = PaxosMessage.AcceptReq.parseFrom(dataGram.getBody());
+        return new Event.AcceptRequest(dataGram.getSender(), dataGram.getInstanceId(), req.getBallot(), req.getValue().toByteArray());
+    }
+
+    private Event decodeAcceptResponse(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
+        PaxosMessage.AcceptRes res = PaxosMessage.AcceptRes.parseFrom(dataGram.getBody());
+        return new Event.AcceptResponse(dataGram.getSender(), dataGram.getInstanceId(), res.getMaxBallot(), res.getSuccess());
     }
 }

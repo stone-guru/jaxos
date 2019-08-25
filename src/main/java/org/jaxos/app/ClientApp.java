@@ -14,15 +14,19 @@ public class ClientApp {
         JaxosConfig config = JaxosConfig.builder()
                 .setServerId(1)
                 .setPort(9999)
-                .addPeer(0, "localhost", 9999)
+                .addPeer(0, "192.168.1.164", 9999)
                 .build();
 
         NettySenderFactory factory = new NettySenderFactory();
         RequestSender sender = factory.createSender(config);
 
         for(int i = 0; i < 10 ; i++) {
-            Event.PrepareRequest req = new Event.PrepareRequest(config.serverId(), 1000, 10*(i + 1));
+            int ballot = 10*(i + 1);
+            Event.PrepareRequest req = new Event.PrepareRequest(config.serverId(), 1000, ballot);
             sender.broadcast(req);
+            Event.AcceptRequest accept = new Event.AcceptRequest(config.serverId(), 1000, ballot, new byte[]{});
+            sender.broadcast(accept);
+
             Thread.sleep(1000);
         }
     }

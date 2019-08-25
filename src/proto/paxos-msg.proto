@@ -31,7 +31,18 @@ message PrepareRes {
   int32 maxBallot = 2;
   int32 acceptedBallot = 3;
   bytes acceptedValue = 4;
-} 
+}
+
+message AcceptReq {
+  int32 ballot = 1;
+  bytes value = 2;
+}
+
+message AcceptRes {
+  bool success = 1;
+  int32 maxBallot = 2;
+}
+
 
 
 
