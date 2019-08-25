@@ -18,8 +18,8 @@ import java.net.InetSocketAddress;
  * @author gaoyuan
  * @sine 2019/8/22.
  */
-public class JaxosTcpServer {
-    private static Logger logger = LoggerFactory.getLogger(JaxosTcpServer.class);
+public class NettyServer {
+    private static Logger logger = LoggerFactory.getLogger(NettyServer.class);
 
     private String address;
     private int port;
@@ -27,7 +27,7 @@ public class JaxosTcpServer {
 
     private RequestDispatcher requestDispatcher;
 
-    public JaxosTcpServer(String address, int port, int serverId) {
+    public NettyServer(String address, int port, int serverId) {
         this.address = address;
         this.port = port;
         this.serverId = serverId;
@@ -98,7 +98,7 @@ public class JaxosTcpServer {
     }
 
     public static void main(String[] args) {
-        JaxosTcpServer server = new JaxosTcpServer("localhost", 9999, 0);
+        NettyServer server = new NettyServer("localhost", 9999, 0);
         server.startup();
     }
 }

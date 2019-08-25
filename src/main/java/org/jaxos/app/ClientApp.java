@@ -4,7 +4,7 @@
 package org.jaxos.app;
 
 import org.jaxos.JaxosConfig;
-import org.jaxos.netty.JaxosSenderFactory;
+import org.jaxos.netty.NettySenderFactory;
 import org.jaxos.network.RequestSender;
 
 public class ClientApp {
@@ -14,7 +14,7 @@ public class ClientApp {
 
     public static void main(String[] args) {
         JaxosConfig config = new JaxosConfig();
-        JaxosSenderFactory factory = new JaxosSenderFactory();
+        NettySenderFactory factory = new NettySenderFactory();
         RequestSender sender = factory.createSender(config);
 
         sender.broadcast();

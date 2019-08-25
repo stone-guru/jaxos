@@ -23,8 +23,8 @@ import java.net.InetSocketAddress;
  * @author gaoyuan
  * @sine 2019/8/24.
  */
-public class JaxosSenderFactory implements SenderFactory {
-    Logger logger = LoggerFactory.getLogger(JaxosSenderFactory.class);
+public class NettySenderFactory implements SenderFactory {
+    Logger logger = LoggerFactory.getLogger(NettySenderFactory.class);
 
     @Override
     public RequestSender createSender(JaxosConfig config) {
