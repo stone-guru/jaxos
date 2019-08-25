@@ -1,11 +1,8 @@
 package org.jaxos.netty;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -15,9 +12,11 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jaxos.JaxosConfig;
+import org.jaxos.algo.Event;
 import org.jaxos.network.RequestSender;
 import org.jaxos.network.SenderFactory;
 import org.jaxos.network.protobuff.PaxosMessage;
+import org.jaxos.network.protobuff.ProtoMessageCoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +27,7 @@ import java.net.InetSocketAddress;
  * @sine 2019/8/24.
  */
 public class NettySenderFactory implements SenderFactory {
-    Logger logger = LoggerFactory.getLogger(NettySenderFactory.class);
+    private static Logger logger = LoggerFactory.getLogger(NettySenderFactory.class);
 
     @Override
     public RequestSender createSender(JaxosConfig config) {
@@ -48,14 +47,13 @@ public class NettySenderFactory implements SenderFactory {
                                     .addLast(new ProtobufDecoder(PaxosMessage.DataGram.getDefaultInstance()))
                                     .addLast(new ProtobufVarint32LengthFieldPrepender())
                                     .addLast(new ProtobufEncoder())
-                                    .addLast(new ClientHandler());
+                                    .addLast(new JaxosClientHandler());
                         }
                     });
 
-            JaxosConfig.Peer peer = config.getPeer(1);
+            JaxosConfig.Peer peer = config.getPeer(0);
             ChannelFuture future = bootstrap.connect(new InetSocketAddress(peer.address(), peer.port())).sync();
-
-            return new NettySender(future);
+            return new NettySender(config, future.channel());
         }
         catch (InterruptedException e) {
             logger.info("Interrupted");
@@ -63,8 +61,8 @@ public class NettySenderFactory implements SenderFactory {
         }
     }
 
-    private class ClientHandler extends ChannelInboundHandlerAdapter {
-        Logger logger = LoggerFactory.getLogger(ClientHandler.class);
+    private class JaxosClientHandler extends ChannelInboundHandlerAdapter {
+        Logger logger = LoggerFactory.getLogger(JaxosClientHandler.class);
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
@@ -91,27 +89,19 @@ public class NettySenderFactory implements SenderFactory {
     }
 
     private class NettySender implements RequestSender {
-        private ChannelFuture channelFuture;
-
-        public NettySender(ChannelFuture channelFuture) {
-            this.channelFuture = channelFuture;
+        private Channel channel;
+        private JaxosConfig config;
+        private ProtoMessageCoder coder;
+        public NettySender(JaxosConfig config, Channel channel) {
+            this.config = config;
+            this.channel = channel;
+            this.coder = new ProtoMessageCoder(this.config);
         }
 
         @Override
-        public void broadcast() {
-            ByteString body = PaxosMessage.PrepareReq.newBuilder()
-                    .setBallot(520)
-                    .build()
-                    .toByteString();
-
-            PaxosMessage.DataGram dataGram = PaxosMessage.DataGram.newBuilder()
-                    .setInstanceId(100)
-                    .setSender(2)
-                    .setCode(PaxosMessage.Code.PREPARE_REQ)
-                    .setBody(body)
-                    .build();
-
-            channelFuture.channel().writeAndFlush(dataGram);
+        public void broadcast(Event msg) {
+            PaxosMessage.DataGram dataGram = this.coder.encode(msg);
+            channel.writeAndFlush(dataGram);
         }
     }
 }

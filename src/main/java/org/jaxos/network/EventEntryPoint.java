@@ -4,8 +4,8 @@ import org.jaxos.algo.Event;
 
 /**
  * @author gaoyuan
- * @sine 2019/8/24.
+ * @sine 2019/8/25.
  */
-public interface RequestSender {
-    void broadcast(Event msg);
+public interface EventEntryPoint {
+    Event process(Event event);
 }

@@ -1,21 +1,21 @@
 package org.jaxos.algo;
 
+import java.util.Arrays;
+
 /**
  * @author gaoyuan
  * @sine 2019/8/22.
  */
-public class Message {
+public interface Event {
     enum Code {
-        PREPARE, PREPARE_RESPONSE, ACCEPT, ACCEPT_RESPONSE
+        NOOP, HEART_BEAT, HEART_BEAT_RESPONSE, PREPARE, PREPARE_RESPONSE, ACCEPT, ACCEPT_RESPONSE
     }
 
-    public interface PaxosMessage {
-        Code code();
-        int senderId();
-        long instanceId();
-    }
+    Code code();
+    int senderId();
+    long instanceId();
 
-    public static class PrepareRequest implements PaxosMessage {
+    class PrepareRequest implements Event {
         private int sender;
         private long instanceId;
         private int ballot;
@@ -59,18 +59,29 @@ public class Message {
             this.ballot = ballot;
             return this;
         }
+
+        @Override
+        public String toString() {
+            return "PrepareRequest{" +
+                    "sender=" + sender +
+                    ", instanceId=" + instanceId +
+                    ", ballot=" + ballot +
+                    '}';
+        }
     }
 
-    public static class PrepareResponse implements PaxosMessage {
+    class PrepareResponse implements Event {
         private int sender;
         private long instanceId;
+        private boolean success;
         private int maxBallot;
         private int acceptedBallot;
         private byte[] acceptedValue;
 
-        public PrepareResponse(int sender, long instanceId, int maxBallot, int acceptedBallot, byte[] acceptedValue) {
+        public PrepareResponse(int sender, long instanceId, boolean success, int maxBallot, int acceptedBallot, byte[] acceptedValue) {
             this.sender = sender;
             this.instanceId = instanceId;
+            this.success = success;
             this.maxBallot = maxBallot;
             this.acceptedBallot = acceptedBallot;
             this.acceptedValue = acceptedValue;
@@ -91,6 +102,10 @@ public class Message {
             return this.instanceId;
         }
 
+        public boolean success(){
+            return this.success;
+        }
+
         public int maxBallot() {
             return this.maxBallot;
         }
@@ -102,9 +117,21 @@ public class Message {
         public byte[] acceptedValue() {
             return this.acceptedValue;
         }
+
+        @Override
+        public String toString() {
+            return "PrepareResponse{" +
+                    "sender=" + sender +
+                    ", instanceId=" + instanceId +
+                    ", success=" + success +
+                    ", maxBallot=" + maxBallot +
+                    ", acceptedBallot=" + acceptedBallot +
+                    ", acceptedValue=" + Arrays.toString(acceptedValue) +
+                    '}';
+        }
     }
 
-    public static class AcceptRequest implements PaxosMessage {
+    class AcceptRequest implements Event {
         private int sender;
         private long instanceId;
         private int ballot;
@@ -141,7 +168,7 @@ public class Message {
         }
     }
 
-    public static class AcceptResponse implements PaxosMessage {
+    class AcceptResponse implements Event {
         private int sender;
         private long instanceId;
         private int maxBallot;

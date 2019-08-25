@@ -14,16 +14,17 @@ public class Acceptor {
     private int acceptedBallot = 2;
     private byte[] acceptedValue = new byte[]{1, 2, 3, 4};
 
-    public Message.PrepareResponse prepare(Message.PrepareRequest request) {
+    public Event.PrepareResponse prepare(Event.PrepareRequest request) {
         logger.info("do prepare {} ", request);
 
         if(request.ballot() > this.maxBallot){
             this.maxBallot = request.ballot();
         }
-        return new Message.PrepareResponse(1, 1000, this.maxBallot, this.acceptedBallot, this.acceptedValue);
+        return new Event.PrepareResponse(1, 1000, this.maxBallot == request.ballot(),
+                this.maxBallot, this.acceptedBallot, this.acceptedValue);
     }
 
-    public Message.AcceptResponse accept(Message.AcceptRequest request){
+    public Event.AcceptResponse accept(Event.AcceptRequest request){
         return null;
     }
 }

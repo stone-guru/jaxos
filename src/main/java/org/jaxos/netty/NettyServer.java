@@ -1,7 +1,8 @@
 package org.jaxos.netty;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.*;
+import io.netty.buffer.Unpooled;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -10,10 +11,13 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
-import org.jaxos.algo.Acceptor;
-import org.jaxos.network.RequestDispatcher;
+import org.jaxos.JaxosConfig;
+import org.jaxos.algo.Event;
+import org.jaxos.algo.EventCenter;
+import org.jaxos.network.EventEntryPoint;
+import org.jaxos.network.MessageCoder;
 import org.jaxos.network.protobuff.PaxosMessage;
-import org.jaxos.network.protobuff.ProtoRequestDispatcher;
+import org.jaxos.network.protobuff.ProtoMessageCoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,17 +30,14 @@ import java.net.InetSocketAddress;
 public class NettyServer {
     private static Logger logger = LoggerFactory.getLogger(NettyServer.class);
 
-    private String address;
-    private int port;
-    private int serverId;
+    private EventEntryPoint eventEntryPoint;
+    private MessageCoder<PaxosMessage.DataGram> messageCoder;
+    private JaxosConfig config;
 
-    private RequestDispatcher requestDispatcher;
-
-    public NettyServer(String address, int port, int serverId) {
-        this.address = address;
-        this.port = port;
-        this.serverId = serverId;
-        this.requestDispatcher = new ProtoRequestDispatcher(serverId, new Acceptor());
+    public NettyServer(JaxosConfig config) {
+        this.config = config;
+        this.eventEntryPoint = new EventCenter(this.config);
+        this.messageCoder = new ProtoMessageCoder(this.config);
     }
 
     public void startup() {
@@ -46,7 +47,6 @@ public class NettyServer {
             ServerBootstrap serverBootstrap = new ServerBootstrap()
                     .group(group)
                     .channel(NioServerSocketChannel.class)
-                    .localAddress(new InetSocketAddress(this.address, this.port))
                     .option(ChannelOption.ALLOCATOR, UnpooledByteBufAllocator.DEFAULT)
                     .option(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT);
 
@@ -62,7 +62,7 @@ public class NettyServer {
                             .addLast(new JaxosChannelHandler());
                 }
             });
-            ChannelFuture channelFuture = serverBootstrap.bind().sync();
+            ChannelFuture channelFuture = serverBootstrap.bind(config.port()).sync();
             channelFuture.channel().closeFuture().sync();
         }
         catch (Exception e) {
@@ -86,9 +86,13 @@ public class NettyServer {
     public class JaxosChannelHandler extends ChannelInboundHandlerAdapter {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-            PaxosMessage.DataGram response = requestDispatcher.process((PaxosMessage.DataGram)msg);
-            if(response != null){
-                ctx.writeAndFlush(response);
+            if(msg instanceof PaxosMessage.DataGram){
+                Event e0 = messageCoder.decode((PaxosMessage.DataGram)msg);
+                Event e1 = eventEntryPoint.process(e0);
+                if(e1 != null){
+                    PaxosMessage.DataGram response = messageCoder.encode(e1);
+                    ctx.writeAndFlush(response);
+                }
             }
         }
 
@@ -103,10 +107,5 @@ public class NettyServer {
             logger.error("error when handle request", cause);
             ctx.close();
         }
-    }
-
-    public static void main(String[] args) {
-        NettyServer server = new NettyServer("localhost", 9999, 0);
-        server.startup();
     }
 }

@@ -24,25 +24,29 @@ public final class PaxosMessage {
      */
     NOOP(0),
     /**
-     * <code>HEART_BEAT = 1;</code>
+     * <code>HEARTBEAT_REQ = 1;</code>
      */
-    HEART_BEAT(1),
+    HEARTBEAT_REQ(1),
     /**
-     * <code>PREPARE_REQ = 2;</code>
+     * <code>HEARTBEAT_RES = 2;</code>
      */
-    PREPARE_REQ(2),
+    HEARTBEAT_RES(2),
     /**
-     * <code>PREPARE_RES = 3;</code>
+     * <code>PREPARE_REQ = 3;</code>
      */
-    PREPARE_RES(3),
+    PREPARE_REQ(3),
     /**
-     * <code>ACCEPT_REQ = 4;</code>
+     * <code>PREPARE_RES = 4;</code>
      */
-    ACCEPT_REQ(4),
+    PREPARE_RES(4),
     /**
-     * <code>ACCEPT_RES = 5;</code>
+     * <code>ACCEPT_REQ = 5;</code>
      */
-    ACCEPT_RES(5),
+    ACCEPT_REQ(5),
+    /**
+     * <code>ACCEPT_RES = 6;</code>
+     */
+    ACCEPT_RES(6),
     UNRECOGNIZED(-1),
     ;
 
@@ -51,25 +55,29 @@ public final class PaxosMessage {
      */
     public static final int NOOP_VALUE = 0;
     /**
-     * <code>HEART_BEAT = 1;</code>
+     * <code>HEARTBEAT_REQ = 1;</code>
      */
-    public static final int HEART_BEAT_VALUE = 1;
+    public static final int HEARTBEAT_REQ_VALUE = 1;
     /**
-     * <code>PREPARE_REQ = 2;</code>
+     * <code>HEARTBEAT_RES = 2;</code>
      */
-    public static final int PREPARE_REQ_VALUE = 2;
+    public static final int HEARTBEAT_RES_VALUE = 2;
     /**
-     * <code>PREPARE_RES = 3;</code>
+     * <code>PREPARE_REQ = 3;</code>
      */
-    public static final int PREPARE_RES_VALUE = 3;
+    public static final int PREPARE_REQ_VALUE = 3;
     /**
-     * <code>ACCEPT_REQ = 4;</code>
+     * <code>PREPARE_RES = 4;</code>
      */
-    public static final int ACCEPT_REQ_VALUE = 4;
+    public static final int PREPARE_RES_VALUE = 4;
     /**
-     * <code>ACCEPT_RES = 5;</code>
+     * <code>ACCEPT_REQ = 5;</code>
      */
-    public static final int ACCEPT_RES_VALUE = 5;
+    public static final int ACCEPT_REQ_VALUE = 5;
+    /**
+     * <code>ACCEPT_RES = 6;</code>
+     */
+    public static final int ACCEPT_RES_VALUE = 6;
 
 
     public final int getNumber() {
@@ -91,11 +99,12 @@ public final class PaxosMessage {
     public static Code forNumber(int value) {
       switch (value) {
         case 0: return NOOP;
-        case 1: return HEART_BEAT;
-        case 2: return PREPARE_REQ;
-        case 3: return PREPARE_RES;
-        case 4: return ACCEPT_REQ;
-        case 5: return ACCEPT_RES;
+        case 1: return HEARTBEAT_REQ;
+        case 2: return HEARTBEAT_RES;
+        case 3: return PREPARE_REQ;
+        case 4: return PREPARE_RES;
+        case 5: return ACCEPT_REQ;
+        case 6: return ACCEPT_RES;
         default: return null;
       }
     }
@@ -2033,10 +2042,10 @@ public final class PaxosMessage {
       "\001(\014\"\034\n\nPrepareReq\022\016\n\006ballot\030\001 \001(\005\"_\n\nPre" +
       "pareRes\022\017\n\007success\030\001 \001(\010\022\021\n\tmaxBallot\030\002 " +
       "\001(\005\022\026\n\016acceptedBallot\030\003 \001(\005\022\025\n\racceptedV" +
-      "alue\030\004 \001(\014*b\n\004Code\022\010\n\004NOOP\020\000\022\016\n\nHEART_BE" +
-      "AT\020\001\022\017\n\013PREPARE_REQ\020\002\022\017\n\013PREPARE_RES\020\003\022\016" +
-      "\n\nACCEPT_REQ\020\004\022\016\n\nACCEPT_RES\020\005B\016B\014PaxosM" +
-      "essageb\006proto3"
+      "alue\030\004 \001(\014*x\n\004Code\022\010\n\004NOOP\020\000\022\021\n\rHEARTBEA" +
+      "T_REQ\020\001\022\021\n\rHEARTBEAT_RES\020\002\022\017\n\013PREPARE_RE" +
+      "Q\020\003\022\017\n\013PREPARE_RES\020\004\022\016\n\nACCEPT_REQ\020\005\022\016\n\n" +
+      "ACCEPT_RES\020\006B\016B\014PaxosMessageb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
