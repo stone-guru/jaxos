@@ -45,11 +45,10 @@ public class ProtoRequestDispatcher implements RequestDispatcher {
     }
 
     @Override
-    public byte[] process(byte[] buff) {
+    public PaxosMessage.DataGram process(PaxosMessage.DataGram request) {
         try {
-            PaxosMessage.DataGram dataGram = PaxosMessage.DataGram.parseFrom(buff);
-            RequestHandler handler = handlerMap.getOrDefault(dataGram.getCode(), this.defaultHandler);
-            Pair<PaxosMessage.Code, ByteString> result = handler.process(dataGram);
+            RequestHandler handler = handlerMap.getOrDefault(request.getCode(), this.defaultHandler);
+            Pair<PaxosMessage.Code, ByteString> result = handler.process(request);
             if (result == null) {
                 return null;
             }
@@ -57,10 +56,9 @@ public class ProtoRequestDispatcher implements RequestDispatcher {
             return PaxosMessage.DataGram.newBuilder()
                     .setSender(this.serverId)
                     .setCode(result.getKey())
-                    .setInstanceId(dataGram.getInstanceId())
+                    .setInstanceId(request.getInstanceId())
                     .setBody(result.getValue())
-                    .build()
-                    .toByteArray();
+                    .build();
         }
         catch (Exception e) {
             logger.error("invalid proto data", e);

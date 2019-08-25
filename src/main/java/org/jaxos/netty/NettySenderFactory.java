@@ -10,6 +10,10 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jaxos.JaxosConfig;
 import org.jaxos.network.RequestSender;
 import org.jaxos.network.SenderFactory;
@@ -40,7 +44,11 @@ public class NettySenderFactory implements SenderFactory {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
                             ChannelPipeline pipeline = socketChannel.pipeline();
-                            pipeline.addLast(new ClientHandler());
+                            pipeline.addLast(new ProtobufVarint32FrameDecoder())
+                                    .addLast(new ProtobufDecoder(PaxosMessage.DataGram.getDefaultInstance()))
+                                    .addLast(new ProtobufVarint32LengthFieldPrepender())
+                                    .addLast(new ProtobufEncoder())
+                                    .addLast(new ClientHandler());
                         }
                     });
 
@@ -61,10 +69,7 @@ public class NettySenderFactory implements SenderFactory {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
             try {
-                ByteBuf buff = (ByteBuf) msg; // (1)
-                byte bx[] = new byte[buff.readableBytes()];
-                buff.readBytes(bx);
-                PaxosMessage.DataGram dataGram = PaxosMessage.DataGram.parseFrom(bx);
+                PaxosMessage.DataGram dataGram = (PaxosMessage.DataGram)msg;
                 switch(dataGram.getCode()) {
                     case PREPARE_RES: {
                         PaxosMessage.PrepareRes res = PaxosMessage.PrepareRes.parseFrom(dataGram.getBody());
@@ -99,17 +104,14 @@ public class NettySenderFactory implements SenderFactory {
                     .build()
                     .toByteString();
 
-            byte[] bytes = PaxosMessage.DataGram.newBuilder()
+            PaxosMessage.DataGram dataGram = PaxosMessage.DataGram.newBuilder()
                     .setInstanceId(100)
                     .setSender(2)
                     .setCode(PaxosMessage.Code.PREPARE_REQ)
                     .setBody(body)
-                    .build()
-                    .toByteArray();
+                    .build();
 
-            ByteBuf buf = Unpooled.copiedBuffer(bytes);
-
-            channelFuture.channel().writeAndFlush(buf);
+            channelFuture.channel().writeAndFlush(dataGram);
         }
     }
 }

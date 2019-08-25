@@ -6,8 +6,13 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jaxos.algo.Acceptor;
 import org.jaxos.network.RequestDispatcher;
+import org.jaxos.network.protobuff.PaxosMessage;
 import org.jaxos.network.protobuff.ProtoRequestDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,8 +52,14 @@ public class NettyServer {
 
             serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
                 protected void initChannel(SocketChannel socketChannel) throws Exception {
-                    socketChannel.pipeline().addLast(new JaxosChannelHandler());
                     socketChannel.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
+
+                    socketChannel.pipeline()
+                            .addLast(new ProtobufVarint32FrameDecoder())
+                            .addLast(new ProtobufDecoder(PaxosMessage.DataGram.getDefaultInstance()))
+                            .addLast(new ProtobufVarint32LengthFieldPrepender())
+                            .addLast(new ProtobufEncoder())
+                            .addLast(new JaxosChannelHandler());
                 }
             });
             ChannelFuture channelFuture = serverBootstrap.bind().sync();
@@ -75,12 +86,9 @@ public class NettyServer {
     public class JaxosChannelHandler extends ChannelInboundHandlerAdapter {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-            ByteBuf inBuffer = (ByteBuf) msg;
-            byte bx[] = new byte[inBuffer.readableBytes()];
-            inBuffer.readBytes(bx);
-            byte[] result = requestDispatcher.process(bx);
-            if(result != null){
-                ctx.writeAndFlush(Unpooled.copiedBuffer(result));
+            PaxosMessage.DataGram response = requestDispatcher.process((PaxosMessage.DataGram)msg);
+            if(response != null){
+                ctx.writeAndFlush(response);
             }
         }
 

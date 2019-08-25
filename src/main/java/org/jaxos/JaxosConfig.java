@@ -38,7 +38,7 @@ public class JaxosConfig {
     private Map<Integer, Peer> peerMap;
 
     public JaxosConfig() {
-        this.peerMap = ImmutableMap.<Integer, Peer>builder().put(1, new Peer(1, "localhost", 9999)).build();
+        this.peerMap = ImmutableMap.<Integer, Peer>builder().put(1, new Peer(1, "127.0.0.1", 9999)).build();
     }
 
     public Peer getPeer(int id){
