@@ -6,12 +6,13 @@ option java_outer_classname="PaxosMessage";
 enum Code {
   NOOP = 0;
   
-  HEART_BEAT = 1;
+  HEARTBEAT_REQ = 1;
+  HEARTBEAT_RES = 2;
   
-  PREPARE_REQ = 2;
-  PREPARE_RES = 3;
-  ACCEPT_REQ = 4;
-  ACCEPT_RES = 5;
+  PREPARE_REQ = 3;
+  PREPARE_RES = 4;
+  ACCEPT_REQ = 5;
+  ACCEPT_RES = 6;
 }
 
 message DataGram {

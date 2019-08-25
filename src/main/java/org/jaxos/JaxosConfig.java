@@ -1,10 +1,8 @@
 package org.jaxos;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author gaoyuan
@@ -35,10 +33,45 @@ public class JaxosConfig {
         }
     }
 
-    private Map<Integer, Peer> peerMap;
+    public static Builder builder() {
+        return new Builder();
+    }
 
-    public JaxosConfig() {
-        this.peerMap = ImmutableMap.<Integer, Peer>builder().put(1, new Peer(1, "127.0.0.1", 9999)).build();
+    public static class Builder {
+        private int serverId;
+        private int port;
+        private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
+
+        public Builder setServerId(int serverId) {
+            this.serverId = serverId;
+            return this;
+        }
+
+        public Builder setPort(int port) {
+            this.port = port;
+            return this;
+        }
+
+        public Builder addPeer(int id, String address, int port){
+            this.peerBuilder.put(id, new Peer(id, address, port));
+            return this;
+        }
+
+        public JaxosConfig build(){
+            JaxosConfig config = new JaxosConfig();
+            config.port = this.port;
+            config.serverId = this.serverId;
+            config.peerMap = this.peerBuilder.build();
+            return config;
+        }
+    }
+
+
+    private Map<Integer, Peer> peerMap;
+    private int serverId;
+    private int port;
+
+    private JaxosConfig() {
     }
 
     public Peer getPeer(int id){
@@ -47,5 +80,13 @@ public class JaxosConfig {
 
     public Map<Integer, Peer> peerMap() {
         return this.peerMap;
+    }
+
+    public int serverId() {
+        return this.serverId;
+    }
+
+    public int port() {
+        return this.port;
     }
 }

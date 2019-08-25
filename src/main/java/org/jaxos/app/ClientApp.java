@@ -4,19 +4,26 @@
 package org.jaxos.app;
 
 import org.jaxos.JaxosConfig;
+import org.jaxos.algo.Event;
 import org.jaxos.netty.NettySenderFactory;
 import org.jaxos.network.RequestSender;
 
 public class ClientApp {
-    public String getGreeting() {
-        return "Hello world.";
-    }
 
-    public static void main(String[] args) {
-        JaxosConfig config = new JaxosConfig();
+    public static void main(String[] args) throws Exception{
+        JaxosConfig config = JaxosConfig.builder()
+                .setServerId(1)
+                .setPort(9999)
+                .addPeer(0, "localhost", 9999)
+                .build();
+
         NettySenderFactory factory = new NettySenderFactory();
         RequestSender sender = factory.createSender(config);
 
-        sender.broadcast();
+        for(int i = 0; i < 10 ; i++) {
+            Event.PrepareRequest req = new Event.PrepareRequest(config.serverId(), 1000, 10*(i + 1));
+            sender.broadcast(req);
+            Thread.sleep(1000);
+        }
     }
 }

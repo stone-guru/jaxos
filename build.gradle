@@ -31,7 +31,7 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
     // Use JUnit test framework
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.10'
 }
 
 // Define the main class for the application
