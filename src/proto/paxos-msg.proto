@@ -1,0 +1,36 @@
+syntax = "proto3";
+package  org.jaxos.network.protobuff;
+
+option java_outer_classname="PaxosMessage";
+
+enum Code {
+  NOOP = 0;
+  
+  HEART_BEAT = 1;
+  
+  PREPARE_REQ = 2;
+  PREPARE_RES = 3;
+  ACCEPT_REQ = 4;
+  ACCEPT_RES = 5;
+}
+
+message DataGram {
+  Code code = 1;
+  int32 sender = 2;
+  int64 instanceId = 3;
+  bytes body = 4;
+}
+
+message PrepareReq {
+  int32 ballot = 1;
+}
+
+message PrepareRes {
+  bool success = 1;
+  int32 maxBallot = 2;
+  int32 acceptedBallot = 3;
+  bytes acceptedValue = 4;
+} 
+
+
+

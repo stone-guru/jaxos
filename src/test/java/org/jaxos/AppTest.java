@@ -3,12 +3,13 @@
  */
 package org.jaxos;
 
+import org.jaxos.app.ClientApp;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class AppTest {
     @Test public void testAppHasAGreeting() {
-        App classUnderTest = new App();
+        ClientApp classUnderTest = new ClientApp();
         assertNotNull("app should have a greeting", classUnderTest.getGreeting());
     }
 }

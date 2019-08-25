@@ -11,16 +11,16 @@ public class Message {
 
     public interface PaxosMessage {
         Code code();
-        String sender();
+        int senderId();
         long instanceId();
     }
 
-    public static class Prepare implements PaxosMessage {
-        private String sender;
+    public static class PrepareRequest implements PaxosMessage {
+        private int sender;
         private long instanceId;
         private int ballot;
 
-        public Prepare(String sender, long instanceId, int ballot) {
+        public PrepareRequest(int sender, long instanceId, int ballot) {
             this.sender = sender;
             this.instanceId = instanceId;
             this.ballot = ballot;
@@ -32,7 +32,7 @@ public class Message {
         }
 
         @Override
-        public String sender() {
+        public int senderId() {
             return sender;
         }
 
@@ -44,18 +44,35 @@ public class Message {
         public int ballot() {
             return ballot;
         }
+
+        public PrepareRequest setSender(int sender) {
+            this.sender = sender;
+            return this;
+        }
+
+        public PrepareRequest setInstanceId(long instanceId) {
+            this.instanceId = instanceId;
+            return this;
+        }
+
+        public PrepareRequest setBallot(int ballot) {
+            this.ballot = ballot;
+            return this;
+        }
     }
 
     public static class PrepareResponse implements PaxosMessage {
-        private String sender;
+        private int sender;
         private long instanceId;
         private int maxBallot;
+        private int acceptedBallot;
         private byte[] acceptedValue;
 
-        public PrepareResponse(String sender, long instanceId, int maxBallot, byte[] acceptedValue) {
+        public PrepareResponse(int sender, long instanceId, int maxBallot, int acceptedBallot, byte[] acceptedValue) {
             this.sender = sender;
             this.instanceId = instanceId;
             this.maxBallot = maxBallot;
+            this.acceptedBallot = acceptedBallot;
             this.acceptedValue = acceptedValue;
         }
 
@@ -65,7 +82,7 @@ public class Message {
         }
 
         @Override
-        public String sender() {
+        public int senderId() {
             return this.sender;
         }
 
@@ -78,18 +95,22 @@ public class Message {
             return this.maxBallot;
         }
 
+        public int acceptedBallot() {
+            return this.acceptedBallot;
+        }
+
         public byte[] acceptedValue() {
             return this.acceptedValue;
         }
     }
 
-    public static class Accept implements PaxosMessage {
-        private String sender;
+    public static class AcceptRequest implements PaxosMessage {
+        private int sender;
         private long instanceId;
         private int ballot;
         private byte[] value;
 
-        public Accept(String sender, long instanceId, int ballot, byte[] value) {
+        public AcceptRequest(int sender, long instanceId, int ballot, byte[] value) {
             this.sender = sender;
             this.instanceId = instanceId;
             this.ballot = ballot;
@@ -102,7 +123,7 @@ public class Message {
         }
 
         @Override
-        public String sender() {
+        public int senderId() {
             return this.sender;
         }
 
@@ -121,12 +142,12 @@ public class Message {
     }
 
     public static class AcceptResponse implements PaxosMessage {
-        private String sender;
+        private int sender;
         private long instanceId;
         private int maxBallot;
         private boolean accepted;
 
-        public AcceptResponse(String sender, long instanceId, int maxBallot, boolean accepted) {
+        public AcceptResponse(int sender, long instanceId, int maxBallot, boolean accepted) {
             this.sender = sender;
             this.instanceId = instanceId;
             this.maxBallot = maxBallot;
@@ -139,7 +160,7 @@ public class Message {
         }
 
         @Override
-        public String sender() {
+        public int senderId() {
             return this.sender;
         }
 

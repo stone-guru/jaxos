@@ -1,16 +1,16 @@
 package org.jaxos.netty;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.*;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.util.CharsetUtil;
+import org.jaxos.algo.Acceptor;
+import org.jaxos.network.RequestDispatcher;
+import org.jaxos.network.protobuff.ProtoRequestDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import java.net.InetSocketAddress;
 
@@ -18,29 +18,37 @@ import java.net.InetSocketAddress;
  * @author gaoyuan
  * @sine 2019/8/22.
  */
-public class Server {
-    private static Logger logger = LoggerFactory.getLogger(Server.class);
+public class JaxosTcpServer {
+    private static Logger logger = LoggerFactory.getLogger(JaxosTcpServer.class);
 
     private String address;
     private int port;
+    private int serverId;
 
-    public Server(String address, int port) {
+    private RequestDispatcher requestDispatcher;
+
+    public JaxosTcpServer(String address, int port, int serverId) {
         this.address = address;
         this.port = port;
+        this.serverId = serverId;
+        this.requestDispatcher = new ProtoRequestDispatcher(serverId, new Acceptor());
     }
 
     public void startup() {
         EventLoopGroup group = new NioEventLoopGroup();
 
         try {
-            ServerBootstrap serverBootstrap = new ServerBootstrap();
-            serverBootstrap.group(group);
-            serverBootstrap.channel(NioServerSocketChannel.class);
-            serverBootstrap.localAddress(new InetSocketAddress(this.address, this.port));
+            ServerBootstrap serverBootstrap = new ServerBootstrap()
+                    .group(group)
+                    .channel(NioServerSocketChannel.class)
+                    .localAddress(new InetSocketAddress(this.address, this.port))
+                    .option(ChannelOption.ALLOCATOR, UnpooledByteBufAllocator.DEFAULT)
+                    .option(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT);
 
             serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
                 protected void initChannel(SocketChannel socketChannel) throws Exception {
-                    socketChannel.pipeline().addLast(new HelloServerHandler());
+                    socketChannel.pipeline().addLast(new JaxosChannelHandler());
+                    socketChannel.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
                 }
             });
             ChannelFuture channelFuture = serverBootstrap.bind().sync();
@@ -64,21 +72,22 @@ public class Server {
     }
 
 
-    public static class HelloServerHandler extends ChannelInboundHandlerAdapter {
+    public class JaxosChannelHandler extends ChannelInboundHandlerAdapter {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
             ByteBuf inBuffer = (ByteBuf) msg;
-
-            String received = inBuffer.toString(CharsetUtil.UTF_8);
-            logger.info("Server received: " + received);
-
-            ctx.write(Unpooled.copiedBuffer("Hello " + received, CharsetUtil.UTF_8));
+            byte bx[] = new byte[inBuffer.readableBytes()];
+            inBuffer.readBytes(bx);
+            byte[] result = requestDispatcher.process(bx);
+            if(result != null){
+                ctx.writeAndFlush(Unpooled.copiedBuffer(result));
+            }
         }
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-                    .addListener(ChannelFutureListener.CLOSE);
+            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);
+                    //.addListener(ChannelFutureListener.CLOSE);
         }
 
         @Override
@@ -89,7 +98,7 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        Server server = new Server("localhost", 9999);
+        JaxosTcpServer server = new JaxosTcpServer("localhost", 9999, 0);
         server.startup();
     }
 }
