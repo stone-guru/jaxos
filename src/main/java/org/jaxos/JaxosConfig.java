@@ -89,4 +89,17 @@ public class JaxosConfig {
     public int port() {
         return this.port;
     }
+
+    public int peerCount() {
+        return this.peerMap.size() + 1;
+    }
+
+    @Override
+    public String toString() {
+        return "JaxosConfig{" +
+                "peerMap=" + peerMap +
+                ", serverId=" + serverId +
+                ", port=" + port +
+                '}';
+    }
 }

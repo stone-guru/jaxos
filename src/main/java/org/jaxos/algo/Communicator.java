@@ -1,4 +1,4 @@
-package org.jaxos.network;
+package org.jaxos.algo;
 
 import org.jaxos.algo.Event;
 
@@ -6,6 +6,6 @@ import org.jaxos.algo.Event;
  * @author gaoyuan
  * @sine 2019/8/24.
  */
-public interface RequestSender {
+public interface Communicator {
     void broadcast(Event msg);
 }

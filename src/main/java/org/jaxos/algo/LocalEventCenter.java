@@ -1,21 +1,18 @@
 package org.jaxos.algo;
 
 import org.jaxos.JaxosConfig;
-import org.jaxos.network.EventEntryPoint;
 
 /**
  * @author gaoyuan
  * @sine 2019/8/25.
  */
-public class EventCenter implements EventEntryPoint {
-    private JaxosConfig config;
+public class LocalEventCenter implements EventEntryPoint {
     private Acceptor acceptor;
     private Proposal proposal;
 
-    public EventCenter(JaxosConfig config) {
-        this.config = config;
-        this.proposal = new Proposal(this.config);
-        this.acceptor = new Acceptor();
+    public LocalEventCenter(Proposal proposal, Acceptor acceptor) {
+        this.proposal = proposal;
+        this.acceptor = acceptor;
     }
 
     @Override

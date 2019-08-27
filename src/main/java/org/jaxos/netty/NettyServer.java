@@ -13,15 +13,13 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jaxos.JaxosConfig;
 import org.jaxos.algo.Event;
-import org.jaxos.algo.EventCenter;
-import org.jaxos.network.EventEntryPoint;
+import org.jaxos.algo.LocalEventCenter;
+import org.jaxos.algo.EventEntryPoint;
 import org.jaxos.network.MessageCoder;
 import org.jaxos.network.protobuff.PaxosMessage;
 import org.jaxos.network.protobuff.ProtoMessageCoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetSocketAddress;
 
 /**
  * @author gaoyuan
@@ -36,7 +34,7 @@ public class NettyServer {
 
     public NettyServer(JaxosConfig config) {
         this.config = config;
-        this.eventEntryPoint = new EventCenter(this.config);
+        this.eventEntryPoint = new LocalEventCenter(null, null);//FIXME
         this.messageCoder = new ProtoMessageCoder(this.config);
     }
 

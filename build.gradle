@@ -30,6 +30,7 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+    compile group: 'com.beust', name: 'jcommander', version: '1.78'
     // Use JUnit test framework
     testImplementation 'junit:junit:4.10'
 }

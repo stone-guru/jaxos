@@ -3,36 +3,54 @@
  */
 package org.jaxos.app;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.jaxos.JaxosConfig;
-import org.jaxos.algo.Event;
-import org.jaxos.algo.EventCenter;
-import org.jaxos.netty.NettySenderFactory;
-import org.jaxos.network.RequestSender;
+import org.jaxos.algo.*;
+import org.jaxos.netty.NettyCommunicatorFactory;
+
+import java.util.concurrent.TimeUnit;
 
 public class ClientApp {
-    static final String PEER0 = "localhost";
-    static final String PEER1 = "192.168.1.164";
 
-    public static void main(String[] args) throws Exception{
-        JaxosConfig config = JaxosConfig.builder()
-                .setServerId(1)
-                .setPort(9999)
-                .addPeer(0, PEER0, 9999)
-                .build();
-
-        NettySenderFactory factory = new NettySenderFactory(config, new EventCenter(config));
-        RequestSender sender = factory.createSender();
+    public static void main(String[] args) throws Exception {
+        JaxosConfig config = new ArgumentParser().parse(args);
+        ClientApp app = new ClientApp(config);
+        app.run();
+    }
 
 
+    private JaxosConfig config;
+    private Communicator communicator;
+
+    public ClientApp(JaxosConfig config) {
+        this.config = config;
+    }
+
+    public void run() throws Exception {
+        Acceptor acceptor = new Acceptor();
+        Proposal proposal = new Proposal(config, () -> communicator);
+        NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, new LocalEventCenter(proposal, acceptor));
+        this.communicator = factory.createSender();
+
+        StopWatch w = StopWatch.createStarted();
         for(int i = 0; i < 10 ; i++) {
-            int ballot = 10*(i + 1);
-            Event.PrepareRequest prepare = new Event.PrepareRequest(config.serverId(), 1000, ballot);
-            sender.broadcast(prepare);
-
             byte[] s = "AreYouCrazy".getBytes("UTF-8");
+            proposal.propose(s);
+
+            if(i >= 0){
+                break;
+            }
+            int ballot = (int)(20000 * Math.random());
+            Event.PrepareRequest prepare = new Event.PrepareRequest(config.serverId(), 1000, ballot);
+            communicator.broadcast(prepare);
+
+
             Event.AcceptRequest accept = new Event.AcceptRequest(config.serverId(), 1000, ballot, s);
-            sender.broadcast(accept);
-            Thread.sleep(1000);
+            communicator.broadcast(accept);
+            Thread.sleep(500);
         }
+        w.stop();
+        long ms = w.getTime(TimeUnit.MILLISECONDS);
+        System.out.println(String.format("Spent %d ms", ms));
     }
 }

@@ -1,6 +1,4 @@
-package org.jaxos.network;
-
-import org.jaxos.algo.Event;
+package org.jaxos.algo;
 
 /**
  * @author gaoyuan
