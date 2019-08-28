@@ -71,13 +71,13 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                         }
                     });
 
-            for(JaxosConfig.Peer peer : config.peerMap().values()){
-                bootstrap.connect(new InetSocketAddress(peer.address(), peer.port())).sync();
-            }
+//            for(JaxosConfig.Peer peer : config.peerMap().values()){
+//                bootstrap.connect(new InetSocketAddress(peer.address(), peer.port())).sync();
+//            }
 
             return this.communicator;
         }
-        catch (InterruptedException e) {
+        catch (Exception e) {
             logger.info("Interrupted");
             throw new RuntimeException("interrupted");
         }

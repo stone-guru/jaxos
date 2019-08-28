@@ -27,7 +27,7 @@ public class ClientApp {
     }
 
     public void run() throws Exception {
-        Acceptor acceptor = new Acceptor();
+        Acceptor acceptor = new Acceptor(config);
         Proposal proposal = new Proposal(config, () -> communicator);
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, new LocalEventCenter(proposal, acceptor));
         this.communicator = factory.createSender();
