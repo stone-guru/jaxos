@@ -16,9 +16,9 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jaxos.JaxosConfig;
+import org.jaxos.algo.Communicator;
 import org.jaxos.algo.Event;
 import org.jaxos.algo.EventEntryPoint;
-import org.jaxos.algo.Communicator;
 import org.jaxos.network.CommunicatorFactory;
 import org.jaxos.network.protobuff.PaxosMessage;
 import org.jaxos.network.protobuff.ProtoMessageCoder;
@@ -44,12 +44,13 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         this.config = config;
         this.coder = new ProtoMessageCoder(config);
         this.localEventEntryPoint = eventEntryPoint;
-        this.communicator = new ChannelGroupCommunicator();
     }
 
     @Override
-    public Communicator createSender() {
+    public Communicator createCommunicator() {
         EventLoopGroup worker = new NioEventLoopGroup();
+        this.communicator = new ChannelGroupCommunicator(worker);
+
         try {
             Bootstrap bootstrap = new Bootstrap()
                     .group(worker)
@@ -71,28 +72,33 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                         }
                     });
 
-//            for(JaxosConfig.Peer peer : config.peerMap().values()){
-//                bootstrap.connect(new InetSocketAddress(peer.address(), peer.port())).sync();
-//            }
+            for(JaxosConfig.Peer peer : config.peerMap().values()){
+                bootstrap.connect(new InetSocketAddress(peer.address(), peer.port())).sync();
+            }
 
             return this.communicator;
         }
         catch (Exception e) {
-            logger.info("Interrupted");
-            throw new RuntimeException("interrupted");
+            throw new RuntimeException(e);
         }
     }
 
     private class ChannelGroupCommunicator implements Communicator {
         private ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
+        private EventLoopGroup worker;
+
+        public ChannelGroupCommunicator(EventLoopGroup worker) {
+            this.worker = worker;
+        }
+
         @Override
         public void broadcast(Event event) {
-            Event ret = localEventEntryPoint.process(event);
-            localEventEntryPoint.process(ret);
-
+            logger.info("Broadcast {} " + event);
             PaxosMessage.DataGram dataGram = coder.encode(event);
             channels.writeAndFlush(dataGram);
+            Event ret = localEventEntryPoint.process(event);
+            localEventEntryPoint.process(ret);
         }
 
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -107,6 +113,17 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             logger.info("Disconnect from a server {}", c.remoteAddress());
 
             channels.remove(ctx.channel());
+        }
+
+        @Override
+        public void close()  {
+            try {
+                channels.close().sync();
+                worker.shutdownGracefully().sync();
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -126,6 +143,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             if(msg instanceof PaxosMessage.DataGram) {
                 PaxosMessage.DataGram dataGram = (PaxosMessage.DataGram) msg;
                 //this is an empty dataGram
+                //TODO ingest why
                 if(dataGram.getCode() == PaxosMessage.Code.NONE){
                     return;
                 }

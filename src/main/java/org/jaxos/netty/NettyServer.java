@@ -38,7 +38,7 @@ public class NettyServer {
         this.acceptor = new Acceptor(this.config);
         this.proposal = new Proposal(this.config, () -> this.communicator);
         this.eventEntryPoint = new LocalEventCenter(this.proposal, this.acceptor);
-        this.communicator = new NettyCommunicatorFactory(this.config, eventEntryPoint).createSender();
+        this.communicator = new NettyCommunicatorFactory(this.config, eventEntryPoint).createCommunicator();
         this.messageCoder = new ProtoMessageCoder(this.config);
     }
 

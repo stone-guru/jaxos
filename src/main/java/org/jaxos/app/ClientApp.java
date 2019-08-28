@@ -3,12 +3,14 @@
  */
 package org.jaxos.app;
 
-import org.apache.commons.lang3.time.StopWatch;
 import org.jaxos.JaxosConfig;
-import org.jaxos.algo.*;
+import org.jaxos.algo.Acceptor;
+import org.jaxos.algo.Communicator;
+import org.jaxos.algo.LocalEventCenter;
+import org.jaxos.algo.Proposal;
 import org.jaxos.netty.NettyCommunicatorFactory;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Date;
 
 public class ClientApp {
 
@@ -30,27 +32,21 @@ public class ClientApp {
         Acceptor acceptor = new Acceptor(config);
         Proposal proposal = new Proposal(config, () -> communicator);
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, new LocalEventCenter(proposal, acceptor));
-        this.communicator = factory.createSender();
+        this.communicator = factory.createCommunicator();
 
-        StopWatch w = StopWatch.createStarted();
-        for(int i = 0; i < 10 ; i++) {
-            byte[] s = "AreYouCrazy".getBytes("UTF-8");
+        final int n = 100;
+        for(int i = 0; i < n; i++) {
+            byte[] s = new Date().toString().getBytes("UTF-8");
             proposal.propose(s);
 
-            if(i >= 0){
-                break;
+            while(!proposal.accepted()) {
+                Thread.sleep(5);
             }
-            int ballot = (int)(20000 * Math.random());
-            Event.PrepareRequest prepare = new Event.PrepareRequest(config.serverId(), 1000, ballot);
-            communicator.broadcast(prepare);
-
-
-            Event.AcceptRequest accept = new Event.AcceptRequest(config.serverId(), 1000, ballot, s);
-            communicator.broadcast(accept);
-            Thread.sleep(500);
         }
-        w.stop();
-        long ms = w.getTime(TimeUnit.MILLISECONDS);
-        System.out.println(String.format("Spent %d ms", ms));
+        Thread.sleep(1000);
+
+        double t = (double)proposal.taskElpasedMillis() - 200;
+        System.out.println("Average time is " + t/(n-1));
+        this.communicator.close();
     }
 }
