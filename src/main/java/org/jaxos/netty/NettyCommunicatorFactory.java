@@ -72,8 +72,10 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                         }
                     });
 
-            for(JaxosConfig.Peer peer : config.peerMap().values()){
-                bootstrap.connect(new InetSocketAddress(peer.address(), peer.port())).sync();
+            if(config.connectOtherPeer()) {
+                for (JaxosConfig.Peer peer : config.peerMap().values()) {
+                    bootstrap.connect(new InetSocketAddress(peer.address(), peer.port())).sync();
+                }
             }
 
             return this.communicator;

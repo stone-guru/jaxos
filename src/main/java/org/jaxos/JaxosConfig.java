@@ -14,6 +14,7 @@ public class JaxosConfig {
         private String address;
         private int port;
 
+
         public Peer(int id, String address, int port) {
             this.id = id;
             this.address = address;
@@ -40,6 +41,7 @@ public class JaxosConfig {
     public static class Builder {
         private int serverId;
         private int port;
+        private boolean connectOtherPeer;
         private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
 
         public Builder setServerId(int serverId) {
@@ -57,11 +59,17 @@ public class JaxosConfig {
             return this;
         }
 
+        public Builder setConnectOtherPeer(boolean connectOtherPeer) {
+            this.connectOtherPeer = connectOtherPeer;
+            return this;
+        }
+
         public JaxosConfig build(){
             JaxosConfig config = new JaxosConfig();
             config.port = this.port;
             config.serverId = this.serverId;
             config.peerMap = this.peerBuilder.build();
+            config.connectOtherPeer = this.connectOtherPeer;
             return config;
         }
     }
@@ -70,6 +78,7 @@ public class JaxosConfig {
     private Map<Integer, Peer> peerMap;
     private int serverId;
     private int port;
+    private boolean connectOtherPeer;
 
     private JaxosConfig() {
     }
@@ -92,6 +101,10 @@ public class JaxosConfig {
 
     public int peerCount() {
         return this.peerMap.size() + 1;
+    }
+
+    public boolean connectOtherPeer() {
+        return connectOtherPeer;
     }
 
     @Override

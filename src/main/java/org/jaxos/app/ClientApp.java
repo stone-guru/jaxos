@@ -34,19 +34,19 @@ public class ClientApp {
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, new LocalEventCenter(proposal, acceptor));
         this.communicator = factory.createCommunicator();
 
-        final int n = 100;
+        final int n = 10000;
         for(int i = 0; i < n; i++) {
             byte[] s = new Date().toString().getBytes("UTF-8");
             proposal.propose(s);
 
             while(!proposal.accepted()) {
-                Thread.sleep(5);
+                Thread.sleep(3);
             }
         }
         Thread.sleep(1000);
 
-        double t = (double)proposal.taskElpasedMillis() - 200;
-        System.out.println("Average time is " + t/(n-1));
+        double t = (double)proposal.taskElpasedMillis();
+        System.out.println("Average time is " + t/(n-0));
         this.communicator.close();
     }
 }

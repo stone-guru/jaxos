@@ -4,8 +4,11 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.jaxos.JaxosConfig;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author gaoyuan
@@ -19,8 +22,11 @@ public class ArgumentParser {
         @Parameter(names = {"-i"}, description = "Self id")
         private Integer id = 0;
 
-        @Parameter(names = "-r", description = "All Peers")
-        private List<String> peers = new ArrayList<>();
+        @Parameter(names = {"-f"}, description = "config file name")
+        private String configFilename;
+
+        @Parameter(names={"-c"}, description = "connect to other peers")
+        private boolean connectOtherPeer = false;
     }
 
     public JaxosConfig parse(String[] sx) {
@@ -33,33 +39,47 @@ public class ArgumentParser {
 
         JaxosConfig.Builder b = JaxosConfig.builder();
         b.setServerId(args.id);
+        b.setConnectOtherPeer(args.connectOtherPeer);
+        loadAddressFromFile(b, args.configFilename, args.id);
 
+        return b.build();
+    }
+
+    private JaxosConfig.Builder loadAddressFromFile(JaxosConfig.Builder builder, String fileName, int selfId){
+        Properties properties = new Properties();
+        try {
+            properties.load(new BufferedReader(new FileReader(fileName)));
+        }
+        catch (IOException e) {
+            return builder;
+        }
         boolean selfPortSet = false;
-        for (String peer : args.peers) {
-            String[] px = peer.split(":");
-            if (px.length != 3) {
-                throw new IllegalArgumentException(peer);
+        for(String k : properties.stringPropertyNames()){
+            if(!k.startsWith("peer.")){
+                continue;
             }
-            int id = Integer.parseInt(px[0]);
-            String address = px[1];
-            int port = Integer.parseInt(px[2]);
+            String[] sx = k.split("\\.");
+            int id = Integer.parseInt(sx[1]);
 
-            if (id == args.id.intValue()) {
+            String[] ax = properties.getProperty(k).split(":");
+            String address = ax[0];
+            int port = Integer.parseInt(ax[1]);
+
+            if (id == selfId) {
                 if(selfPortSet){
                     throw new IllegalArgumentException("more than one self");
                 }
-                b.setPort(port);
+                builder.setPort(port);
                 selfPortSet = true;
-            }
-            else {
-                b.addPeer(id, address, port);
+            } else {
+                builder.addPeer(id, address, port);
             }
         }
 
         if(!selfPortSet){
-            throw new IllegalArgumentException("self setting not found selfId=" + args.id);
+            throw new IllegalArgumentException("self setting not found selfId=" + selfId);
         }
 
-        return b.build();
+        return builder;
     }
 }

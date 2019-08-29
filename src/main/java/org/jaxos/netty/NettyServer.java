@@ -65,7 +65,7 @@ public class NettyServer {
                 }
             });
             ChannelFuture channelFuture = serverBootstrap.bind(config.port()).sync();
-            logger.info("Jaxos server {} started at {}", config.serverId(), config.port());
+            logger.warn("Jaxos server {} started at {}", config.serverId(), config.port());
             channelFuture.channel().closeFuture().sync();
         }
         catch (Exception e) {
