@@ -9,12 +9,7 @@ import org.jaxos.netty.NettyServer;
  */
 public class ServerApp {
     public static void main(String[] args) {
-        JaxosConfig config = JaxosConfig.builder()
-                .setServerId(0)
-                .setPort(9999)
-                .addPeer(1, "localhost", 9999)
-                .build();
-
+        JaxosConfig config = new ArgumentParser().parse(args);
         NettyServer server = new NettyServer(config);
         server.startup();
     }

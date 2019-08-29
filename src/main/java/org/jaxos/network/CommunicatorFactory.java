@@ -7,5 +7,5 @@ import org.jaxos.algo.Communicator;
  * @sine 2019/8/24.
  */
 public interface CommunicatorFactory {
-    Communicator createSender();
+    Communicator createCommunicator();
 }

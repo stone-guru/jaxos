@@ -17,9 +17,15 @@ plugins {
 repositories {
     // Use jcenter for resolving your dependencies.
     // Yes, you can declare any Maven/Ivy/file repository here.
-    jcenter()
+    mavenCentral()
 }
 
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+wrapper {
+    gradleVersion = 5.3
+}
 
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.
@@ -36,4 +42,4 @@ dependencies {
 }
 
 // Define the main class for the application
-mainClassName = 'org.jaxos.netty.NettyServer'
+mainClassName = 'org.jaxos.app.ServerApp'

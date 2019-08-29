@@ -12,9 +12,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jaxos.JaxosConfig;
-import org.jaxos.algo.Event;
-import org.jaxos.algo.LocalEventCenter;
-import org.jaxos.algo.EventEntryPoint;
+import org.jaxos.algo.*;
 import org.jaxos.network.MessageCoder;
 import org.jaxos.network.protobuff.PaxosMessage;
 import org.jaxos.network.protobuff.ProtoMessageCoder;
@@ -31,10 +29,16 @@ public class NettyServer {
     private EventEntryPoint eventEntryPoint;
     private MessageCoder<PaxosMessage.DataGram> messageCoder;
     private JaxosConfig config;
+    private Acceptor acceptor;
+    private Communicator communicator;
+    private Proposal proposal;
 
     public NettyServer(JaxosConfig config) {
         this.config = config;
-        this.eventEntryPoint = new LocalEventCenter(null, null);//FIXME
+        this.acceptor = new Acceptor(this.config);
+        this.proposal = new Proposal(this.config, () -> this.communicator);
+        this.eventEntryPoint = new LocalEventCenter(this.proposal, this.acceptor);
+        this.communicator = new NettyCommunicatorFactory(this.config, eventEntryPoint).createCommunicator();
         this.messageCoder = new ProtoMessageCoder(this.config);
     }
 
@@ -61,6 +65,7 @@ public class NettyServer {
                 }
             });
             ChannelFuture channelFuture = serverBootstrap.bind(config.port()).sync();
+            logger.info("Jaxos server {} started at {}", config.serverId(), config.port());
             channelFuture.channel().closeFuture().sync();
         }
         catch (Exception e) {
