@@ -24,12 +24,13 @@ public class Acceptor {
 
     public Event.PrepareResponse prepare(Event.PrepareRequest request) {
         logger.info("do prepare {} ", request);
-
-        if (request.ballot() > this.maxBallot) {
+        int b0 = this.maxBallot;
+        if (request.ballot() > b0) {
             this.maxBallot = request.ballot();
         }
-        return new Event.PrepareResponse(config.serverId(), 1000, this.maxBallot == request.ballot(),
-                this.maxBallot, this.acceptedBallot, this.acceptedValue);
+
+        return new Event.PrepareResponse(config.serverId(), 1000, b0 <= request.ballot(),
+                b0, this.acceptedBallot, this.acceptedValue);
     }
 
     public Event.AcceptResponse accept(Event.AcceptRequest request) {
