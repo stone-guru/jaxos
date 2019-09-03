@@ -48,6 +48,14 @@ public final class PaxosMessage {
      */
     ACCEPT_RES(6),
     /**
+     * <code>ACCEPTED_NOTIFY = 7;</code>
+     */
+    ACCEPTED_NOTIFY(7),
+    /**
+     * <code>ACCEPTED_ACK = 8;</code>
+     */
+    ACCEPTED_ACK(8),
+    /**
      * <code>NOOP = 10;</code>
      */
     NOOP(10),
@@ -83,6 +91,14 @@ public final class PaxosMessage {
      */
     public static final int ACCEPT_RES_VALUE = 6;
     /**
+     * <code>ACCEPTED_NOTIFY = 7;</code>
+     */
+    public static final int ACCEPTED_NOTIFY_VALUE = 7;
+    /**
+     * <code>ACCEPTED_ACK = 8;</code>
+     */
+    public static final int ACCEPTED_ACK_VALUE = 8;
+    /**
      * <code>NOOP = 10;</code>
      */
     public static final int NOOP_VALUE = 10;
@@ -113,6 +129,8 @@ public final class PaxosMessage {
         case 4: return PREPARE_RES;
         case 5: return ACCEPT_REQ;
         case 6: return ACCEPT_RES;
+        case 7: return ACCEPTED_NOTIFY;
+        case 8: return ACCEPTED_ACK;
         case 10: return NOOP;
         default: return null;
       }
@@ -3152,11 +3170,12 @@ public final class PaxosMessage {
       "\001(\005\022\026\n\016acceptedBallot\030\003 \001(\005\022\025\n\racceptedV" +
       "alue\030\004 \001(\014\"*\n\tAcceptReq\022\016\n\006ballot\030\001 \001(\005\022" +
       "\r\n\005value\030\002 \001(\014\"/\n\tAcceptRes\022\017\n\007success\030\001" +
-      " \001(\010\022\021\n\tmaxBallot\030\002 \001(\005*\202\001\n\004Code\022\010\n\004NONE" +
+      " \001(\010\022\021\n\tmaxBallot\030\002 \001(\005*\251\001\n\004Code\022\010\n\004NONE" +
       "\020\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021\n\rHEARTBEAT_RES\020\002" +
       "\022\017\n\013PREPARE_REQ\020\003\022\017\n\013PREPARE_RES\020\004\022\016\n\nAC" +
-      "CEPT_REQ\020\005\022\016\n\nACCEPT_RES\020\006\022\010\n\004NOOP\020\nB\016B\014" +
-      "PaxosMessageb\006proto3"
+      "CEPT_REQ\020\005\022\016\n\nACCEPT_RES\020\006\022\023\n\017ACCEPTED_N" +
+      "OTIFY\020\007\022\020\n\014ACCEPTED_ACK\020\010\022\010\n\004NOOP\020\nB\016B\014P" +
+      "axosMessageb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

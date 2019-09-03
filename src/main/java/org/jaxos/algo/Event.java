@@ -1,6 +1,6 @@
 package org.jaxos.algo;
 
-import java.util.Arrays;
+import com.google.protobuf.ByteString;
 
 /**
  * @author gaoyuan
@@ -8,7 +8,8 @@ import java.util.Arrays;
  */
 public interface Event {
     enum Code {
-        NOOP, HEART_BEAT, HEART_BEAT_RESPONSE, PREPARE, PREPARE_RESPONSE, ACCEPT, ACCEPT_RESPONSE
+        NOOP, HEART_BEAT, HEART_BEAT_RESPONSE, PREPARE, PREPARE_RESPONSE, ACCEPT, ACCEPT_RESPONSE,
+        ACCEPTED_NOTIFY
     }
 
     Code code();
@@ -76,9 +77,9 @@ public interface Event {
         private boolean success;
         private int maxBallot;
         private int acceptedBallot;
-        private byte[] acceptedValue;
+        private ByteString acceptedValue;
 
-        public PrepareResponse(int sender, long instanceId, boolean success, int maxBallot, int acceptedBallot, byte[] acceptedValue) {
+        public PrepareResponse(int sender, long instanceId, boolean success, int maxBallot, int acceptedBallot, ByteString acceptedValue) {
             this.sender = sender;
             this.instanceId = instanceId;
             this.success = success;
@@ -114,7 +115,7 @@ public interface Event {
             return this.acceptedBallot;
         }
 
-        public byte[] acceptedValue() {
+        public ByteString acceptedValue() {
             return this.acceptedValue;
         }
 
@@ -124,9 +125,9 @@ public interface Event {
                     "sender=" + sender +
                     ", instanceId=" + instanceId +
                     ", success=" + success +
-                    ", maxBallot=" + maxBallot +
+                    ", ballot=" + maxBallot +
                     ", acceptedBallot=" + acceptedBallot +
-                    ", acceptedValue=" + Arrays.toString(acceptedValue) +
+                    ", acceptedValue=" + acceptedValue.toStringUtf8() + //FIXME not string in future
                     '}';
         }
     }
@@ -135,9 +136,9 @@ public interface Event {
         private int sender;
         private long instanceId;
         private int ballot;
-        private byte[] value;
+        private ByteString value;
 
-        public AcceptRequest(int sender, long instanceId, int ballot, byte[] value) {
+        public AcceptRequest(int sender, long instanceId, int ballot, ByteString value) {
             this.sender = sender;
             this.instanceId = instanceId;
             this.ballot = ballot;
@@ -163,7 +164,7 @@ public interface Event {
             return this.ballot;
         }
 
-        public byte[] value() {
+        public ByteString value() {
             return this.value;
         }
 
@@ -173,7 +174,7 @@ public interface Event {
                     "sender=" + sender +
                     ", instanceId=" + instanceId +
                     ", ballot=" + ballot +
-                    ", value=" + Arrays.toString(value) +
+                    ", value=" + value.toStringUtf8() + //FIXME not string in future
                     '}';
         }
     }
@@ -219,8 +220,48 @@ public interface Event {
             return "AcceptResponse{" +
                     "sender=" + sender +
                     ", instanceId=" + instanceId +
-                    ", maxBallot=" + maxBallot +
+                    ", ballot=" + maxBallot +
                     ", accepted=" + accepted +
+                    '}';
+        }
+    }
+
+    class ChosenNotify implements Event {
+        private int sender;
+        private long instanceId;
+        private int ballot;
+
+        public ChosenNotify(int sender, long instanceId, int ballot) {
+            this.sender = sender;
+            this.instanceId = instanceId;
+            this.ballot = ballot;
+        }
+
+        @Override
+        public Code code() {
+            return Code.ACCEPTED_NOTIFY;
+        }
+
+        @Override
+        public int senderId() {
+            return this.sender;
+        }
+
+        @Override
+        public long instanceId() {
+            return this.instanceId;
+        }
+
+        public int ballot() {
+            return this.ballot;
+        }
+
+        @Override
+        public String toString() {
+            return "AcceptedNotify{" +
+                    "sender=" + sender +
+                    ", instanceId=" + instanceId +
+                    ", ballot=" + ballot +
                     '}';
         }
     }

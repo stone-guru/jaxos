@@ -100,7 +100,9 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             PaxosMessage.DataGram dataGram = coder.encode(event);
             channels.writeAndFlush(dataGram);
             Event ret = localEventEntryPoint.process(event);
-            localEventEntryPoint.process(ret);
+            if(ret != null) {
+                localEventEntryPoint.process(ret);
+            }
         }
 
         public void channelActive(ChannelHandlerContext ctx) throws Exception {

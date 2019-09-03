@@ -2,6 +2,7 @@ package org.jaxos.network.protobuff;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
+import com.google.common.primitives.Ints;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.jaxos.JaxosConfig;
@@ -25,6 +26,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
 
     private JaxosConfig config;
 
+
     public ProtoMessageCoder(JaxosConfig config) {
         decodeMap = ImmutableBiMap.<PaxosMessage.Code, Event.Code>builder()
                 .put(PaxosMessage.Code.NOOP, Event.Code.NOOP)
@@ -34,6 +36,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .put(PaxosMessage.Code.ACCEPT_RES, Event.Code.ACCEPT_RESPONSE)
                 .put(PaxosMessage.Code.PREPARE_REQ, Event.Code.PREPARE)
                 .put(PaxosMessage.Code.PREPARE_RES, Event.Code.PREPARE_RESPONSE)
+                .put(PaxosMessage.Code.ACCEPTED_NOTIFY, Event.Code.ACCEPTED_NOTIFY)
                 .build();
         encodeMap = decodeMap.inverse();
         this.config = config;
@@ -57,6 +60,11 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
             }
             case ACCEPT_RESPONSE: {
                 body = encodeBody((Event.AcceptResponse) event);
+                break;
+            }
+            case ACCEPTED_NOTIFY: {
+                byte[] bytes = Ints.toByteArray(((Event.ChosenNotify)event).ballot());
+                body = ByteString.copyFrom(bytes);
                 break;
             }
             default: {
@@ -88,7 +96,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setSuccess(resp.success())
                 .setMaxBallot(resp.maxBallot())
                 .setAcceptedBallot(resp.acceptedBallot())
-                .setAcceptedValue(ByteString.copyFrom(resp.acceptedValue()))
+                .setAcceptedValue(resp.acceptedValue())
                 .build()
                 .toByteString();
 
@@ -97,7 +105,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
     private ByteString encodeBody(Event.AcceptRequest req) {
         return PaxosMessage.AcceptReq.newBuilder()
                 .setBallot(req.ballot())
-                .setValue(ByteString.copyFrom(req.value()))
+                .setValue(req.value())
                 .build()
                 .toByteString();
     }
@@ -131,6 +139,9 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 case ACCEPT_RES:{
                     return decodeAcceptResponse(dataGram);
                 }
+                case ACCEPTED_NOTIFY: {
+                    return decodeAcceptedNotify(dataGram);
+                }
                 default: {
                     logger.error("Unknown dataGram {}", dataGram);
                     return null;
@@ -150,16 +161,21 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
     private Event decodePrepareResponse(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.PrepareRes res = PaxosMessage.PrepareRes.parseFrom(dataGram.getBody());
         return new Event.PrepareResponse(dataGram.getSender(), dataGram.getInstanceId(),
-                res.getSuccess(), res.getMaxBallot(), res.getAcceptedBallot(), res.getAcceptedValue().toByteArray());
+                res.getSuccess(), res.getMaxBallot(), res.getAcceptedBallot(), res.getAcceptedValue());
     }
 
     private Event decodeAcceptReq(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.AcceptReq req = PaxosMessage.AcceptReq.parseFrom(dataGram.getBody());
-        return new Event.AcceptRequest(dataGram.getSender(), dataGram.getInstanceId(), req.getBallot(), req.getValue().toByteArray());
+        return new Event.AcceptRequest(dataGram.getSender(), dataGram.getInstanceId(), req.getBallot(), req.getValue());
     }
 
     private Event decodeAcceptResponse(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.AcceptRes res = PaxosMessage.AcceptRes.parseFrom(dataGram.getBody());
         return new Event.AcceptResponse(dataGram.getSender(), dataGram.getInstanceId(), res.getMaxBallot(), res.getSuccess());
+    }
+
+    private Event decodeAcceptedNotify(PaxosMessage.DataGram dataGram){
+        int ballot = Ints.fromByteArray(dataGram.getBody().toByteArray());
+        return new Event.ChosenNotify(dataGram.getSender(), dataGram.getInstanceId(), ballot);
     }
 }

@@ -3,11 +3,10 @@
  */
 package org.jaxos.app;
 
+import com.google.protobuf.ByteString;
 import org.jaxos.JaxosConfig;
-import org.jaxos.algo.Acceptor;
 import org.jaxos.algo.Communicator;
-import org.jaxos.algo.LocalEventCenter;
-import org.jaxos.algo.Proposal;
+import org.jaxos.algo.Instance;
 import org.jaxos.netty.NettyCommunicatorFactory;
 
 import java.util.Date;
@@ -29,24 +28,25 @@ public class ClientApp {
     }
 
     public void run() throws Exception {
-        Acceptor acceptor = new Acceptor(config);
-        Proposal proposal = new Proposal(config, () -> communicator);
-        NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, new LocalEventCenter(proposal, acceptor));
+        Instance instance = new Instance(config, () -> communicator);
+        NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, instance);
+
         this.communicator = factory.createCommunicator();
 
-        final int n = 10000;
+        final int n = 3;
         for(int i = 0; i < n; i++) {
-            byte[] s = new Date().toString().getBytes("UTF-8");
-            proposal.propose(s);
+            ByteString s =  ByteString.copyFromUtf8(new Date().toString());
+            long i0 = instance.lastChosenInstance();
+            instance.propose(s);
 
-            while(!proposal.accepted()) {
-                Thread.sleep(3);
-            }
+            //while(instance.lastChosenInstance() <= i0){
+                Thread.sleep(1000);
+            //}
         }
         Thread.sleep(1000);
 
-        double t = (double)proposal.taskElpasedMillis();
-        System.out.println("Average time is " + t/(n-0));
+        //double t = (double)proposal.taskElapsedMillis();
+        //System.out.println("Average time is " + t/(n-0));
         this.communicator.close();
     }
 }

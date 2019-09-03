@@ -13,7 +13,10 @@ enum Code {
   PREPARE_RES = 4;
   ACCEPT_REQ = 5;
   ACCEPT_RES = 6;
-
+  
+  ACCEPTED_NOTIFY = 7;
+  ACCEPTED_ACK = 8;
+  
   NOOP=10;
 }
 
@@ -44,7 +47,6 @@ message AcceptRes {
   bool success = 1;
   int32 maxBallot = 2;
 }
-
 
 
 

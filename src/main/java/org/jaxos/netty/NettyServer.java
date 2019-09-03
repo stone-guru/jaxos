@@ -26,19 +26,17 @@ import org.slf4j.LoggerFactory;
 public class NettyServer {
     private static Logger logger = LoggerFactory.getLogger(NettyServer.class);
 
-    private EventEntryPoint eventEntryPoint;
     private MessageCoder<PaxosMessage.DataGram> messageCoder;
     private JaxosConfig config;
-    private Acceptor acceptor;
     private Communicator communicator;
-    private Proposal proposal;
+    private Instance instance;
 
     public NettyServer(JaxosConfig config) {
         this.config = config;
-        this.acceptor = new Acceptor(this.config);
-        this.proposal = new Proposal(this.config, () -> this.communicator);
-        this.eventEntryPoint = new LocalEventCenter(this.proposal, this.acceptor);
-        this.communicator = new NettyCommunicatorFactory(this.config, eventEntryPoint).createCommunicator();
+        this.instance = new Instance(config, () -> communicator);
+        NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, instance);
+        this.communicator = factory.createCommunicator();
+        this.communicator = new NettyCommunicatorFactory(this.config, this.instance).createCommunicator();
         this.messageCoder = new ProtoMessageCoder(this.config);
     }
 
@@ -91,7 +89,7 @@ public class NettyServer {
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
             if(msg instanceof PaxosMessage.DataGram){
                 Event e0 = messageCoder.decode((PaxosMessage.DataGram)msg);
-                Event e1 = eventEntryPoint.process(e0);
+                Event e1 = instance.process(e0);
                 if(e1 != null){
                     PaxosMessage.DataGram response = messageCoder.encode(e1);
                     ctx.writeAndFlush(response);
