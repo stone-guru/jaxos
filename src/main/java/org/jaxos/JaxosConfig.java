@@ -14,7 +14,6 @@ public class JaxosConfig {
         private String address;
         private int port;
 
-
         public Peer(int id, String address, int port) {
             this.id = id;
             this.address = address;
@@ -32,6 +31,15 @@ public class JaxosConfig {
         public int port() {
             return port;
         }
+
+        @Override
+        public String toString() {
+            return "Peer{" +
+                    "id=" + id +
+                    ", address='" + address + '\'' +
+                    ", port=" + port +
+                    '}';
+        }
     }
 
     public static Builder builder() {
@@ -41,7 +49,8 @@ public class JaxosConfig {
     public static class Builder {
         private int serverId;
         private int port;
-        private boolean connectOtherPeer;
+        private int httpPort;
+
         private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
 
         public Builder setServerId(int serverId) {
@@ -59,8 +68,8 @@ public class JaxosConfig {
             return this;
         }
 
-        public Builder setConnectOtherPeer(boolean connectOtherPeer) {
-            this.connectOtherPeer = connectOtherPeer;
+        public Builder setHttpPort(int httpPort) {
+            this.httpPort = httpPort;
             return this;
         }
 
@@ -69,7 +78,7 @@ public class JaxosConfig {
             config.port = this.port;
             config.serverId = this.serverId;
             config.peerMap = this.peerBuilder.build();
-            config.connectOtherPeer = this.connectOtherPeer;
+            config.httpPort = this.httpPort;
             return config;
         }
     }
@@ -78,7 +87,7 @@ public class JaxosConfig {
     private Map<Integer, Peer> peerMap;
     private int serverId;
     private int port;
-    private boolean connectOtherPeer;
+    private int httpPort;
 
     private JaxosConfig() {
     }
@@ -103,8 +112,8 @@ public class JaxosConfig {
         return this.peerMap.size() + 1;
     }
 
-    public boolean connectOtherPeer() {
-        return connectOtherPeer;
+    public int httpPort(){
+        return this.httpPort;
     }
 
     @Override

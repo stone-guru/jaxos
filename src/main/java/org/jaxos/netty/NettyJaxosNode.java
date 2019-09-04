@@ -23,15 +23,15 @@ import org.slf4j.LoggerFactory;
  * @author gaoyuan
  * @sine 2019/8/22.
  */
-public class NettyServer {
-    private static Logger logger = LoggerFactory.getLogger(NettyServer.class);
+public class NettyJaxosNode {
+    private static Logger logger = LoggerFactory.getLogger(NettyJaxosNode.class);
 
     private MessageCoder<PaxosMessage.DataGram> messageCoder;
     private JaxosConfig config;
     private Communicator communicator;
     private Instance instance;
 
-    public NettyServer(JaxosConfig config) {
+    public NettyJaxosNode(JaxosConfig config) {
         this.config = config;
         this.instance = new Instance(config, () -> communicator);
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, instance);
@@ -40,12 +40,16 @@ public class NettyServer {
         this.messageCoder = new ProtoMessageCoder(this.config);
     }
 
-    public void startup() {
-        EventLoopGroup group = new NioEventLoopGroup();
+    public Instance instance(){
+        return this.instance;
+    }
 
+    public void startup() {
+        EventLoopGroup boss = new NioEventLoopGroup(1);
+        EventLoopGroup worker = new NioEventLoopGroup();
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap()
-                    .group(group)
+                    .group(boss, worker)
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.ALLOCATOR, UnpooledByteBufAllocator.DEFAULT)
                     .option(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT);
@@ -71,7 +75,8 @@ public class NettyServer {
         }
         finally {
             try {
-                group.shutdownGracefully().sync();
+                worker.shutdownGracefully().sync();
+                boss.shutdownGracefully().sync();
             }
             catch (InterruptedException e) {
                 logger.info("Interrupted");

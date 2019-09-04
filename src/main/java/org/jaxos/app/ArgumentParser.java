@@ -25,8 +25,9 @@ public class ArgumentParser {
         @Parameter(names = {"-f"}, description = "config file name")
         private String configFilename;
 
-        @Parameter(names={"-c"}, description = "connect to other peers")
-        private boolean connectOtherPeer = false;
+        @Parameter(names = {"-p"}, description = "HTTP server port")
+        private Integer httpPort = 0;
+
     }
 
     public JaxosConfig parse(String[] sx) {
@@ -37,9 +38,10 @@ public class ArgumentParser {
                 .build()
                 .parse(sx);
 
-        JaxosConfig.Builder b = JaxosConfig.builder();
-        b.setServerId(args.id);
-        b.setConnectOtherPeer(args.connectOtherPeer);
+        JaxosConfig.Builder b = JaxosConfig.builder()
+                .setServerId(args.id)
+                .setHttpPort(args.httpPort);
+
         loadAddressFromFile(b, args.configFilename, args.id);
 
         return b.build();

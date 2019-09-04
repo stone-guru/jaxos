@@ -26,8 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author gaoyuan
@@ -49,13 +51,12 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
     @Override
     public Communicator createCommunicator() {
         EventLoopGroup worker = new NioEventLoopGroup();
-        this.communicator = new ChannelGroupCommunicator(worker);
-
         try {
             Bootstrap bootstrap = new Bootstrap()
                     .group(worker)
                     .channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
+                    .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                     .option(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT)
                     .handler(new ChannelInitializer<SocketChannel>() {
@@ -67,17 +68,13 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                                     .addLast(new ProtobufDecoder(PaxosMessage.DataGram.getDefaultInstance()))
                                     .addLast(new ProtobufVarint32LengthFieldPrepender())
                                     .addLast(new ProtobufEncoder())
-                                    .addLast(new JaxosOutboundHandler())
+                                    //.addLast(new JaxosOutboundHandler())
                                     .addLast(new JaxosClientHandler());
                         }
                     });
 
-            if(config.connectOtherPeer()) {
-                for (JaxosConfig.Peer peer : config.peerMap().values()) {
-                    bootstrap.connect(new InetSocketAddress(peer.address(), peer.port())).sync();
-                }
-            }
-
+            this.communicator = new ChannelGroupCommunicator(worker, bootstrap);
+            this.communicator.start();
             return this.communicator;
         }
         catch (Exception e) {
@@ -87,11 +84,37 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
     private class ChannelGroupCommunicator implements Communicator {
         private ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-
+        private Bootstrap bootstrap;
         private EventLoopGroup worker;
+        private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-        public ChannelGroupCommunicator(EventLoopGroup worker) {
+        public ChannelGroupCommunicator(EventLoopGroup worker, Bootstrap bootstrap) {
             this.worker = worker;
+            this.bootstrap = bootstrap;
+        }
+
+        public void start() {
+            for (JaxosConfig.Peer peer : config.peerMap().values()) {
+                connect(peer);
+            }
+        }
+
+        private void connect(JaxosConfig.Peer peer) {
+            ChannelFuture future = bootstrap.connect(new InetSocketAddress(peer.address(), peer.port()));
+            future.addListener(f -> {
+                if (!f.isSuccess()) {
+                    logger.error("Unable to connect to {} ", peer);
+                    executor.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
+                }
+                else {
+                    logger.info("Connected to {}", peer);
+                }
+            });
+        }
+
+        @Override
+        public boolean available() {
+            return channels.size() >= config.peerCount() / 2;
         }
 
         @Override
@@ -100,15 +123,12 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             PaxosMessage.DataGram dataGram = coder.encode(event);
             channels.writeAndFlush(dataGram);
             Event ret = localEventEntryPoint.process(event);
-            if(ret != null) {
+            if (ret != null) {
                 localEventEntryPoint.process(ret);
             }
         }
 
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            Channel c = ctx.channel();
-            logger.info("Connected to a server {}", c.remoteAddress());
-
             channels.add(ctx.channel());
         }
 
@@ -120,7 +140,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         }
 
         @Override
-        public void close()  {
+        public void close() {
             try {
                 channels.close().sync();
                 worker.shutdownGracefully().sync();
@@ -131,7 +151,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         }
     }
 
-    private class JaxosClientHandler extends ChannelInboundHandlerAdapter{
+    private class JaxosClientHandler extends ChannelInboundHandlerAdapter {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             communicator.channelActive(ctx);
@@ -144,11 +164,11 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            if(msg instanceof PaxosMessage.DataGram) {
+            if (msg instanceof PaxosMessage.DataGram) {
                 PaxosMessage.DataGram dataGram = (PaxosMessage.DataGram) msg;
                 //this is an empty dataGram
                 //TODO ingest why
-                if(dataGram.getCode() == PaxosMessage.Code.NONE){
+                if (dataGram.getCode() == PaxosMessage.Code.NONE) {
                     return;
                 }
 
@@ -156,23 +176,17 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                 if (event != null) {
                     localEventEntryPoint.process(event);
                 }
-            } else {
+            }
+            else {
                 logger.error("Unknown received object {}", Objects.toString(msg));
             }
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            cause.printStackTrace();
+            logger.error("error ", cause);
+            //cause.printStackTrace();
             ctx.close();
-        }
-    }
-
-    private class JaxosOutboundHandler extends ChannelOutboundHandlerAdapter {
-        @Override
-        public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
-            logger.info("jaxos connect from {} to {}",localAddress, remoteAddress);
-            super.connect(ctx, remoteAddress, localAddress, promise);
         }
     }
 }

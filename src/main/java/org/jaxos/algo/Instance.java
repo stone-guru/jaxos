@@ -20,6 +20,10 @@ public class Instance implements EventEntryPoint {
         this.acceptor = new Acceptor(config, context);
     }
 
+    /**
+     * @param v value to be proposed
+     * @throws CommunicatorException
+     */
     public void propose(ByteString v){
         this.proposal.propose(v);
     }

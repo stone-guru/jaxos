@@ -58,6 +58,9 @@ public class Proposal {
     }
 
     public void propose(ByteString value) {
+        if(!communicator.get().available()){
+            throw new CommunicatorException("Not enough nodes connected");
+        }
         this.proposeValue = value;
         this.watch = StopWatch.createStarted();
         this.state.set(NONE);
