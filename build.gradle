@@ -6,6 +6,8 @@
  * User Manual available at https://docs.gradle.org/5.4.1/userguide/tutorial_java_projects.html
  */
 
+
+
 plugins {
     // Apply the java plugin to add support for Java
     id 'java'
@@ -20,6 +22,10 @@ repositories {
     mavenCentral()
 }
 
+configurations{
+    runtime.exclude group: "ch.qos.logback", module: "logback-classic"
+}
+
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
@@ -31,7 +37,11 @@ dependencies {
     // This dependency is found on compile classpath of this component and consumers.
     implementation 'com.google.guava:guava:27.0.1-jre'
     implementation 'io.netty:netty-all:4.1.39.Final'
-    implementation 'io.netty:netty-example:4.1.39.Final'
+
+    compile('io.netty:netty-example:4.1.39.Final'){
+        exclude group: "ch.qos.logback", module: "logback-classic"
+    }
+
     implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.9.1'
     //implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
@@ -40,6 +50,8 @@ dependencies {
     compile group: 'com.beust', name: 'jcommander', version: '1.78'
     // Use JUnit test framework
     testImplementation 'junit:junit:4.10'
+
+
 }
 
 // Define the main class for the application

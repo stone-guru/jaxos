@@ -16,6 +16,52 @@ public interface Event {
     int senderId();
     long instanceId();
 
+    class HeartBeatRequest implements Event {
+        private final int senderId;
+
+        public HeartBeatRequest(int senderId) {
+            this.senderId = senderId;
+        }
+
+        @Override
+        public Code code() {
+            return Code.HEART_BEAT;
+        }
+
+        @Override
+        public int senderId() {
+            return this.senderId;
+        }
+
+        @Override
+        public long instanceId() {
+            return 0;
+        }
+    }
+
+    class HeartBeatResponse implements Event {
+        private final int senderId;
+
+        public HeartBeatResponse(int senderId) {
+            this.senderId = senderId;
+        }
+
+        @Override
+        public Code code() {
+            return Code.HEART_BEAT_RESPONSE;
+        }
+
+        @Override
+        public int senderId() {
+            return this.senderId;
+        }
+
+        @Override
+        public long instanceId() {
+            return 0;
+        }
+    }
+
     class PrepareRequest implements Event {
         private int sender;
         private long instanceId;

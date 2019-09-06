@@ -5,9 +5,7 @@ import org.jaxos.JaxosConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -16,7 +14,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Acceptor {
     private static final Logger logger = LoggerFactory.getLogger(Acceptor.class);
-    public static final byte[] EMPTY_BYTE = new byte[0];
 
     public static class ProposalInfo {
         private final int serverId;
@@ -69,7 +66,7 @@ public class Acceptor {
         else if (request.instanceId() == last + 1) {
             //It's ok to start a new round
             if (this.instanceId == 0) {
-                logger.info("start a new round with instance id {}", request.instanceId());
+                logger.debug("start a new round with instance id {}", request.instanceId());
                 this.instanceId = request.instanceId();
             }
             else if (this.instanceId != request.instanceId()) {
@@ -132,7 +129,7 @@ public class Acceptor {
             }
             accepted = true;
             this.lastProposeInfo.set(new ProposalInfo(request.senderId(), System.currentTimeMillis()));
-            logger.info("Accept new value sender = {}, ballot = {}, value = {}", request.senderId(), v.ballot, v.content.toStringUtf8());
+            logger.debug("Accept new value sender = {}, ballot = {}, value = {}", request.senderId(), v.ballot, v.content.toStringUtf8());
             break;
         }
 
@@ -151,6 +148,7 @@ public class Acceptor {
         instanceContext.learnValue(this.instanceId, v0.content);
 
         this.acceptedValue.set(AcceptedValue.NONE);
+        this.maxBallot.set(0);
         this.instanceId = 0;
     }
 }

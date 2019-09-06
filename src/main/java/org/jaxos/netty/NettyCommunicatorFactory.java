@@ -1,5 +1,6 @@
 package org.jaxos.netty;
 
+import com.google.common.util.concurrent.RateLimiter;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -26,9 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -83,14 +84,23 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
     }
 
     private class ChannelGroupCommunicator implements Communicator {
+        private static final long HEART_BEAT_INTERVAL_SEC = 2;
         private ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         private Bootstrap bootstrap;
         private EventLoopGroup worker;
-        private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        private RateLimiter logLimiter = RateLimiter.create(1.0 / 15);
+        private Map<ChannelId, JaxosConfig.Peer> channelPeerMap = new ConcurrentHashMap<>();
+        private PaxosMessage.DataGram heartBeatDataGram = coder.encode(new Event.HeartBeatRequest(config.serverId()));
 
         public ChannelGroupCommunicator(EventLoopGroup worker, Bootstrap bootstrap) {
             this.worker = worker;
             this.bootstrap = bootstrap;
+
+            this.worker.scheduleWithFixedDelay(() -> {
+                        //logger.info("send heart beat");
+                        channels.writeAndFlush(heartBeatDataGram);
+                    },
+                    HEART_BEAT_INTERVAL_SEC, HEART_BEAT_INTERVAL_SEC, TimeUnit.SECONDS);
         }
 
         public void start() {
@@ -99,15 +109,28 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             }
         }
 
+        private void connect(ChannelId channelId) {
+            JaxosConfig.Peer peer = channelPeerMap.remove(channelId);
+            if (peer == null) {
+                logger.error("Peer for channel {} is not recorded", channelId);
+            }
+            else {
+                connect(peer);
+            }
+        }
+
         private void connect(JaxosConfig.Peer peer) {
             ChannelFuture future = bootstrap.connect(new InetSocketAddress(peer.address(), peer.port()));
             future.addListener(f -> {
                 if (!f.isSuccess()) {
-                    logger.error("Unable to connect to {} ", peer);
-                    executor.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
+                    if (logLimiter.tryAcquire()) {
+                        logger.error("Unable to connect to {} ", peer);
+                    }
+                    worker.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
                 }
                 else {
                     logger.info("Connected to {}", peer);
+                    channelPeerMap.put(future.channel().id(), peer);
                 }
             });
         }
@@ -119,7 +142,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         @Override
         public void broadcast(Event event) {
-            logger.info("Broadcast {} " + event);
+            logger.debug("Broadcast {} " + event);
             PaxosMessage.DataGram dataGram = coder.encode(event);
             channels.writeAndFlush(dataGram);
             Event ret = localEventEntryPoint.process(event);
@@ -134,9 +157,10 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             Channel c = ctx.channel();
-            logger.info("Disconnect from a server {}", c.remoteAddress());
-
+            logger.error("Disconnected from a server {}", channelPeerMap.get(c.id()));
             channels.remove(ctx.channel());
+
+            connect(c.id());
         }
 
         @Override
@@ -174,7 +198,12 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
                 Event event = coder.decode(dataGram);
                 if (event != null) {
-                    localEventEntryPoint.process(event);
+                    if (event.code() == Event.Code.HEART_BEAT_RESPONSE) {
+                        //logger.info("Got heart beat response from server {}", event.senderId());
+                    }
+                    else {
+                        localEventEntryPoint.process(event);
+                    }
                 }
             }
             else {

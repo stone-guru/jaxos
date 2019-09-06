@@ -1,5 +1,7 @@
 package org.jaxos.algo;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import org.jaxos.JaxosConfig;
 
@@ -24,7 +26,7 @@ public class Instance implements EventEntryPoint {
      * @param v value to be proposed
      * @throws CommunicatorException
      */
-    public void propose(ByteString v){
+    public void propose(ByteString v) throws InterruptedException{
         this.proposal.propose(v);
     }
 

@@ -13,6 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @author gaoyuan
@@ -46,6 +49,11 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
     public PaxosMessage.DataGram encode(Event event) {
         ByteString body;
         switch (event.code()) {
+            case HEART_BEAT:
+            case HEART_BEAT_RESPONSE:{
+                body = ByteString.EMPTY;
+                break;
+            }
             case PREPARE: {
                 body = encodeBody((Event.PrepareRequest) event);
                 break;
@@ -119,14 +127,19 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
     }
 
     private PaxosMessage.Code toProtoCode(Event.Code code) {
-        return encodeMap.get(code);
+        return checkNotNull(this.encodeMap.get(code));
     }
-
 
     @Override
     public Event decode(PaxosMessage.DataGram dataGram) {
         try {
             switch (dataGram.getCode()) {
+                case HEARTBEAT_REQ:{
+                    return new Event.HeartBeatRequest(dataGram.getSender());
+                }
+                case HEARTBEAT_RES: {
+                    return new Event.HeartBeatResponse(dataGram.getSender());
+                }
                 case PREPARE_REQ: {
                     return decodePrepareReq(dataGram);
                 }

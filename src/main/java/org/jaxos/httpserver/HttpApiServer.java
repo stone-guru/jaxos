@@ -30,6 +30,8 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.util.CharsetUtil;
 import org.jaxos.algo.Instance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -48,6 +50,8 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * in a pretty plaintext form.
  */
 public final class HttpApiServer {
+    private static final Logger logger = LoggerFactory.getLogger(HttpApiServer.class);
+
     private Instance instance;
     private int port;
 
@@ -119,42 +123,49 @@ public final class HttpApiServer {
                 }
 
                 buf.setLength(0);
-                buf.append("METHOD: ").append(request.method()).append("\r\n");
-                buf.append("REQUEST_URI: ").append(request.uri()).append("\r\n");
-
-                QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.uri());
-                buf.append("RAW_PATH: ").append(queryStringDecoder.rawPath()).append("\r\n\r\n");
-                Map<String, List<String>> params = queryStringDecoder.parameters();
+//                buf.append("METHOD: ").append(request.method()).append("\r\n");
+//                buf.append("REQUEST_URI: ").append(request.uri()).append("\r\n");
+//
+//                QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.uri());
+//                buf.append("RAW_PATH: ").append(queryStringDecoder.rawPath()).append("\r\n\r\n");
+//                Map<String, List<String>> params = queryStringDecoder.parameters();
 
                 if(request.method().equals(HttpMethod.POST)){
-                    instance.propose(ByteString.copyFromUtf8("Hello word!"));
-                }
-                if (!params.isEmpty()) {
-                    for (Map.Entry<String, List<String>> p : params.entrySet()) {
-                        String key = p.getKey();
-                        List<String> vals = p.getValue();
-                        for (String val : vals) {
-                            buf.append("PARAM: ").append(key).append(" = ").append(val).append("\r\n");
-                        }
+                    try {
+                        instance.propose(ByteString.copyFromUtf8("Hello word!"));
+                        buf.append("OK\r\n");
+                    }catch(InterruptedException e){
+                        logger.info("Asked to be quit");
+                        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+                        return;
                     }
-                    buf.append("\r\n");
                 }
+//                if (!params.isEmpty()) {
+//                    for (Map.Entry<String, List<String>> p : params.entrySet()) {
+//                        String key = p.getKey();
+//                        List<String> vals = p.getValue();
+//                        for (String val : vals) {
+//                            buf.append("PARAM: ").append(key).append(" = ").append(val).append("\r\n");
+//                        }
+//                    }
+//                    buf.append("\r\n");
+//                }
             }
 
             if (msg instanceof LastHttpContent) {
-                buf.append("END OF CONTENT\r\n");
+                //buf.append("END OF CONTENT\r\n");
 
                 LastHttpContent trailer = (LastHttpContent) msg;
-                if (!trailer.trailingHeaders().isEmpty()) {
-                    buf.append("\r\n");
-                    for (CharSequence name : trailer.trailingHeaders().names()) {
-                        for (CharSequence value : trailer.trailingHeaders().getAll(name)) {
-                            buf.append("TRAILING HEADER: ");
-                            buf.append(name).append(" = ").append(value).append("\r\n");
-                        }
-                    }
-                    buf.append("\r\n");
-                }
+//                if (!trailer.trailingHeaders().isEmpty()) {
+//                    buf.append("\r\n");
+//                    for (CharSequence name : trailer.trailingHeaders().names()) {
+//                        for (CharSequence value : trailer.trailingHeaders().getAll(name)) {
+//                            buf.append("TRAILING HEADER: ");
+//                            buf.append(name).append(" = ").append(value).append("\r\n");
+//                        }
+//                    }
+//                    buf.append("\r\n");
+//                }
 
                 if (!writeResponse(trailer, ctx)) {
                     // If keep-alive is off, close the connection once the content is fully written.

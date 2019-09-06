@@ -50,6 +50,8 @@ public class Proposal {
     private StopWatch watch;
     private AtomicLong taskElapsed = new AtomicLong(0);
 
+    private Object executingSignal = new Object();
+
     public Proposal(JaxosConfig config, InstanceContext instanceContext, Supplier<Communicator> communicator) {
         this.config = config;
         this.communicator = communicator;
@@ -57,14 +59,19 @@ public class Proposal {
         this.instanceContext = instanceContext;
     }
 
-    public void propose(ByteString value) {
-        if(!communicator.get().available()){
+    public synchronized void propose(ByteString value) throws InterruptedException {
+        if (!communicator.get().available()) {
             throw new CommunicatorException("Not enough nodes connected");
         }
+
         this.proposeValue = value;
         this.watch = StopWatch.createStarted();
         this.state.set(NONE);
         askPrepare(this.config.serverId());
+
+        synchronized (executingSignal) {
+            executingSignal.wait();
+        }
     }
 
     private void askPrepare(int ballot0) {
@@ -99,10 +106,10 @@ public class Proposal {
     }
 
     public void onPrepareReply(Event.PrepareResponse response) {
-        logger.info("got PREPARE reply {}", response);
+        logger.debug("got PREPARE reply {}", response);
 
         if (this.switching) {
-            logger.info("Abandon response at switching");
+            logger.debug("Abandon response at switching");
             return;
         }
 
@@ -131,7 +138,7 @@ public class Proposal {
         }
 
         if (repliedCount.get() == config.peerCount()) {
-            logger.info("End prepare after receiving {} response ", repliedCount.get());
+            logger.debug("End prepare after receiving {} response ", repliedCount.get());
             preparedEntry.exec(this::onAllPrepareReplied);
         }
     }
@@ -166,34 +173,39 @@ public class Proposal {
             askPrepare(config.serverId());
             return;
         }
-
-        logger.info("on all prepared max chose ballot = {}", this.maxAcceptedValue.get().ballot);
         AcceptedValue mv = this.maxAcceptedValue.get();
-        int newBallot = this.totalMaxBallot.get() >= this.ballot ? nextBallot(this.totalMaxBallot.get()) : this.ballot;
+
+        logger.debug("on all prepared max accepted ballot = {}, total max ballot ={}, my ballot = {}",
+                this.maxAcceptedValue.get().ballot, mv.ballot, this.ballot);
+
+        int maxiBallot = this.totalMaxBallot.get();
+        int b0 = this.ballot;
+        int newBallot = maxiBallot > b0? nextBallot(maxiBallot) : b0;
 
         if (!resetState(PREPARING, ACCEPTING, newBallot)) {
-            logger.info("Another thread has handle the state change");
+            logger.debug("Another thread has handle the state change");
             return;
         }
 
-        logger.warn("Prepare end in {} ms", watch.getTime(TimeUnit.MILLISECONDS));
+        logger.debug("Prepare end in {} ms", watch.getTime(TimeUnit.MILLISECONDS));
 
         ByteString value;
         if (mv.ballot == 0) {
-            logger.info("No other chose value, use mine");
+            logger.debug("No other chose value, use mine");
             value = this.proposeValue;
         }
         else {
-            logger.info("use another allAccept value");
+            logger.debug("use another allAccept value");
             value = mv.content;
         }
 
+        logger.debug("new ballot is {} and my ballot changed to {}", newBallot, this.ballot);
         Event.AcceptRequest request = new Event.AcceptRequest(this.config.serverId(), this.proposeInstanceId, this.ballot, value);
         this.communicator.get().broadcast(request);
     }
 
     public void onAcceptReply(Event.AcceptResponse response) {
-        logger.info("got ACCEPT reply {}", response);
+        logger.debug("got ACCEPT reply {}", response);
         if (switching) {
             logger.info("Abandon response when switching");
             return;
@@ -220,7 +232,7 @@ public class Proposal {
     }
 
     private void afterAllAcceptReplied() {
-        logger.info("Received all accept response");
+        logger.debug("Received all accept response");
         if (this.allAccept) {
             Event notify = new Event.ChosenNotify(this.config.serverId(), this.proposeInstanceId, this.ballot);
             this.communicator.get().broadcast(notify);
@@ -228,6 +240,9 @@ public class Proposal {
             logger.warn("value chose in  {} ms", t);
             state.set(CHOSEN);
             this.taskElapsed.addAndGet(t);
+            synchronized (executingSignal) {
+                executingSignal.notifyAll();
+            }
         }
         else {
             state.set(NONE);

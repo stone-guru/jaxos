@@ -11,13 +11,22 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.jaxos.JaxosConfig;
-import org.jaxos.algo.*;
+import org.jaxos.algo.Communicator;
+import org.jaxos.algo.Event;
+import org.jaxos.algo.Instance;
 import org.jaxos.network.MessageCoder;
 import org.jaxos.network.protobuff.PaxosMessage;
 import org.jaxos.network.protobuff.ProtoMessageCoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author gaoyuan
@@ -30,13 +39,13 @@ public class NettyJaxosNode {
     private JaxosConfig config;
     private Communicator communicator;
     private Instance instance;
+    private Map<ChannelId, JaxosConfig.Peer> channelPeerMap = new ConcurrentHashMap<>();
 
     public NettyJaxosNode(JaxosConfig config) {
         this.config = config;
         this.instance = new Instance(config, () -> communicator);
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, instance);
         this.communicator = factory.createCommunicator();
-        this.communicator = new NettyCommunicatorFactory(this.config, this.instance).createCommunicator();
         this.messageCoder = new ProtoMessageCoder(this.config);
     }
 
@@ -59,6 +68,7 @@ public class NettyJaxosNode {
                     socketChannel.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
 
                     socketChannel.pipeline()
+                            .addLast(new IdleStateHandler(20, 20, 20 * 10, TimeUnit.SECONDS))
                             .addLast(new ProtobufVarint32FrameDecoder())
                             .addLast(new ProtobufDecoder(PaxosMessage.DataGram.getDefaultInstance()))
                             .addLast(new ProtobufVarint32LengthFieldPrepender())
@@ -90,14 +100,26 @@ public class NettyJaxosNode {
 
 
     public class JaxosChannelHandler extends ChannelInboundHandlerAdapter {
+        private final PaxosMessage.DataGram heartBeatResponse = messageCoder.encode(new Event.HeartBeatResponse(config.serverId()));
+
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            logger.info("Channel connected from {}", ctx.channel().remoteAddress());
+        }
+
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
             if(msg instanceof PaxosMessage.DataGram){
                 Event e0 = messageCoder.decode((PaxosMessage.DataGram)msg);
-                Event e1 = instance.process(e0);
-                if(e1 != null){
-                    PaxosMessage.DataGram response = messageCoder.encode(e1);
-                    ctx.writeAndFlush(response);
+                if(e0.code() == Event.Code.HEART_BEAT){
+                    //logger.info("Receive heart beat from server {}", e0.senderId());
+                    ctx.writeAndFlush(heartBeatResponse);
+                } else {
+                    Event e1 = instance.process(e0);
+                    if (e1 != null) {
+                        PaxosMessage.DataGram response = messageCoder.encode(e1);
+                        ctx.writeAndFlush(response);
+                    }
                 }
             }
         }
@@ -105,13 +127,24 @@ public class NettyJaxosNode {
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
             ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);
-                    //.addListener(ChannelFutureListener.CLOSE);
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
             logger.error("error when handle request", cause);
             ctx.close();
+        }
+
+        @Override
+        public void userEventTriggered(ChannelHandlerContext ctx, Object obj) throws Exception {
+            super.userEventTriggered(ctx, obj);
+            if(obj instanceof IdleStateEvent){
+                IdleStateEvent event = (IdleStateEvent)obj;
+                if (event.state() == IdleState.READER_IDLE || event.state() == IdleState.ALL_IDLE){
+                    logger.warn("connection from {} idle, close it");
+                    ctx.channel().close();
+                }
+            }
         }
     }
 
