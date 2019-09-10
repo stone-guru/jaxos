@@ -15,37 +15,19 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Acceptor {
     private static final Logger logger = LoggerFactory.getLogger(Acceptor.class);
 
-    public static class ProposalInfo {
-        private final int serverId;
-        private final long millis;
-
-        public ProposalInfo(int serverId, long millis) {
-            this.serverId = serverId;
-            this.millis = millis;
-        }
-
-        public int serverId() {
-            return this.serverId;
-        }
-
-        public long millis() {
-            return this.millis;
-        }
-    }
 
     private volatile long instanceId;
     private AtomicInteger maxBallot;
     private AtomicReference<AcceptedValue> acceptedValue;
     private InstanceContext instanceContext;
     private JaxosConfig config;
-    private AtomicReference<ProposalInfo> lastProposeInfo;
 
     public Acceptor(JaxosConfig config, InstanceContext instanceContext) {
         this.config = config;
         this.maxBallot = new AtomicInteger(0);
         this.acceptedValue = new AtomicReference<>(AcceptedValue.NONE);
         this.instanceContext = instanceContext;
-        this.lastProposeInfo = new AtomicReference<>(new ProposalInfo(-1, 0));
+
     }
 
     public Event.PrepareResponse prepare(Event.PrepareRequest request) {
@@ -66,7 +48,7 @@ public class Acceptor {
         else if (request.instanceId() == last + 1) {
             //It's ok to start a new round
             if (this.instanceId == 0) {
-                logger.debug("start a new round with instance id {}", request.instanceId());
+                logger.debug("PREPARE start a new round with instance id {}", request.instanceId());
                 this.instanceId = request.instanceId();
             }
             else if (this.instanceId != request.instanceId()) {
@@ -93,18 +75,34 @@ public class Acceptor {
     }
 
     public Event.AcceptResponse accept(Event.AcceptRequest request) {
-        ProposalInfo info = this.lastProposeInfo.get();
-        //it's the current leader
-        if (info.serverId() == request.senderId()) {
-            //FIXME request may curry wrong instance it
-            this.instanceId = request.instanceId();
-        }
-        else {
-            if (this.instanceId != request.instanceId()) {
-                logger.warn("unmatched instance id in accept(instance id = {}), while my instance id is {} ",
-                        request.instanceId(), this.instanceId);
+        //no prepare before
+        if (this.instanceId <= 0) {
+            long last = this.instanceContext.lastInstanceId();
+
+            if (request.instanceId() > last + 1) {
+                logger.error("future instance id in prepare(instance id = {}), while my last instance id is {} ",
+                        request.instanceId(), last);
                 return null;
             }
+            else if (request.instanceId() <= last) {
+                logger.error("historical instance id in prepare(instance id = {}), while my instance id is {} ",
+                        request.instanceId(), last);
+                return null;
+            }
+            else if (request.instanceId() == last + 1) {
+                //It's ok to start a new round
+                logger.debug("ACCEPT start a new round with instance id {}", request.instanceId());
+                this.instanceId = request.instanceId();
+            } else {
+                logger.error("ACCEPT uncovered case");
+                return null;
+            }
+        }
+        //prepared but instance id in request is not same, abandon the request
+        else if (this.instanceId != request.instanceId()) {
+            logger.error("unmatched instance id in accept(instance id = {}), while my instance id is {} ",
+                    request.instanceId(), this.instanceId);
+            return null;
         }
 
         boolean accepted = false;
@@ -128,11 +126,12 @@ public class Acceptor {
                 continue;
             }
             accepted = true;
-            this.lastProposeInfo.set(new ProposalInfo(request.senderId(), System.currentTimeMillis()));
+
             logger.debug("Accept new value sender = {}, ballot = {}, value = {}", request.senderId(), v.ballot, v.content.toStringUtf8());
             break;
         }
 
+        this.instanceContext.recordLastRequest(request.senderId(), System.currentTimeMillis());
         return new Event.AcceptResponse(config.serverId(), this.instanceId, this.maxBallot.get(), accepted);
     }
 

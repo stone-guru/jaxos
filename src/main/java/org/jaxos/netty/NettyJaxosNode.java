@@ -116,7 +116,7 @@ public class NettyJaxosNode {
                     ctx.writeAndFlush(heartBeatResponse);
                 } else {
                     Event e1 = instance.process(e0);
-                    if (e1 != null) {
+                    if (e1 != null && e0.senderId() != -1) { //-1 is nothing, or other server's id
                         PaxosMessage.DataGram response = messageCoder.encode(e1);
                         ctx.writeAndFlush(response);
                     }
@@ -141,7 +141,7 @@ public class NettyJaxosNode {
             if(obj instanceof IdleStateEvent){
                 IdleStateEvent event = (IdleStateEvent)obj;
                 if (event.state() == IdleState.READER_IDLE || event.state() == IdleState.ALL_IDLE){
-                    logger.warn("connection from {} idle, close it");
+                    logger.warn("connection from {} idle, close it", channelPeerMap.get(ctx.channel().id()));
                     ctx.channel().close();
                 }
             }

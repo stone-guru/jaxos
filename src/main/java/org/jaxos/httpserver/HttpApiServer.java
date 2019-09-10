@@ -17,6 +17,7 @@ package org.jaxos.httpserver;
 
 import com.google.protobuf.ByteString;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -25,23 +26,13 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.util.CharsetUtil;
+import org.jaxos.JaxosConfig;
 import org.jaxos.algo.Instance;
+import org.jaxos.algo.ProposeResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-
-import static io.netty.handler.codec.http.HttpHeaderNames.CONNECTION;
-import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
-import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
-import static io.netty.handler.codec.http.HttpHeaderValues.CLOSE;
-import static io.netty.handler.codec.http.HttpHeaderValues.KEEP_ALIVE;
-import static io.netty.handler.codec.http.HttpHeaderValues.TEXT_PLAIN;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -96,17 +87,14 @@ public final class HttpApiServer {
             ChannelPipeline p = ch.pipeline();
             p.addLast(new HttpRequestDecoder());
             p.addLast(new HttpResponseEncoder());
-            p.addLast(new HttpSnoopServerHandler());
+            p.addLast(new HttpChannelHandler());
         }
     }
 
-    public class HttpSnoopServerHandler extends SimpleChannelInboundHandler<Object> {
-
+    public class HttpChannelHandler extends SimpleChannelInboundHandler<Object> {
         private HttpRequest request;
-        /**
-         * Buffer that stores the response content
-         */
-        private final StringBuilder buf = new StringBuilder();
+        private ProposeResult result;
+        private final ByteBuf okText = Unpooled.copiedBuffer("OK\r\n", CharsetUtil.UTF_8);
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) {
@@ -122,34 +110,17 @@ public final class HttpApiServer {
                     send100Continue(ctx);
                 }
 
-                buf.setLength(0);
-//                buf.append("METHOD: ").append(request.method()).append("\r\n");
-//                buf.append("REQUEST_URI: ").append(request.uri()).append("\r\n");
-//
-//                QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.uri());
-//                buf.append("RAW_PATH: ").append(queryStringDecoder.rawPath()).append("\r\n\r\n");
-//                Map<String, List<String>> params = queryStringDecoder.parameters();
-
-                if(request.method().equals(HttpMethod.POST)){
+                if (request.method().equals(HttpMethod.POST)) {
                     try {
-                        instance.propose(ByteString.copyFromUtf8("Hello word!"));
-                        buf.append("OK\r\n");
-                    }catch(InterruptedException e){
+                        this.result = instance.propose(ByteString.copyFromUtf8("Hello word!"));
+                        logger.debug("{}", this.result);
+                    }
+                    catch (InterruptedException e) {
                         logger.info("Asked to be quit");
                         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
                         return;
                     }
                 }
-//                if (!params.isEmpty()) {
-//                    for (Map.Entry<String, List<String>> p : params.entrySet()) {
-//                        String key = p.getKey();
-//                        List<String> vals = p.getValue();
-//                        for (String val : vals) {
-//                            buf.append("PARAM: ").append(key).append(" = ").append(val).append("\r\n");
-//                        }
-//                    }
-//                    buf.append("\r\n");
-//                }
             }
 
             if (msg instanceof LastHttpContent) {
@@ -167,7 +138,7 @@ public final class HttpApiServer {
 //                    buf.append("\r\n");
 //                }
 
-                if (!writeResponse(trailer, ctx)) {
+                if (!writeResponse(this.result, ctx)) {
                     // If keep-alive is off, close the connection once the content is fully written.
                     ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
                 }
@@ -175,22 +146,23 @@ public final class HttpApiServer {
         }
 
 
-        private boolean writeResponse(HttpObject currentObj, ChannelHandlerContext ctx) {
-            // Decide whether to close the connection or not.
-            if (currentObj == null) {
-                //ByteBuf addr = Unpooled.copiedBuffer("Location: http://www.baidu.com", CharsetUtil.UTF_8);
-                FullHttpResponse response = new DefaultFullHttpResponse(
+        private boolean writeResponse(ProposeResult result, ChannelHandlerContext ctx) {
+            FullHttpResponse response;
+            if (result.isSuccess()) {
+                response = new DefaultFullHttpResponse(HTTP_1_1, OK, okText);
+            }
+            else if (result.code() == ProposeResult.Code.NOT_LEADER) {
+                JaxosConfig.Peer peer = (JaxosConfig.Peer) result.param();
+                response = new DefaultFullHttpResponse(
                         HTTP_1_1, TEMPORARY_REDIRECT);
-                response.headers().set(HttpHeaderNames.LOCATION, "http://www.baidu.com");
-                ctx.writeAndFlush(response);
-                return false;
+                response.headers().set(HttpHeaderNames.LOCATION, String.format("http://%s:%s", peer.address(), peer.httpPort()));
+            }
+            else {
+                response = new DefaultFullHttpResponse(HTTP_1_1, INTERNAL_SERVER_ERROR,
+                        Unpooled.copiedBuffer(result.code().toString(), CharsetUtil.UTF_8));
             }
 
             boolean keepAlive = HttpUtil.isKeepAlive(request);
-            // Build the response object.
-            FullHttpResponse response = new DefaultFullHttpResponse(
-                    HTTP_1_1, currentObj.decoderResult().isSuccess() ? OK : BAD_REQUEST,
-                    Unpooled.copiedBuffer(buf.toString(), CharsetUtil.UTF_8));
 
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
 

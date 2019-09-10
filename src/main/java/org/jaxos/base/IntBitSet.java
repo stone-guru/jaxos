@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class IntBitSet {
     private AtomicLong value = new AtomicLong(0);
 
-    public void set(int i) {
+    public void add(int i) {
         long mask = 1L << i;
         long v0, v1;
         do {
@@ -21,6 +21,11 @@ public class IntBitSet {
     public boolean get(int i) {
         long mask = 1L << i;
         return (value.get() & mask) > 0;
+    }
+
+    public int count(){
+        long n = value.get();
+        return Long.bitCount(n);
     }
 
     public void clear() {

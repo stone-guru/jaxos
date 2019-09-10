@@ -24,10 +24,6 @@ public class ArgumentParser {
 
         @Parameter(names = {"-f"}, description = "config file name")
         private String configFilename;
-
-        @Parameter(names = {"-p"}, description = "HTTP server port")
-        private Integer httpPort = 0;
-
     }
 
     public JaxosConfig parse(String[] sx) {
@@ -39,8 +35,7 @@ public class ArgumentParser {
                 .parse(sx);
 
         JaxosConfig.Builder b = JaxosConfig.builder()
-                .setServerId(args.id)
-                .setHttpPort(args.httpPort);
+                .setServerId(args.id);
 
         loadAddressFromFile(b, args.configFilename, args.id);
 
@@ -66,15 +61,17 @@ public class ArgumentParser {
             String[] ax = properties.getProperty(k).split(":");
             String address = ax[0];
             int port = Integer.parseInt(ax[1]);
+            int httpPort = Integer.parseInt(ax[2]);
 
             if (id == selfId) {
                 if(selfPortSet){
                     throw new IllegalArgumentException("more than one self");
                 }
                 builder.setPort(port);
+                builder.setHttpPort(httpPort);
                 selfPortSet = true;
             } else {
-                builder.addPeer(id, address, port);
+                builder.addPeer(id, address, port, httpPort);
             }
         }
 

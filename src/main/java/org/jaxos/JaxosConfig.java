@@ -13,11 +13,13 @@ public class JaxosConfig {
         private int id;
         private String address;
         private int port;
+        private int httpPort;
 
-        public Peer(int id, String address, int port) {
+        public Peer(int id, String address, int port, int httpPort) {
             this.id = id;
             this.address = address;
             this.port = port;
+            this.httpPort = httpPort;
         }
 
         public int id() {
@@ -32,12 +34,17 @@ public class JaxosConfig {
             return port;
         }
 
+        public int httpPort(){
+            return httpPort;
+        }
+
         @Override
         public String toString() {
             return "Peer{" +
                     "id=" + id +
                     ", address='" + address + '\'' +
                     ", port=" + port +
+                    ", httpPort=" + httpPort +
                     '}';
         }
     }
@@ -63,8 +70,8 @@ public class JaxosConfig {
             return this;
         }
 
-        public Builder addPeer(int id, String address, int port){
-            this.peerBuilder.put(id, new Peer(id, address, port));
+        public Builder addPeer(int id, String address, int port, int httpPort){
+            this.peerBuilder.put(id, new Peer(id, address, port, httpPort));
             return this;
         }
 
@@ -79,6 +86,7 @@ public class JaxosConfig {
             config.serverId = this.serverId;
             config.peerMap = this.peerBuilder.build();
             config.httpPort = this.httpPort;
+            config.leaderLeaseSeconds = 30;
             return config;
         }
     }
@@ -88,6 +96,7 @@ public class JaxosConfig {
     private int serverId;
     private int port;
     private int httpPort;
+    private int leaderLeaseSeconds;
 
     private JaxosConfig() {
     }
@@ -114,6 +123,10 @@ public class JaxosConfig {
 
     public int httpPort(){
         return this.httpPort;
+    }
+
+    public int leaderLeaseSeconds(){
+        return this.leaderLeaseSeconds;
     }
 
     @Override
