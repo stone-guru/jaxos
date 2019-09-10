@@ -3,11 +3,11 @@ n=1
 if [ -n "$2" ]; then
     n="$2"
 fi
-URL="http://localhost:808{1}"
+URL="http://localhost:808$1"
 
 i=0;
 while [ $i -lt $n ]; do
     #echo $i
-    curl -L $URL -X POST
+    curl  $URL -X POST 
     let i=i+1
 done

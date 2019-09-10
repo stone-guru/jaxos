@@ -14,7 +14,7 @@ public class ServerApp {
         NettyJaxosNode server = new NettyJaxosNode(config);
         new Thread(null, () -> server.startup(), "JaxosNodeThread").start();
 
-        HttpApiServer httpServer = new HttpApiServer(server.instance(), config.httpPort());
+        HttpApiServer httpServer = new HttpApiServer(server.instance(), config.self().address(), config.self().httpPort());
         httpServer.start();
     }
 }

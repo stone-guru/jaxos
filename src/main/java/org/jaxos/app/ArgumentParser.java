@@ -63,15 +63,15 @@ public class ArgumentParser {
             int port = Integer.parseInt(ax[1]);
             int httpPort = Integer.parseInt(ax[2]);
 
+            JaxosConfig.Peer peer = new JaxosConfig.Peer(id, address, port, httpPort);
             if (id == selfId) {
                 if(selfPortSet){
                     throw new IllegalArgumentException("more than one self");
                 }
-                builder.setPort(port);
-                builder.setHttpPort(httpPort);
+                builder.setSelf(peer);
                 selfPortSet = true;
             } else {
-                builder.addPeer(id, address, port, httpPort);
+                builder.addPeer(peer);
             }
         }
 

@@ -55,8 +55,7 @@ public class JaxosConfig {
 
     public static class Builder {
         private int serverId;
-        private int port;
-        private int httpPort;
+        private Peer self;
 
         private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
 
@@ -65,37 +64,29 @@ public class JaxosConfig {
             return this;
         }
 
-        public Builder setPort(int port) {
-            this.port = port;
+        public Builder setSelf(Peer self) {
+            this.self = self;
             return this;
         }
 
-        public Builder addPeer(int id, String address, int port, int httpPort){
-            this.peerBuilder.put(id, new Peer(id, address, port, httpPort));
-            return this;
-        }
-
-        public Builder setHttpPort(int httpPort) {
-            this.httpPort = httpPort;
+        public Builder addPeer(Peer peer){
+            peerBuilder.put(peer.id(), peer);
             return this;
         }
 
         public JaxosConfig build(){
             JaxosConfig config = new JaxosConfig();
-            config.port = this.port;
             config.serverId = this.serverId;
+            config.self = this.self;
             config.peerMap = this.peerBuilder.build();
-            config.httpPort = this.httpPort;
             config.leaderLeaseSeconds = 30;
             return config;
         }
     }
 
-
     private Map<Integer, Peer> peerMap;
     private int serverId;
-    private int port;
-    private int httpPort;
+    private Peer self;
     private int leaderLeaseSeconds;
 
     private JaxosConfig() {
@@ -113,16 +104,12 @@ public class JaxosConfig {
         return this.serverId;
     }
 
-    public int port() {
-        return this.port;
+    public Peer self() {
+        return this.self;
     }
 
     public int peerCount() {
         return this.peerMap.size() + 1;
-    }
-
-    public int httpPort(){
-        return this.httpPort;
     }
 
     public int leaderLeaseSeconds(){
@@ -134,7 +121,8 @@ public class JaxosConfig {
         return "JaxosConfig{" +
                 "peerMap=" + peerMap +
                 ", serverId=" + serverId +
-                ", port=" + port +
+                ", self=" + self +
+                ", leaderLeaseSeconds=" + leaderLeaseSeconds +
                 '}';
     }
 }

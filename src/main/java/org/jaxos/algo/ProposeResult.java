@@ -13,8 +13,11 @@ public class ProposeResult {
         SUCCESS, NO_QUORUM, NOT_LEADER
     }
 
-    public static final ProposeResult SUCCESS = new ProposeResult(Code.SUCCESS);
     public static final ProposeResult NO_QUORUM = new ProposeResult(Code.NO_QUORUM);
+
+    public static ProposeResult success(long instanceId){
+      return new ProposeResult(Code.SUCCESS, instanceId);
+    }
 
     public static ProposeResult notLeader(JaxosConfig.Peer peer) {
         checkNotNull(peer);

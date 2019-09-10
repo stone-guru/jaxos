@@ -45,9 +45,11 @@ public final class HttpApiServer {
 
     private Instance instance;
     private int port;
+    private String address;
 
-    public HttpApiServer(Instance instance, int port) {
+    public HttpApiServer(Instance instance, String address, int port) {
         this.instance = instance;
+        this.address = address;
         this.port = port;
     }
 
@@ -65,8 +67,7 @@ public final class HttpApiServer {
 
             Channel ch = b.bind(port).sync().channel();
 
-            System.err.println("Open your web browser and navigate to " +
-                    "http://127.0.0.1:" + port + '/');
+            logger.info("HTTP server start at http://{}:{}/", address, port);
 
             ch.closeFuture().sync();
         }
@@ -124,20 +125,6 @@ public final class HttpApiServer {
             }
 
             if (msg instanceof LastHttpContent) {
-                //buf.append("END OF CONTENT\r\n");
-
-                LastHttpContent trailer = (LastHttpContent) msg;
-//                if (!trailer.trailingHeaders().isEmpty()) {
-//                    buf.append("\r\n");
-//                    for (CharSequence name : trailer.trailingHeaders().names()) {
-//                        for (CharSequence value : trailer.trailingHeaders().getAll(name)) {
-//                            buf.append("TRAILING HEADER: ");
-//                            buf.append(name).append(" = ").append(value).append("\r\n");
-//                        }
-//                    }
-//                    buf.append("\r\n");
-//                }
-
                 if (!writeResponse(this.result, ctx)) {
                     // If keep-alive is off, close the connection once the content is fully written.
                     ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
@@ -149,7 +136,9 @@ public final class HttpApiServer {
         private boolean writeResponse(ProposeResult result, ChannelHandlerContext ctx) {
             FullHttpResponse response;
             if (result.isSuccess()) {
-                response = new DefaultFullHttpResponse(HTTP_1_1, OK, okText);
+                long instanceId = (Long) result.param();
+                ByteBuf buf = Unpooled.copiedBuffer("OK  " + instanceId + "\r\n", CharsetUtil.UTF_8);
+                response = new DefaultFullHttpResponse(HTTP_1_1, OK, buf);
             }
             else if (result.code() == ProposeResult.Code.NOT_LEADER) {
                 JaxosConfig.Peer peer = (JaxosConfig.Peer) result.param();
@@ -159,7 +148,7 @@ public final class HttpApiServer {
             }
             else {
                 response = new DefaultFullHttpResponse(HTTP_1_1, INTERNAL_SERVER_ERROR,
-                        Unpooled.copiedBuffer(result.code().toString(), CharsetUtil.UTF_8));
+                        Unpooled.copiedBuffer(result.code().toString() + "\r\n", CharsetUtil.UTF_8));
             }
 
             boolean keepAlive = HttpUtil.isKeepAlive(request);

@@ -20,7 +20,10 @@
 * DONE connect to other peers lazily  
 * TODO use netty local chanel to unify the broachcast interface	    :network:
 * TODO Implment a distributed KV store based on berkely DB	:application:
-* the ballot is not reset after one instance finished
+* TODO the ballot is not reset after one instance finished	       :base:
+* TODO close DB when application exit					:log:
+* DONE [#C] the proposer blocked at "executingSignal"		       :base:
+* DONE implement a HTTP client on netty				    :network:
 * related infors
 ** Quorum algo(NWR)
 * token 8c8caa4dce5df2901c628ca6ec9ba4354c4b3889
