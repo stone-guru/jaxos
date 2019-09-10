@@ -18,14 +18,14 @@ public class Acceptor {
 
     private volatile long instanceId;
     private AtomicInteger maxBallot;
-    private AtomicReference<AcceptedValue> acceptedValue;
+    private AtomicReference<ValueWithProposal> acceptedValue;
     private InstanceContext instanceContext;
     private JaxosConfig config;
 
     public Acceptor(JaxosConfig config, InstanceContext instanceContext) {
         this.config = config;
         this.maxBallot = new AtomicInteger(0);
-        this.acceptedValue = new AtomicReference<>(AcceptedValue.NONE);
+        this.acceptedValue = new AtomicReference<>(ValueWithProposal.NONE);
         this.instanceContext = instanceContext;
 
     }
@@ -70,7 +70,7 @@ public class Acceptor {
             }
         } while (again);
 
-        AcceptedValue v = this.acceptedValue.get();
+        ValueWithProposal v = this.acceptedValue.get();
         return new Event.PrepareResponse(config.serverId(), this.instanceId, b0 <= request.ballot(), b0, v.ballot, v.content);
     }
 
@@ -106,10 +106,10 @@ public class Acceptor {
         }
 
         boolean accepted = false;
-        AcceptedValue v = null;
+        ValueWithProposal v = null;
         for (; ; ) {
             int m0 = this.maxBallot.get();
-            AcceptedValue v0 = this.acceptedValue.get();
+            ValueWithProposal v0 = this.acceptedValue.get();
 
             if (request.ballot() < m0) {
                 logger.info("Reject accept ballot = {}, while my maxBallot={}", request.ballot(), this.maxBallot);
@@ -120,7 +120,7 @@ public class Acceptor {
                 continue;
             }
 
-            AcceptedValue v1 = v != null ? v : new AcceptedValue(request.ballot(), request.value());
+            ValueWithProposal v1 = v != null ? v : new ValueWithProposal(request.ballot(), request.value());
             v = v1;
             if (!this.acceptedValue.compareAndSet(v0, v1)) {
                 continue;
@@ -142,11 +142,11 @@ public class Acceptor {
             return;
         }
 
-        AcceptedValue v0;
+        ValueWithProposal v0;
         v0 = this.acceptedValue.get();
         instanceContext.learnValue(this.instanceId, v0.content);
 
-        this.acceptedValue.set(AcceptedValue.NONE);
+        this.acceptedValue.set(ValueWithProposal.NONE);
         this.maxBallot.set(0);
         this.instanceId = 0;
     }

@@ -9,14 +9,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EntryOnce {
     private AtomicInteger lock = new AtomicInteger(0);
 
-    public void exec(Runnable r) {
+    public boolean exec(Runnable r) {
         if (lock.compareAndSet(0, 1)) {
             try {
                 r.run();
+                return true;
             }
             finally {
                 lock.set(0);
             }
+        }
+        else {
+            return false;
         }
     }
 }

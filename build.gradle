@@ -60,3 +60,5 @@ dependencies {
 
 // Define the main class for the application
 mainClassName = 'org.jaxos.app.ServerApp'
+applicationDefaultJvmArgs = ['-Xmx256m', '-XX:NewSize=128m',
+                             '-XX:+UseG1GC', '-XX:MaxGCPauseMillis=5','-XX:+PrintGCDetails']
