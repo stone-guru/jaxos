@@ -34,7 +34,7 @@ public class ClientApp {
     }
 
     private HttpRequest request;
-    private int n = 10000;
+    private int n = 50000;
     private long start = 0;
     private AtomicInteger count = new AtomicInteger(0);
 
@@ -50,7 +50,6 @@ public class ClientApp {
 
     public void run() throws Exception {
         URI uri = new URI(URL);
-        String scheme = "http";
         String host = uri.getHost() == null? "127.0.0.1" : uri.getHost();
         int port = uri.getPort();
 
@@ -102,8 +101,7 @@ public class ClientApp {
             if (msg instanceof HttpResponse) {
                 HttpResponse response = (HttpResponse) msg;
 
-                System.err.println("STATUS: " + response.status());
-                System.err.println();
+                //System.err.println("STATUS: " + response.status());
             }
             if (msg instanceof HttpContent) {
                 HttpContent content = (HttpContent) msg;
@@ -111,9 +109,10 @@ public class ClientApp {
                 System.err.print(content.content().toString(CharsetUtil.UTF_8));
 
                 int i = count.incrementAndGet();
-                if(i <= n){
+                if(i < n){
                     ctx.writeAndFlush(request);
                 } else {
+                    ctx.close();
                     double millis = (System.nanoTime() - start) / 1e+6;
                     double qps = n / (millis/1000.0);
                     System.out.println(String.format("POST %d in %.3f millis, QPS is %.0f", n, millis, qps));

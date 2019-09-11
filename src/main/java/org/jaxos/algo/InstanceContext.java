@@ -3,19 +3,12 @@ package org.jaxos.algo;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.sleepycat.je.*;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBFactory;
-import org.iq80.leveldb.Options;
-import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.jaxos.JaxosConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.parsers.FactoryConfigurationError;
 import java.io.File;
-import java.io.IOException;
 import java.util.Date;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -113,6 +106,9 @@ public class InstanceContext implements Learner{
                 && !leaderLeaseExpired(lastRequestRecord.timestampMillis());
     }
 
+    public boolean isLeader() {
+        return (lastRequestRecord.serverId() == config.serverId()) && !leaderLeaseExpired(lastRequestRecord.timestampMillis());
+    }
 
     private boolean leaderLeaseExpired(long timestampMillis) {
         return (System.currentTimeMillis() - timestampMillis) / 1000.0 > config.leaderLeaseSeconds();

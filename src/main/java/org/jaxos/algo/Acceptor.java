@@ -34,21 +34,21 @@ public class Acceptor {
         logger.debug("do prepare {} ", request);
         long last = this.instanceContext.lastInstanceId();
 
-        if (request.instanceId() > last + 1) {
-            logger.warn("future instance id in prepare(instance id = {}), while my last instance id is {} ",
-                    request.instanceId(), last);
-            return new Event.PrepareResponse(config.serverId(), last, false, 0, 0, ByteString.EMPTY);
-        }
-        else if (request.instanceId() < last) {
+        if (request.instanceId() < last) {
             logger.warn("historical instance id in prepare(instance id = {}), while my instance id is {} ",
                     request.instanceId(), last);
             ByteString v = instanceContext.valueOf(request.instanceId());
             return new Event.PrepareResponse(config.serverId(), request.instanceId(), false, 0, Integer.MAX_VALUE, v);
         }
-        else if (request.instanceId() == last + 1) {
+        else if (request.instanceId() >= last + 1) {
             //It's ok to start a new round
             if (this.instanceId == 0) {
-                logger.debug("PREPARE start a new round with instance id {}", request.instanceId());
+                if (request.instanceId() == last + 1) {
+                    logger.debug("PREPARE start a new round with instance id {}", request.instanceId());
+                }
+                else {
+                    logger.warn("PREPARE start a new round with instance id {}, while my last instance id is {}", request.instanceId(), last);
+                }
                 this.instanceId = request.instanceId();
             }
             else if (this.instanceId != request.instanceId()) {
@@ -80,12 +80,12 @@ public class Acceptor {
             long last = this.instanceContext.lastInstanceId();
 
             if (request.instanceId() > last + 1) {
-                logger.error("future instance id in prepare(instance id = {}), while my last instance id is {} ",
+                logger.warn("ACCEPT future instance id in accept(instance id = {}), while my last instance id is {} ",
                         request.instanceId(), last);
-                return null;
+                this.instanceId = request.instanceId();
             }
             else if (request.instanceId() <= last) {
-                logger.error("historical instance id in prepare(instance id = {}), while my instance id is {} ",
+                logger.error("ACCEPT historical instance id in accept(instance id = {}), while my instance id is {} ",
                         request.instanceId(), last);
                 return null;
             }
@@ -93,7 +93,8 @@ public class Acceptor {
                 //It's ok to start a new round
                 logger.debug("ACCEPT start a new round with instance id {}", request.instanceId());
                 this.instanceId = request.instanceId();
-            } else {
+            }
+            else {
                 logger.error("ACCEPT uncovered case");
                 return null;
             }

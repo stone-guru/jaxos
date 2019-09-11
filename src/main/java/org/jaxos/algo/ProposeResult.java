@@ -10,10 +10,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class ProposeResult {
     public enum Code {
-        SUCCESS, NO_QUORUM, NOT_LEADER
+        SUCCESS, NO_QUORUM, NOT_LEADER, TIME_OUT
     }
 
     public static final ProposeResult NO_QUORUM = new ProposeResult(Code.NO_QUORUM);
+
+    public static final ProposeResult TIME_OUT = new ProposeResult(Code.TIME_OUT);
 
     public static ProposeResult success(long instanceId){
       return new ProposeResult(Code.SUCCESS, instanceId);
