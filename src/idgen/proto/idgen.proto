@@ -1,0 +1,12 @@
+syntax = "proto3";
+package  org.axesoft.idgen.protobuff;
+
+option java_outer_classname="IdGenProtoBuff";
+
+message Counter {
+  string name = 1;
+  int64 value = 2;
+}
+
+
+

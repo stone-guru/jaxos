@@ -26,6 +26,21 @@ configurations{
     runtime.exclude group: "ch.qos.logback", module: "logback-classic"
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs "src/main/java"
+            srcDirs "src/idgen/java"
+        }
+    }
+    test {
+        java {
+            srcDirs "src/test/java"
+            srcDirs "src/idgen-test/java"
+        }
+    }
+}
+
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
@@ -54,6 +69,6 @@ dependencies {
 }
 
 // Define the main class for the application
-mainClassName = 'org.jaxos.app.ServerApp'
-applicationDefaultJvmArgs = ['-Xmx256m', '-XX:NewSize=128m',
+mainClassName = 'org.axesoft.jaxos.app.ServerApp'
+applicationDefaultJvmArgs = ['-Xmx512m', '-XX:NewSize=256m',
                              '-XX:+UseG1GC', '-XX:MaxGCPauseMillis=5','-XX:+PrintGCDetails']

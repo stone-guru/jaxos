@@ -28,11 +28,3 @@
 ** Quorum algo(NWR)
 * token 8c8caa4dce5df2901c628ca6ec9ba4354c4b3889
 
-    private static class PreparingStateData {
-        private volatile long InstanceId;
-        private volatile int proposal;
-        private volatile ByteString value;
-        private AtomicInteger totalMaxBallot = new AtomicInteger(0);
-        private AtomicReference<AcceptedValue> maxAcceptedValue = new AtomicReference<>(AcceptedValue.NONE);
-        private IntBitSet repliedNodes = new IntBitSet();
-    }
