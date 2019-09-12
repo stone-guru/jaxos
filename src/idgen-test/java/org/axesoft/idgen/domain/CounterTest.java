@@ -1,4 +1,4 @@
-package org.idgen.domain;
+package org.axesoft.idgen.domain;
 
 import org.junit.Test;
 

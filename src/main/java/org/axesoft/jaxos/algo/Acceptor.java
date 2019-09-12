@@ -87,7 +87,7 @@ public class Acceptor {
             else if (request.instanceId() <= last) {
                 logger.error("ACCEPT historical instance id in accept(instance id = {}), while my instance id is {} ",
                         request.instanceId(), last);
-                return null;
+                return new Event.AcceptResponse(config.serverId(), request.instanceId(), Integer.MAX_VALUE, false);
             }
             else if (request.instanceId() == last + 1) {
                 //It's ok to start a new round

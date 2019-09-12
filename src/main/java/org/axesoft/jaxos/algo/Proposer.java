@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,8 +42,9 @@ public class Proposer {
     private volatile AcceptActor acceptActor;
     private volatile Timeout acceptTimeout;
 
-    private Object executingSignal = new Object();
+    private CountDownLatch execEndLatch;
     private volatile ProposeResult result = null;
+    private volatile boolean valueProposed = false;
 
     private volatile long times0 = 0;
     private volatile long nanos0 = 0;
@@ -60,9 +62,24 @@ public class Proposer {
 
         final long startNano = System.nanoTime();
         this.proposeValue = value;
-        this.result = null;
+
 
         this.timeout = timer.newTimeout(this::executingTimeout, 3, TimeUnit.SECONDS);
+
+        boolean proposed;
+        do {
+            proposed = proposeOnce();
+        } while (this.result.isSuccess() && !proposed);
+
+        recordMetrics(startNano);
+
+        return this.result;
+    }
+
+    private boolean proposeOnce() throws InterruptedException {
+        this.result = null;
+        this.valueProposed = false;
+        this.execEndLatch = new CountDownLatch(1);
 
         if (this.instanceContext.isLeader()) {
             startAccept(this.instanceContext.lastInstanceId() + 1, this.proposeValue, this.config.serverId());
@@ -71,25 +88,24 @@ public class Proposer {
             startPrepare(this.config.serverId());
         }
 
-        //process not end
-        while (this.result == null) {
-            synchronized (executingSignal) {
-                executingSignal.wait();
-            }
-        }
-        recordMetrics(startNano);
+        execEndLatch.await(5, TimeUnit.SECONDS);
 
-        return this.result;
+        if (this.result == null) {
+            endWith(ProposeResult.TIME_OUT);
+        }
+
+        return this.valueProposed;
     }
 
     private void endWith(ProposeResult r) {
-        synchronized (this.executingSignal) {
-            this.timeout.cancel();
-            this.result = r;
-            this.prepareActor = null;
-            this.acceptActor = null;
-            this.executingSignal.notifyAll();
-        }
+        this.timeout.cancel();
+
+        this.result = r;
+        this.valueProposed = acceptActor.value == this.proposeValue;
+
+        this.prepareActor = null;
+        this.acceptActor = null;
+        this.execEndLatch.countDown();
     }
 
     private void executingTimeout(Timeout t) {
@@ -188,7 +204,7 @@ public class Proposer {
         logger.debug("End Accept");
         this.acceptTimeout.cancel();
         AcceptActor actor = this.acceptActor;
-        if(actor == null){
+        if (actor == null) {
             return; //already executed
         }
         actor.once(() -> {
@@ -287,15 +303,15 @@ public class Proposer {
             }
         }
 
-        public boolean isAllReplied() {
+        private boolean isAllReplied() {
             return repliedNodes.count() == config.peerCount();
         }
 
-        public boolean isAllAccepted() {
+        private boolean isAllAccepted() {
             return this.allAccepted;
         }
 
-        public int totalMaxProposal() {
+        private int totalMaxProposal() {
             return this.totalMaxProposal.get();
         }
 

@@ -14,20 +14,22 @@ import io.netty.util.CharsetUtil;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientApp {
-    private static final String URL = "http://localhost:8081";
-    private static final int PAR_FACTOR = 10;
+    private static final String DEFAULT_URL = "http://localhost:8081";
+    private static final int PAR_FACTOR = 3;
 
     public static void main(String[] args) throws Exception {
         ClientApp app = new ClientApp();
-        app.run();
+        String url = (args != null && args.length > 0)? args[0] : DEFAULT_URL;
+        app.run(url);
     }
 
     private HttpRequest request;
-    private int n = 9000;
+    private int n = 50000;
     private long start = 0;
     private AtomicInteger count = new AtomicInteger(0);
 
@@ -41,8 +43,8 @@ public class ClientApp {
         return request;
     }
 
-    public void run() throws Exception {
-        URI uri = new URI(URL);
+    public void run(String url) throws Exception {
+        URI uri = new URI(url);
         String host = uri.getHost() == null? "127.0.0.1" : uri.getHost();
         int port = uri.getPort();
 
@@ -118,7 +120,14 @@ public class ClientApp {
                 }
 
                 if(i < n){
-                    ctx.writeAndFlush(request);
+                    try {
+                        if(i == 0) Thread.sleep(100);
+
+                        ctx.writeAndFlush(request);
+                    }
+                    catch (InterruptedException e) {
+                        ctx.close();
+                    }
                 } else {
                     ctx.close();
                 }

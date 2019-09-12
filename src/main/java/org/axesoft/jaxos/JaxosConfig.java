@@ -56,7 +56,7 @@ public class JaxosConfig {
     public static class Builder {
         private int serverId;
         private Peer self;
-
+        private boolean ignoreLeader;
         private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
 
         public Builder setServerId(int serverId) {
@@ -74,12 +74,18 @@ public class JaxosConfig {
             return this;
         }
 
+        public Builder setIgnoreLeader(boolean ignoreLeader) {
+            this.ignoreLeader = ignoreLeader;
+            return this;
+        }
+
         public JaxosConfig build(){
             JaxosConfig config = new JaxosConfig();
             config.serverId = this.serverId;
             config.self = this.self;
             config.peerMap = this.peerBuilder.build();
-            config.leaderLeaseSeconds = 30;
+            config.ignoreLeader = this.ignoreLeader;
+            config.leaderLeaseSeconds = 3;
             return config;
         }
     }
@@ -88,6 +94,7 @@ public class JaxosConfig {
     private int serverId;
     private Peer self;
     private int leaderLeaseSeconds;
+    private boolean ignoreLeader;
 
     private JaxosConfig() {
     }
@@ -114,6 +121,10 @@ public class JaxosConfig {
 
     public int leaderLeaseSeconds(){
         return this.leaderLeaseSeconds;
+    }
+
+    public boolean ignoreLeader(){
+        return this.ignoreLeader;
     }
 
     @Override

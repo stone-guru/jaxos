@@ -34,7 +34,7 @@ public class Instance implements EventEntryPoint {
         InstanceContext.RequestRecord lastRequestRecord = this.context.getLastRequestRecord();
         //logger.info("last request is {}, current is {}", lastRequestInfo, new Date());
 
-        if (this.context.isOtherLeaderActive()) {
+        if (this.context.isOtherLeaderActive() && !this.config.ignoreLeader()) {
             return ProposeResult.notLeader(config.getPeer(lastRequestRecord.serverId()));
         }
         else {

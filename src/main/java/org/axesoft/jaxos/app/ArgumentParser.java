@@ -15,14 +15,14 @@ import java.util.*;
  */
 public class ArgumentParser {
     public static class Args {
-        @Parameter
-        private List<String> parameters = new ArrayList<>();
-
         @Parameter(names = {"-i"}, description = "Self id")
         private Integer id = 0;
 
         @Parameter(names = {"-f"}, description = "config file name")
-        private String configFilename;
+        private String configFilename = "./config/jaxos.properties";
+
+        @Parameter(names = {"-g"}, description = "ignore other leader, always do propose")
+        private boolean ignoreLeader = false;
     }
 
     public JaxosConfig parse(String[] sx) {
@@ -34,7 +34,8 @@ public class ArgumentParser {
                 .parse(sx);
 
         JaxosConfig.Builder b = JaxosConfig.builder()
-                .setServerId(args.id);
+                .setServerId(args.id)
+                .setIgnoreLeader(args.ignoreLeader);
 
         loadAddressFromFile(b, args.configFilename, args.id);
 
