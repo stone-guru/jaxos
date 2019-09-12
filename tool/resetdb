@@ -1,0 +1,5 @@
+#!/bin/bash
+rm -rf ./log/*
+mkdir ./log/db1
+mkdir ./log/db2
+mkdir ./log/db3

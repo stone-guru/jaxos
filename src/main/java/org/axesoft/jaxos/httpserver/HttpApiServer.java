@@ -28,7 +28,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.CharsetUtil;
 import org.axesoft.jaxos.JaxosConfig;
-import org.axesoft.jaxos.algo.Instance;
+import org.axesoft.jaxos.algo.Squad;
 import org.axesoft.jaxos.algo.ProposeResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,12 +43,12 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public final class HttpApiServer {
     private static final Logger logger = LoggerFactory.getLogger(HttpApiServer.class);
 
-    private Instance instance;
+    private Squad squad;
     private int port;
     private String address;
 
-    public HttpApiServer(Instance instance, String address, int port) {
-        this.instance = instance;
+    public HttpApiServer(Squad squad, String address, int port) {
+        this.squad = squad;
         this.address = address;
         this.port = port;
     }
@@ -113,7 +113,7 @@ public final class HttpApiServer {
 
                 if (request.method().equals(HttpMethod.POST)) {
                     try {
-                        this.result = instance.propose(ByteString.copyFromUtf8("Hello word!"));
+                        this.result = squad.propose(ByteString.copyFromUtf8("Hello word!"));
                         logger.debug("{}", this.result);
                     }
                     catch (InterruptedException e) {

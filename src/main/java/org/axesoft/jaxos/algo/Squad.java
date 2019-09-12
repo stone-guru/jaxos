@@ -11,19 +11,19 @@ import java.util.function.Supplier;
  * @author gaoyuan
  * @sine 2019/8/25.
  */
-public class Instance implements EventEntryPoint {
-    private static final Logger logger = LoggerFactory.getLogger(Instance.class);
+public class Squad implements EventEntryPoint {
+    private static final Logger logger = LoggerFactory.getLogger(Squad.class);
 
     private Acceptor acceptor;
     private Proposer proposer;
     private InstanceContext context;
     private JaxosConfig config;
 
-    public Instance(JaxosConfig config, Supplier<Communicator> communicator) {
+    public Squad(int id, JaxosConfig config, Supplier<Communicator> communicator, AcceptorLogger acceptorLogger) {
         this.config = config;
-        this.context = new InstanceContext(this.config);
+        this.context = new InstanceContext(id, this.config);
         this.proposer = new Proposer(this.config, context, communicator);
-        this.acceptor = new Acceptor(this.config, context);
+        this.acceptor = new Acceptor(this.config, context, acceptorLogger);
     }
 
     /**

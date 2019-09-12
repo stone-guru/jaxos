@@ -2,6 +2,7 @@ package org.axesoft.jaxos.app;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.google.common.base.Strings;
 import org.axesoft.jaxos.JaxosConfig;
 
 import java.io.BufferedReader;
@@ -23,6 +24,9 @@ public class ArgumentParser {
 
         @Parameter(names = {"-g"}, description = "ignore other leader, always do propose")
         private boolean ignoreLeader = false;
+
+        @Parameter(names = {"-d"}, description ="Directory of DB")
+        private String dbDirectory;
     }
 
     public JaxosConfig parse(String[] sx) {
@@ -33,8 +37,13 @@ public class ArgumentParser {
                 .build()
                 .parse(sx);
 
+        if(Strings.isNullOrEmpty(args.dbDirectory)){
+            throw new IllegalArgumentException("parameter \"-d\" dbDirectory not set");
+        }
+
         JaxosConfig.Builder b = JaxosConfig.builder()
                 .setServerId(args.id)
+                .setDbDirectory(args.dbDirectory)
                 .setIgnoreLeader(args.ignoreLeader);
 
         loadAddressFromFile(b, args.configFilename, args.id);

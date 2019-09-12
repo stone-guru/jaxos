@@ -26,4 +26,12 @@ public class ArgumentParserTest {
         JaxosConfig config = new ArgumentParser().parse(args);
         assertFalse(config.ignoreLeader());
     }
+
+    @Test
+    public void testParseDbDirectory() throws Exception {
+        String[] args = new String[]{"-i", "1"};
+        JaxosConfig config = new ArgumentParser().parse(args);
+        assertFalse(config.ignoreLeader());
+    }
+
 }

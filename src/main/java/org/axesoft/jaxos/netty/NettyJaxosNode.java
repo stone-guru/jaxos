@@ -15,12 +15,14 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.axesoft.jaxos.JaxosConfig;
+import org.axesoft.jaxos.algo.AcceptorLogger;
 import org.axesoft.jaxos.algo.Communicator;
 import org.axesoft.jaxos.algo.Event;
+import org.axesoft.jaxos.logger.BerkeleyDbAcceptorLogger;
 import org.axesoft.jaxos.network.MessageCoder;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
-import org.axesoft.jaxos.algo.Instance;
+import org.axesoft.jaxos.algo.Squad;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,19 +40,22 @@ public class NettyJaxosNode {
     private MessageCoder<PaxosMessage.DataGram> messageCoder;
     private JaxosConfig config;
     private Communicator communicator;
-    private Instance instance;
+    private Squad squad;
+    private AcceptorLogger acceptorLogger;
     private Map<ChannelId, JaxosConfig.Peer> channelPeerMap = new ConcurrentHashMap<>();
 
     public NettyJaxosNode(JaxosConfig config) {
         this.config = config;
-        this.instance = new Instance(config, () -> communicator);
-        NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, instance);
+        this.acceptorLogger = new BerkeleyDbAcceptorLogger(this.config.dbDirectory());
+        this.squad = new Squad(1, config, () -> communicator, acceptorLogger);
+
+        NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, squad);
         this.communicator = factory.createCommunicator();
         this.messageCoder = new ProtoMessageCoder(this.config);
     }
 
-    public Instance instance(){
-        return this.instance;
+    public Squad instance(){
+        return this.squad;
     }
 
     public void startup() {
@@ -87,6 +92,7 @@ public class NettyJaxosNode {
             try {
                 worker.shutdownGracefully().sync();
                 boss.shutdownGracefully().sync();
+                this.acceptorLogger.close();
             }
             catch (InterruptedException e) {
                 logger.info("Interrupted");
@@ -115,7 +121,7 @@ public class NettyJaxosNode {
                     //logger.info("Receive heart beat from server {}", e0.senderId());
                     ctx.writeAndFlush(heartBeatResponse);
                 } else {
-                    Event e1 = instance.process(e0);
+                    Event e1 = squad.process(e0);
                     if (e1 != null && e0.senderId() != -1) { //-1 is nothing, or other server's id
                         PaxosMessage.DataGram response = messageCoder.encode(e1);
                         ctx.writeAndFlush(response);

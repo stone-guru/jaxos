@@ -57,6 +57,7 @@ public class JaxosConfig {
         private int serverId;
         private Peer self;
         private boolean ignoreLeader;
+        private String dbDirectory;
         private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
 
         public Builder setServerId(int serverId) {
@@ -79,6 +80,11 @@ public class JaxosConfig {
             return this;
         }
 
+        public Builder setDbDirectory(String dbDirectory) {
+            this.dbDirectory = dbDirectory;
+            return this;
+        }
+
         public JaxosConfig build(){
             JaxosConfig config = new JaxosConfig();
             config.serverId = this.serverId;
@@ -86,6 +92,7 @@ public class JaxosConfig {
             config.peerMap = this.peerBuilder.build();
             config.ignoreLeader = this.ignoreLeader;
             config.leaderLeaseSeconds = 3;
+            config.dbDirectory = this.dbDirectory;
             return config;
         }
     }
@@ -95,6 +102,7 @@ public class JaxosConfig {
     private Peer self;
     private int leaderLeaseSeconds;
     private boolean ignoreLeader;
+    private String dbDirectory;
 
     private JaxosConfig() {
     }
@@ -127,6 +135,9 @@ public class JaxosConfig {
         return this.ignoreLeader;
     }
 
+    public String dbDirectory(){
+        return this.dbDirectory;
+    }
     @Override
     public String toString() {
         return "JaxosConfig{" +

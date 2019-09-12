@@ -51,12 +51,11 @@ public class InstanceContext implements Learner{
     private volatile RequestRecord lastRequestRecord = new RequestRecord(-1, 0);
     private JaxosMetrics jaxosMetrics = new JaxosMetrics();
     private JaxosConfig config;
-    private Database db;
-    private Environment dbEnv;
+    private int squadId;
 
-    public InstanceContext(JaxosConfig config) {
+    public InstanceContext(int squadId, JaxosConfig config) {
         this.config = config;
-        initDb("./log/db" + config.serverId());
+        this.squadId = squadId;
     }
 
     public JaxosMetrics jaxosMetrics() {
@@ -82,16 +81,9 @@ public class InstanceContext implements Learner{
                     }
                 }
             }
-
-            saveLog(instanceId, value);
         }
     }
 
-    private void saveLog(long instanceId, ByteString value){
-        DatabaseEntry k = new DatabaseEntry(Longs.toByteArray(instanceId));
-        DatabaseEntry v = new DatabaseEntry(value.toByteArray());
-        db.put(null, k, v);
-    }
 
     public void recordLastRequest(int serverId, long timeStampMillis) {
         this.lastRequestRecord = new RequestRecord(serverId, timeStampMillis);
@@ -110,17 +102,11 @@ public class InstanceContext implements Learner{
         return (lastRequestRecord.serverId() == config.serverId()) && !leaderLeaseExpired(lastRequestRecord.timestampMillis());
     }
 
-    private boolean leaderLeaseExpired(long timestampMillis) {
-        return (System.currentTimeMillis() - timestampMillis) / 1000.0 > config.leaderLeaseSeconds();
+    public int squadId(){
+        return this.squadId;
     }
 
-    private void initDb(String path){
-        EnvironmentConfig config = new EnvironmentConfig();
-        config.setAllowCreate(true);
-        this.dbEnv = new Environment(new File(path), config);
-
-        DatabaseConfig dbConfig = new DatabaseConfig();
-        dbConfig.setAllowCreate(true);
-        this.db = this.dbEnv.openDatabase(null, "jaxosdb" + this.config.serverId(), dbConfig);
+    private boolean leaderLeaseExpired(long timestampMillis) {
+        return (System.currentTimeMillis() - timestampMillis) / 1000.0 > config.leaderLeaseSeconds();
     }
 }

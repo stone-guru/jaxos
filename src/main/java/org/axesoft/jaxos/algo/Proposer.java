@@ -21,10 +21,6 @@ import java.util.function.Supplier;
  * @sine 2019/8/24.
  */
 public class Proposer {
-    public static final int NONE = 0;
-    public static final int PREPARING = 1;
-    public static final int ACCEPTING = 2;
-    public static final int CHOSEN = 3;
     private static Logger logger = LoggerFactory.getLogger(Proposer.class);
 
     private JaxosConfig config;
@@ -35,7 +31,6 @@ public class Proposer {
 
     private HashedWheelTimer timer = new HashedWheelTimer(100, TimeUnit.MILLISECONDS);
     private Timeout timeout;
-
 
     private volatile PrepareActor prepareActor;
     private volatile Timeout prepareTimeout;
@@ -62,7 +57,6 @@ public class Proposer {
 
         final long startNano = System.nanoTime();
         this.proposeValue = value;
-
 
         this.timeout = timer.newTimeout(this::executingTimeout, 3, TimeUnit.SECONDS);
 

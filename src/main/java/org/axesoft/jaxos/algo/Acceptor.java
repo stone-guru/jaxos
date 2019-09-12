@@ -15,22 +15,29 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Acceptor {
     private static final Logger logger = LoggerFactory.getLogger(Acceptor.class);
 
-
     private volatile long instanceId;
-    private AtomicInteger maxBallot;
-    private AtomicReference<ValueWithProposal> acceptedValue;
+    private volatile int maxBallot;
+    private volatile int acceptedBallot;
+    private volatile ByteString acceptedValue;
     private InstanceContext instanceContext;
     private JaxosConfig config;
+    private AcceptorLogger acceptorLogger;
 
-    public Acceptor(JaxosConfig config, InstanceContext instanceContext) {
+    public Acceptor(JaxosConfig config, InstanceContext instanceContext, AcceptorLogger acceptorLogger) {
         this.config = config;
-        this.maxBallot = new AtomicInteger(0);
-        this.acceptedValue = new AtomicReference<>(ValueWithProposal.NONE);
+        this.maxBallot = 0;
+        this.acceptedValue = ByteString.EMPTY;
         this.instanceContext = instanceContext;
+        this.acceptorLogger = acceptorLogger;
 
+        AcceptorLogger.Promise promise = this.acceptorLogger.loadLastPromise(instanceContext.squadId());
+        if(promise != null){
+            logger.info("Acceptor restore last instance {}", promise.instanceId);
+            instanceContext.learnValue(promise.instanceId, promise.value);
+        }
     }
 
-    public Event.PrepareResponse prepare(Event.PrepareRequest request) {
+    public synchronized Event.PrepareResponse prepare(Event.PrepareRequest request) {
         logger.debug("do prepare {} ", request);
         long last = this.instanceContext.lastInstanceId();
 
@@ -58,23 +65,18 @@ public class Acceptor {
             }
         }
 
-        int b0;
-        boolean again;
-        do {
-            b0 = this.maxBallot.get();
-            if (request.ballot() > b0) {
-                again = !this.maxBallot.compareAndSet(b0, request.ballot());
-            }
-            else {
-                again = false;
-            }
-        } while (again);
+        boolean success = false;
+        int b0 = this.maxBallot;
+        if(request.ballot() > this.maxBallot) {
+            this.maxBallot = request.ballot();
+            success = true;
+            acceptorLogger.saveLastPromise(instanceContext.squadId(), this.instanceId, request.ballot(), this.acceptedValue);
+        }
 
-        ValueWithProposal v = this.acceptedValue.get();
-        return new Event.PrepareResponse(config.serverId(), this.instanceId, b0 <= request.ballot(), b0, v.ballot, v.content);
+        return new Event.PrepareResponse(config.serverId(), this.instanceId, success, b0, acceptedBallot, acceptedValue);
     }
 
-    public Event.AcceptResponse accept(Event.AcceptRequest request) {
+    public synchronized Event.AcceptResponse accept(Event.AcceptRequest request) {
         //no prepare before
         if (this.instanceId <= 0) {
             long last = this.instanceContext.lastInstanceId();
@@ -106,49 +108,33 @@ public class Acceptor {
             return null;
         }
 
-        boolean accepted = false;
-        ValueWithProposal v = null;
-        for (; ; ) {
-            int m0 = this.maxBallot.get();
-            ValueWithProposal v0 = this.acceptedValue.get();
-
-            if (request.ballot() < m0) {
-                logger.info("Reject accept ballot = {}, while my maxBallot={}", request.ballot(), this.maxBallot);
-                break;
-            }
-
-            if (!this.maxBallot.compareAndSet(m0, request.ballot())) {
-                continue;
-            }
-
-            ValueWithProposal v1 = v != null ? v : new ValueWithProposal(request.ballot(), request.value());
-            v = v1;
-            if (!this.acceptedValue.compareAndSet(v0, v1)) {
-                continue;
-            }
-            accepted = true;
-
-            logger.debug("Accept new value sender = {}, ballot = {}, value = {}", request.senderId(), v.ballot, v.content.toStringUtf8());
-            break;
+        if(request.ballot() < this.maxBallot){
+            logger.info("Reject accept ballot = {}, while my maxBallot={}", request.ballot(), this.maxBallot);
+            return new Event.AcceptResponse(config.serverId(), this.instanceId, this.maxBallot, false);
         }
 
+        this.acceptedBallot = this.maxBallot = request.ballot();
+        this.acceptedValue = request.value();
+        logger.debug("Accept new value sender = {}, ballot = {}, value = {}", request.senderId(), acceptedBallot, acceptedValue.toStringUtf8());
+
         this.instanceContext.recordLastRequest(request.senderId(), System.currentTimeMillis());
-        return new Event.AcceptResponse(config.serverId(), this.instanceId, this.maxBallot.get(), accepted);
+
+        acceptorLogger.saveLastPromise(instanceContext.squadId(), this.instanceId, this.maxBallot, this.acceptedValue);
+
+        return new Event.AcceptResponse(config.serverId(), this.instanceId, this.maxBallot, true);
     }
 
-    public void chose(Event.ChosenNotify notify) {
+    public synchronized void chose(Event.ChosenNotify notify) {
         logger.debug("receive chose notify {}", notify);
         if (notify.instanceId() != this.instanceId) {
             logger.debug("unmatched instance id in chose notify({}), while my instance id is {} ", notify.instanceId(), this.instanceId);
             return;
         }
 
-        ValueWithProposal v0;
-        v0 = this.acceptedValue.get();
-        instanceContext.learnValue(this.instanceId, v0.content);
+        instanceContext.learnValue(this.instanceId, this.acceptedValue);
 
-        this.acceptedValue.set(ValueWithProposal.NONE);
-        this.maxBallot.set(0);
         this.instanceId = 0;
+        this.acceptedValue = ByteString.EMPTY;
+        this.maxBallot = 0;
     }
 }
