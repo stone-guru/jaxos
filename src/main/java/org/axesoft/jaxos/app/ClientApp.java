@@ -29,7 +29,7 @@ public class ClientApp {
     }
 
     private HttpRequest request;
-    private int n = 20000;
+    private int n = 10000;
     private long start = 0;
     private AtomicInteger count = new AtomicInteger(0);
 
