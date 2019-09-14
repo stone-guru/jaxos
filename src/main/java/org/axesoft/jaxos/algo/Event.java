@@ -171,7 +171,7 @@ public interface Event {
                     "sender=" + sender +
                     ", instanceId=" + instanceId +
                     ", success=" + success +
-                    ", ballot=" + maxBallot +
+                    ", maxBallot=" + maxBallot +
                     ", acceptedBallot=" + acceptedBallot +
                     ", acceptedValue=" + acceptedValue.toStringUtf8() + //FIXME not string in future
                     '}';

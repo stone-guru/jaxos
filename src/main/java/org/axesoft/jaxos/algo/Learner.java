@@ -7,5 +7,5 @@ import com.google.protobuf.ByteString;
  * @sine 2019/9/9.
  */
 public interface Learner {
-    void learnValue(long instanceId, ByteString value);
+    void learnValue(long instanceId, int proposal, ByteString value);
 }

@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author gaoyuan
  * @sine 2019/9/2.
  */
-public class InstanceContext implements Learner{
+public class InstanceContext implements Learner {
 
     public static class RequestRecord {
         private final int serverId;
@@ -44,10 +44,11 @@ public class InstanceContext implements Learner{
                     '}';
         }
     }
+
     private static final Logger logger = LoggerFactory.getLogger(InstanceContext.class);
 
     private AtomicLong lastInstanceId = new AtomicLong(0);
-    private ConcurrentMap<Long, ByteString> histValues = new ConcurrentHashMap<>();
+    private ConcurrentMap<Long, ValueWithProposal> histValues = new ConcurrentHashMap<>();
     private volatile RequestRecord lastRequestRecord = new RequestRecord(-1, 0);
     private JaxosMetrics jaxosMetrics = new JaxosMetrics();
     private JaxosConfig config;
@@ -66,24 +67,26 @@ public class InstanceContext implements Learner{
         return lastInstanceId.get();
     }
 
-    public ByteString valueOf(long instanceId) {
-        return histValues.getOrDefault(instanceId, ByteString.EMPTY);
+    public ValueWithProposal valueOf(long instanceId) {
+        return histValues.getOrDefault(instanceId, ValueWithProposal.NONE);
     }
 
     @Override
-    public void learnValue(long instanceId, ByteString value) {
-        if (this.histValues.put(instanceId, value) == null) {
-            for (; ; ) {
-                long i0 = this.lastInstanceId.get();
-                if (instanceId > i0) {
-                    if (this.lastInstanceId.compareAndSet(i0, instanceId)) {
-                        break;
-                    }
-                }
+    public void learnValue(long instanceId, int proposal, ByteString value) {
+        ValueWithProposal v = ValueWithProposal.of(proposal, value);
+
+        long i0 = this.lastInstanceId.get();
+        if (instanceId > i0) {
+            if (this.lastInstanceId.compareAndSet(i0, instanceId)) {
+                return;
             }
         }
     }
 
+    public boolean sameInHistory(long instanceId, int proposal) {
+        ValueWithProposal v = valueOf(instanceId);
+        return v.ballot == proposal;
+    }
 
     public void recordLastRequest(int serverId, long timeStampMillis) {
         this.lastRequestRecord = new RequestRecord(serverId, timeStampMillis);
@@ -102,7 +105,7 @@ public class InstanceContext implements Learner{
         return (lastRequestRecord.serverId() == config.serverId()) && !leaderLeaseExpired(lastRequestRecord.timestampMillis());
     }
 
-    public int squadId(){
+    public int squadId() {
         return this.squadId;
     }
 

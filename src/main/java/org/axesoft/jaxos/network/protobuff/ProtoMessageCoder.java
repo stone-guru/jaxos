@@ -80,7 +80,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         }
 
         if(logger.isDebugEnabled()) {
-            logger.debug("encode {}", event);
+            logger.trace("encode {}", event);
         }
 
         return PaxosMessage.DataGram.newBuilder()

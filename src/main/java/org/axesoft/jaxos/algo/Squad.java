@@ -53,7 +53,7 @@ public class Squad implements EventEntryPoint {
                 return acceptor.prepare((Event.PrepareRequest) event);
             }
             case PREPARE_RESPONSE: {
-                proposer.onPrepareReply((Event.PrepareResponse) event);
+                proposer.processPrepareResponse((Event.PrepareResponse) event);
                 return null;
             }
             case ACCEPT: {

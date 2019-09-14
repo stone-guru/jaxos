@@ -142,7 +142,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         @Override
         public void broadcast(Event event) {
-            logger.debug("Broadcast {} " + event);
+            logger.trace("Broadcast {} " + event);
             PaxosMessage.DataGram dataGram = coder.encode(event);
             channels.writeAndFlush(dataGram);
             Event ret = localEventEntryPoint.process(event);

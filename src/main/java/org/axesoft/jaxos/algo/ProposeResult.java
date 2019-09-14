@@ -1,5 +1,6 @@
 package org.axesoft.jaxos.algo;
 
+import com.google.protobuf.ByteString;
 import org.axesoft.jaxos.JaxosConfig;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -10,18 +11,24 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class ProposeResult {
     public enum Code {
-        SUCCESS, NO_QUORUM, NOT_LEADER, TIME_OUT
+        SUCCESS, CONFLICT, NO_QUORUM, NOT_LEADER, TIME_OUT
     }
 
-    public static final ProposeResult NO_QUORUM = new ProposeResult(Code.NO_QUORUM);
+    static final ProposeResult NO_QUORUM = new ProposeResult(Code.NO_QUORUM);
 
-    public static final ProposeResult TIME_OUT = new ProposeResult(Code.TIME_OUT);
+    static final ProposeResult TIME_OUT = new ProposeResult(Code.TIME_OUT);
 
-    public static ProposeResult success(long instanceId){
+    static final ProposeResult CONFLICT = new ProposeResult(Code.CONFLICT);
+
+    static ProposeResult conflict(ByteString s){
+        return new ProposeResult(Code.CONFLICT, s.toStringUtf8());
+    }
+
+    static ProposeResult success(long instanceId){
       return new ProposeResult(Code.SUCCESS, instanceId);
     }
 
-    public static ProposeResult notLeader(JaxosConfig.Peer peer) {
+    static ProposeResult notLeader(JaxosConfig.Peer peer) {
         checkNotNull(peer);
         return new ProposeResult(Code.NOT_LEADER, peer);
     }

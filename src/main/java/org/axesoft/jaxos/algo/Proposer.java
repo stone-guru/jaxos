@@ -13,7 +13,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 /**
@@ -25,12 +24,11 @@ public class Proposer {
 
     private JaxosConfig config;
     private Supplier<Communicator> communicator;
-
     private InstanceContext instanceContext;
-    private volatile ByteString proposeValue;
+    private HashedWheelTimer timer = new HashedWheelTimer(10, TimeUnit.MILLISECONDS);
 
-    private HashedWheelTimer timer = new HashedWheelTimer(100, TimeUnit.MILLISECONDS);
-    private Timeout timeout;
+    private volatile long instanceId = 0;
+    private volatile ByteString proposeValue;
 
     private volatile PrepareActor prepareActor;
     private volatile Timeout prepareTimeout;
@@ -39,15 +37,14 @@ public class Proposer {
 
     private CountDownLatch execEndLatch;
     private volatile ProposeResult result = null;
-    private volatile boolean valueProposed = false;
 
-    private volatile long times0 = 0;
-    private volatile long nanos0 = 0;
+    private MetricsRecorder metricsRecorder;
 
     public Proposer(JaxosConfig config, InstanceContext instanceContext, Supplier<Communicator> communicator) {
         this.config = config;
         this.communicator = communicator;
         this.instanceContext = instanceContext;
+        this.metricsRecorder = new MetricsRecorder(instanceContext.jaxosMetrics());
     }
 
     public synchronized ProposeResult propose(ByteString value) throws InterruptedException {
@@ -58,119 +55,99 @@ public class Proposer {
         final long startNano = System.nanoTime();
         this.proposeValue = value;
 
-        this.timeout = timer.newTimeout(this::executingTimeout, 3, TimeUnit.SECONDS);
+        this.result = null;
+        this.execEndLatch = new CountDownLatch(1);
 
-        boolean proposed;
-        do {
-            proposed = proposeOnce();
-        } while (this.result.isSuccess() && !proposed);
+        if (this.instanceContext.isLeader() && (this == null)) {
+            startAccept(this.instanceContext.lastInstanceId() + 1, this.proposeValue, this.config.serverId());
+        }
+        else {
+            startPrepare(0, this.config.serverId(), 1);
+        }
 
-        recordMetrics(startNano);
+        this.execEndLatch.await(3, TimeUnit.SECONDS);
+
+        if (this.result == null) {
+            this.result = ProposeResult.TIME_OUT;
+        }
+
+        metricsRecorder.recordRoundExecMetrics(this.instanceId, startNano, this.result);
 
         return this.result;
     }
 
-    private boolean proposeOnce() throws InterruptedException {
-        this.result = null;
-        this.valueProposed = false;
-        this.execEndLatch = new CountDownLatch(1);
-
-        if (this.instanceContext.isLeader()) {
-            startAccept(this.instanceContext.lastInstanceId() + 1, this.proposeValue, this.config.serverId());
+    private void endWith(ProposeResult r, String reason) {
+        if (this.result != null) {
+            return; //another thread has enter this
         }
-        else {
-            startPrepare(this.config.serverId());
-        }
-
-        execEndLatch.await(5, TimeUnit.SECONDS);
-
-        if (this.result == null) {
-            endWith(ProposeResult.TIME_OUT);
-        }
-
-        return this.valueProposed;
-    }
-
-    private void endWith(ProposeResult r) {
-        this.timeout.cancel();
 
         this.result = r;
-        this.valueProposed = acceptActor.value == this.proposeValue;
-
         this.prepareActor = null;
         this.acceptActor = null;
         this.execEndLatch.countDown();
+
+        logger.trace("propose round for {} end with {} by {}", this.instanceId, r.code(), reason);
     }
 
-    private void executingTimeout(Timeout t) {
-        logger.error("executing not finished in time");
-        endWith(ProposeResult.TIME_OUT);
-    }
-
-    private boolean checkMajority(int n) {
+    private boolean checkMajority(int n, String step) {
         if (n <= this.config.peerCount() / 2) {
-            endWith(ProposeResult.NO_QUORUM);
+            endWith(ProposeResult.NO_QUORUM, step);
             return false;
         }
         return true;
     }
 
-    private void recordMetrics(long startNano) {
-        JaxosMetrics m = this.instanceContext.jaxosMetrics();
-        m.recordPropose(System.nanoTime() - startNano);
-
-        if (this.instanceContext.lastInstanceId() % 1000 == 0) {
-            long timesDelta = m.proposeTimes() - this.times0;
-            double avgNanos = (m.proposeTotalNanos() - this.nanos0) / (double) timesDelta;
-
-            logger.info("{} total propose times is {}, average elapsed {} ms in recent {} times",
-                    new Date(), m.proposeTimes(), avgNanos / 1e+6, timesDelta);
-
-            this.times0 = m.proposeTimes();
-            this.nanos0 = m.proposeTotalNanos();
+    private void startPrepare(long instanceId, int proposal0, int times) {
+        long next = this.instanceContext.lastInstanceId() + 1;
+        if (instanceId > 0 && instanceId != next) {
+            endWith(ProposeResult.conflict(this.proposeValue), "when prepare " + next + " again");
+            return;
         }
-    }
 
-    private void startPrepare(int proposal0) {
-        this.prepareActor = new PrepareActor(this.instanceContext.lastInstanceId() + 1, this.proposeValue, proposal0);
-
-        this.prepareTimeout = this.timer.newTimeout(t -> this.endPrepare(), 1, TimeUnit.SECONDS);
+        this.prepareActor = new PrepareActor(next, this.proposeValue, proposal0, times);
+        this.prepareTimeout = Proposer.this.timer.newTimeout(t -> this.endPrepare(this.prepareActor), 1, TimeUnit.SECONDS);
         this.prepareActor.begin();
     }
 
 
-    public void onPrepareReply(Event.PrepareResponse response) {
-        logger.debug("RECEIVED {}", response);
+    public void processPrepareResponse(Event.PrepareResponse response) {
+        logger.trace("RECEIVED {}", response);
 
         PrepareActor actor = this.prepareActor;
         if (actor == null) {
-            logger.warn("Not at state of preparing for {}", response);
+            logger.warn("Not at the state of preparing for {}", response);
             return;
         }
 
         actor.onReply(response);
         if (actor.isAllReplied()) {
             this.prepareTimeout.cancel();
-            endPrepare();
+            actor.once(() -> endPrepare(actor));
         }
     }
 
-    private void endPrepare() {
-        PrepareActor actor = this.prepareActor;
-        actor.once(() -> {
-            if (!checkMajority(actor.repliedNodes.count())) {
+    private void endPrepare(PrepareActor actor) {
+        //this.prepareActor = null;
+
+        if (!checkMajority(actor.repliedNodes.count(), "PREPARE")) {
+            return;
+        }
+
+        if (actor.isAllAccepted()) {
+            ValueWithProposal v = actor.getResult();
+            startAccept(actor.instanceId, v.content, actor.proposal);
+        }
+        else {
+            ValueWithProposal v = actor.getResult();
+            if (v.ballot == Integer.MAX_VALUE) {
+                endWith(ProposeResult.conflict(this.proposeValue), "CONFLICT other value chosen");
                 return;
             }
-
-            if (actor.isAllAccepted()) {
-                ValueWithProposal v = actor.getResult();
-                startAccept(actor.instanceId, v.content, v.ballot);
+            if (actor.times >= 2) {
+                sleepRandom("PREPARE");
             }
-            else {
-                int p = nextProposal(actor.totalMaxProposal());
-                startPrepare(p);
-            }
-        });
+            startPrepare(actor.instanceId, nextProposal(actor.totalMaxProposal), actor.times + 1);
+        }
     }
 
     private void startAccept(long instanceId, ByteString value, int proposal) {
@@ -180,7 +157,7 @@ public class Proposer {
     }
 
     public void onAcceptReply(Event.AcceptResponse response) {
-        logger.debug("RECEIVED {}", response);
+        logger.trace("RECEIVED {}", response);
 
         AcceptActor actor = this.acceptActor;
         if (actor == null) {
@@ -195,27 +172,45 @@ public class Proposer {
     }
 
     private void endAccept() {
-        logger.debug("End Accept");
+        logger.trace("End Accept");
         this.acceptTimeout.cancel();
         AcceptActor actor = this.acceptActor;
         if (actor == null) {
             return; //already executed
         }
         actor.once(() -> {
-            if (!checkMajority(actor.repliedNodes.count())) {
+            if (!checkMajority(actor.repliedNodes.count(), "ACCEPT")) {
                 return;
             }
 
             if (actor.isAllAccepted()) {
                 actor.notifyChosen();
-                endWith(ProposeResult.success(actor.instanceId));
+                endWith(ProposeResult.success(actor.instanceId), "OK");
+            }
+            else if (actor.isChosenByOther()) {
+                endWith(ProposeResult.conflict(this.proposeValue), "Chosen by other at accept");
+            }
+            else if (this.prepareActor.times >= 2) {
+                endWith(ProposeResult.conflict(this.proposeValue), "REJECT at accept");
             }
             else {
-                int newProposal = nextProposal(actor.maxProposal());
-                startPrepare(newProposal);
+                //uer another prepare phase to detect, whether this value chosen
+                startPrepare(this.prepareActor.instanceId, this.config.serverId(), this.prepareActor.times + 1);
             }
         });
     }
+
+    private void sleepRandom(String when) {
+        try {
+            long t = (long) (Math.random() * 5);
+            logger.debug("({}) meet conflict sleep {} ms", when, this.instanceId, t);
+            Thread.sleep(t);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+    }
+
 
     private int nextProposal(int b) {
         return nextProposal(b, 10, this.config.serverId());
@@ -226,11 +221,11 @@ public class Proposer {
     }
 
 
-    private static void accumulateMax(AtomicInteger a, int v) {
+    public static void accumulateMax(AtomicInteger a, int v) {
         int v0;
         do {
             v0 = a.get();
-            if (v >= v0) {
+            if (v <= v0) {
                 return;
             }
         } while (!a.compareAndSet(v0, v));
@@ -250,51 +245,50 @@ public class Proposer {
     }
 
     private class PrepareActor extends ActorBase {
-        private long instanceId;
-        private int proposal;
-        private ByteString value;
-        private AtomicInteger totalMaxProposal = new AtomicInteger(0);
-        private AtomicReference<ValueWithProposal> maxAcceptedValue = new AtomicReference<>(ValueWithProposal.NONE);
+        private final long instanceId;
+        private final int proposal;
+        private final ByteString value;
+        private final int times;
+        private volatile int totalMaxProposal = 0;
+        private volatile int maxAcceptedProposal = 0;
+        private volatile ByteString acceptedValue = ByteString.EMPTY;
         private IntBitSet repliedNodes = new IntBitSet();
         private volatile boolean allAccepted = true;
-        private boolean historical = true;
-        private ByteString chosenValue = ByteString.EMPTY;
 
-
-        public PrepareActor(long instanceId, ByteString value, int proposal) {
+        public PrepareActor(long instanceId, ByteString value, int proposal, int times) {
             this.instanceId = instanceId;
             this.value = value;
             this.proposal = proposal;
+            this.times = times;
         }
 
         public void begin() {
+            Proposer.this.instanceId = this.instanceId;
             Event.PrepareRequest req = new Event.PrepareRequest(config.serverId(), this.instanceId, this.proposal);
             communicator.get().broadcast(req);
         }
 
-        public void onReply(Event.PrepareResponse response) {
-            logger.debug("got PREPARE reply {}", response);
+        public synchronized void onReply(Event.PrepareResponse response) {
+            logger.trace("got PREPARE reply {}", response);
 
             if (repliedNodes.get(response.senderId())) {
                 logger.warn("Duplicated PREPARE response {}", response);
                 return;
             }
-            repliedNodes.add(response.senderId());
 
-            if (response.acceptedBallot() == Integer.MAX_VALUE) { //Instance has been chosen
-                this.historical = true;
-                this.chosenValue = response.acceptedValue();
+            if (response.maxBallot() > this.totalMaxProposal) {
+                this.totalMaxProposal = response.maxBallot();
             }
-            else {
-                accumulateMax(this.totalMaxProposal, response.maxBallot());
-                if (response.acceptedBallot() > this.maxAcceptedValue.get().ballot) {
-                    accumulateAcceptedValue(response.acceptedBallot(), response.acceptedValue());
-                }
+
+            if (response.acceptedBallot() > this.maxAcceptedProposal) {
+                this.maxAcceptedProposal = response.acceptedBallot();
+                this.acceptedValue = response.acceptedValue();
             }
 
             if (!response.success()) {
                 allAccepted = false;
             }
+            repliedNodes.add(response.senderId());
         }
 
         private boolean isAllReplied() {
@@ -306,43 +300,24 @@ public class Proposer {
         }
 
         private int totalMaxProposal() {
-            return this.totalMaxProposal.get();
+            return this.totalMaxProposal;
         }
 
-        private ValueWithProposal getResult() {
-            ValueWithProposal mv = this.maxAcceptedValue.get();
-
-            logger.debug("on all prepared max accepted ballot = {}, total max ballot ={}, my ballot = {}",
-                    this.maxAcceptedValue.get().ballot, mv.ballot, this.proposal);
-
-            int maxiBallot = this.totalMaxProposal.get();
-            int b0 = this.proposal;
-            int newBallot = maxiBallot > b0 ? nextProposal(maxiBallot) : b0;
+        private synchronized ValueWithProposal getResult() {
+            logger.trace("on all prepared max accepted ballot = {}, total max ballot ={}, my ballot = {}",
+                    maxAcceptedProposal, totalMaxProposal, this.proposal);
 
             ByteString value;
-            if (mv.ballot == 0) {
-                logger.debug("No other chose value, use mine");
+            if (maxAcceptedProposal == 0) {
+                logger.trace("End prepare({}) No other chose value, max ballot is {}, use my value", this.instanceId, this.totalMaxProposal);
                 value = this.value;
             }
             else {
-                logger.debug("use another allAccept value");
-                value = mv.content;
+                logger.trace("End prepare({}) use another accepted value with proposal {}", this.instanceId, maxAcceptedProposal);
+                value = this.acceptedValue;
             }
 
-            return new ValueWithProposal(newBallot, value);
-        }
-
-
-        private void accumulateAcceptedValue(int proposal, ByteString value) {
-            ValueWithProposal v0, v1;
-            do {
-                v0 = this.maxAcceptedValue.get();
-                if (v0.ballot >= proposal) {
-                    return;
-                }
-                v1 = new ValueWithProposal(proposal, value);
-                logger.info("There are another accepted value \"{}\"", value.toStringUtf8()); //FIXME not string in future
-            } while (!this.maxAcceptedValue.compareAndSet(v0, v1));
+            return new ValueWithProposal(this.totalMaxProposal, value);
         }
     }
 
@@ -354,15 +329,19 @@ public class Proposer {
         private final AtomicInteger maxProposal = new AtomicInteger(0);
         private volatile boolean allAccepted = true;
         private IntBitSet repliedNodes = new IntBitSet();
+        private volatile boolean chosenByOther;
 
         public AcceptActor(long instanceId, ByteString value, int proposal) {
             this.instanceId = instanceId;
             this.value = value;
             this.proposal = proposal;
+            this.chosenByOther = false;
         }
 
         public void begin() {
-            logger.debug("start accept with proposal  {} ", this.proposal);
+            logger.debug("start accept instance {} with proposal  {} ", this.instanceId, this.proposal);
+            Proposer.this.instanceId = this.instanceId;
+
             Event.AcceptRequest request = new Event.AcceptRequest(config.serverId(), this.instanceId, this.proposal, this.value);
             Proposer.this.communicator.get().broadcast(request);
         }
@@ -372,12 +351,15 @@ public class Proposer {
                 logger.warn("Duplicated ACCEPT response {}", response);
                 return;
             }
-
-            this.repliedNodes.add(response.senderId());
             if (!response.accepted()) {
                 this.allAccepted = false;
             }
+            if (response.maxBallot() == Integer.MAX_VALUE) {
+                this.chosenByOther = true;
+            }
+
             accumulateMax(this.maxProposal, response.maxBallot());
+            this.repliedNodes.add(response.senderId());
         }
 
         public boolean isAllAccepted() {
@@ -386,6 +368,10 @@ public class Proposer {
 
         public boolean isAllReplied() {
             return this.repliedNodes.count() == config.peerCount();
+        }
+
+        public boolean isChosenByOther() {
+            return this.chosenByOther;
         }
 
         public int maxProposal() {
@@ -399,4 +385,32 @@ public class Proposer {
         }
     }
 
+    private static class MetricsRecorder {
+        private volatile long totalTimesLast = 0;
+        private volatile long totalNanosLast = 0;
+        private JaxosMetrics metrics;
+        private AtomicInteger times = new AtomicInteger(0);
+
+        public MetricsRecorder(JaxosMetrics metrics) {
+            this.metrics = metrics;
+        }
+
+        private void recordRoundExecMetrics(long instanceId, long startNano, ProposeResult result) {
+            metrics.recordPropose(System.nanoTime() - startNano, result);
+
+            if (times.incrementAndGet() % 1000 == 0) {
+                long timesDelta = metrics.proposeTimes() - this.totalTimesLast;
+                double avgNanos = (metrics.proposeTotalNanos() - this.totalNanosLast) / (double) timesDelta;
+
+                double total = metrics.proposeTimes();
+                String msg = String.format("Elapsed %.3f ms(recent %d), Total %.0f s, success rate %.3f, conflict rate %.3f",
+                        avgNanos / 1e+6, timesDelta,
+                        total, metrics.successTimes() / total, metrics.conflictTimes() / total);
+                logger.info(msg);
+
+                this.totalTimesLast = metrics.proposeTimes();
+                this.totalNanosLast = metrics.proposeTotalNanos();
+            }
+        }
+    }
 }

@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Acceptor {
     private static final Logger logger = LoggerFactory.getLogger(Acceptor.class);
 
-    private volatile long instanceId;
     private volatile int maxBallot;
     private volatile int acceptedBallot;
     private volatile ByteString acceptedValue;
@@ -31,110 +30,92 @@ public class Acceptor {
         this.acceptorLogger = acceptorLogger;
 
         AcceptorLogger.Promise promise = this.acceptorLogger.loadLastPromise(instanceContext.squadId());
-        if(promise != null){
+        if (promise != null) {
             logger.info("Acceptor restore last instance {}", promise.instanceId);
-            instanceContext.learnValue(promise.instanceId, promise.value);
+            instanceContext.learnValue(promise.instanceId, promise.proposal, promise.value);
         }
     }
 
     public synchronized Event.PrepareResponse prepare(Event.PrepareRequest request) {
-        logger.debug("do prepare {} ", request);
+        logger.trace("On prepare {} ", request);
+        this.instanceContext.recordLastRequest(request.senderId(), System.currentTimeMillis());
+
         long last = this.instanceContext.lastInstanceId();
 
-        if (request.instanceId() < last) {
-            logger.warn("historical instance id in prepare(instance id = {}), while my instance id is {} ",
+        if (request.instanceId() <= last) {
+            logger.warn("PrepareResponse: instance id in prepare(instance id = {}), while my instance id is {} ",
                     request.instanceId(), last);
-            ByteString v = instanceContext.valueOf(request.instanceId());
-            return new Event.PrepareResponse(config.serverId(), request.instanceId(), false, 0, Integer.MAX_VALUE, v);
+            ValueWithProposal v = instanceContext.valueOf(request.instanceId());
+            return new Event.PrepareResponse(config.serverId(), request.instanceId(), false, 0, Integer.MAX_VALUE, v.content);
         }
-        else if (request.instanceId() >= last + 1) {
-            //It's ok to start a new round
-            if (this.instanceId == 0) {
-                if (request.instanceId() == last + 1) {
-                    logger.debug("PREPARE start a new round with instance id {}", request.instanceId());
-                }
-                else {
-                    logger.warn("PREPARE start a new round with instance id {}, while my last instance id is {}", request.instanceId(), last);
-                }
-                this.instanceId = request.instanceId();
+        else if (request.instanceId() > last + 1) {
+            logger.error("PrepareResponse: future instance id in prepare(instance id = {}), request instance id = {}", last, request.instanceId());
+            return null;
+        }
+        else { // request.instanceId == last + 1
+            boolean success = false;
+            int b0 = this.maxBallot;
+            if (request.ballot() > this.maxBallot) {
+                this.maxBallot = request.ballot();
+                success = true;
+                acceptorLogger.saveLastPromise(instanceContext.squadId(), request.instanceId(), request.ballot(), this.acceptedValue);
             }
-            else if (this.instanceId != request.instanceId()) {
-                logger.error("Something is wrong when prepare last = {}, round instance id = {}, request instance id = {}",
-                        last, this.instanceId, request.instanceId());
-                return null;
-            }
-        }
 
-        boolean success = false;
-        int b0 = this.maxBallot;
-        if(request.ballot() > this.maxBallot) {
-            this.maxBallot = request.ballot();
-            success = true;
-            acceptorLogger.saveLastPromise(instanceContext.squadId(), this.instanceId, request.ballot(), this.acceptedValue);
+            return new Event.PrepareResponse(config.serverId(), request.instanceId(), success, b0, acceptedBallot, acceptedValue);
         }
-
-        return new Event.PrepareResponse(config.serverId(), this.instanceId, success, b0, acceptedBallot, acceptedValue);
     }
 
     public synchronized Event.AcceptResponse accept(Event.AcceptRequest request) {
-        //no prepare before
-        if (this.instanceId <= 0) {
-            long last = this.instanceContext.lastInstanceId();
+        logger.trace("On Accept {}", request);
 
-            if (request.instanceId() > last + 1) {
-                logger.warn("ACCEPT future instance id in accept(instance id = {}), while my last instance id is {} ",
-                        request.instanceId(), last);
-                this.instanceId = request.instanceId();
+        this.instanceContext.recordLastRequest(request.senderId(), System.currentTimeMillis());
+        long last = this.instanceContext.lastInstanceId();
+
+        if (request.instanceId() <= last) {
+            if (this.instanceContext.sameInHistory(request.instanceId(), request.ballot()) && (request == null)) {
+                return new Event.AcceptResponse(config.serverId(), request.instanceId(), request.ballot(), true);
             }
-            else if (request.instanceId() <= last) {
-                logger.error("ACCEPT historical instance id in accept(instance id = {}), while my instance id is {} ",
+            else {
+                logger.error("AcceptResponse: historical in accept(instance id = {}), while my instance id is {} ",
                         request.instanceId(), last);
                 return new Event.AcceptResponse(config.serverId(), request.instanceId(), Integer.MAX_VALUE, false);
             }
-            else if (request.instanceId() == last + 1) {
-                //It's ok to start a new round
-                logger.debug("ACCEPT start a new round with instance id {}", request.instanceId());
-                this.instanceId = request.instanceId();
-            }
-            else {
-                logger.error("ACCEPT uncovered case");
-                return null;
-            }
         }
-        //prepared but instance id in request is not same, abandon the request
-        else if (this.instanceId != request.instanceId()) {
-            logger.error("unmatched instance id in accept(instance id = {}), while my instance id is {} ",
-                    request.instanceId(), this.instanceId);
+        else if (request.instanceId() > last + 1) {
+            logger.error("AcceptResponse: future in accept(instance id = {}), request instance id = {}", last, request.instanceId());
             return null;
         }
+        else { // request.instanceId == last
+            if (request.ballot() < this.maxBallot) {
+                logger.info("Reject accept ballot = {}, while my maxBallot={}", request.ballot(), this.maxBallot);
+                return new Event.AcceptResponse(config.serverId(), request.instanceId(), this.maxBallot, false);
+            }
+            else {
+                if (request.ballot() > this.acceptedBallot) {
+                    this.acceptedBallot = this.maxBallot = request.ballot();
+                    this.acceptedValue = request.value();
+                    logger.trace("Accept new value sender = {}, instance = {}, ballot = {}, value = {}",
+                            request.senderId(), request.instanceId(), acceptedBallot, acceptedValue.toStringUtf8());
 
-        if(request.ballot() < this.maxBallot){
-            logger.info("Reject accept ballot = {}, while my maxBallot={}", request.ballot(), this.maxBallot);
-            return new Event.AcceptResponse(config.serverId(), this.instanceId, this.maxBallot, false);
+                    acceptorLogger.saveLastPromise(instanceContext.squadId(), request.instanceId(), this.maxBallot, this.acceptedValue);
+                }
+                return new Event.AcceptResponse(config.serverId(), request.instanceId(), this.maxBallot, true);
+            }
         }
-
-        this.acceptedBallot = this.maxBallot = request.ballot();
-        this.acceptedValue = request.value();
-        logger.debug("Accept new value sender = {}, ballot = {}, value = {}", request.senderId(), acceptedBallot, acceptedValue.toStringUtf8());
-
-        this.instanceContext.recordLastRequest(request.senderId(), System.currentTimeMillis());
-
-        acceptorLogger.saveLastPromise(instanceContext.squadId(), this.instanceId, this.maxBallot, this.acceptedValue);
-
-        return new Event.AcceptResponse(config.serverId(), this.instanceId, this.maxBallot, true);
     }
 
     public synchronized void chose(Event.ChosenNotify notify) {
-        logger.debug("receive chose notify {}", notify);
-        if (notify.instanceId() != this.instanceId) {
-            logger.debug("unmatched instance id in chose notify({}), while my instance id is {} ", notify.instanceId(), this.instanceId);
+        logger.trace("receive chose notify {}", notify);
+        long last = this.instanceContext.lastInstanceId();
+        if (notify.instanceId() != last + 1) {
+            logger.trace("unmatched instance id in chose notify({}), while my last instance id is {} ", notify.instanceId(), last);
             return;
         }
 
-        instanceContext.learnValue(this.instanceId, this.acceptedValue);
+        instanceContext.learnValue(notify.instanceId(), notify.ballot(), this.acceptedValue);
 
-        this.instanceId = 0;
-        this.acceptedValue = ByteString.EMPTY;
         this.maxBallot = 0;
+        this.acceptedValue = ByteString.EMPTY;
+        this.acceptedBallot = 0;
     }
 }

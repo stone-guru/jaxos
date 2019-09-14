@@ -33,6 +33,8 @@ import org.axesoft.jaxos.algo.ProposeResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -70,8 +72,7 @@ public final class HttpApiServer {
             logger.info("HTTP server start at http://{}:{}/", address, port);
 
             ch.closeFuture().sync();
-        }
-        finally {
+        } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }
@@ -96,10 +97,27 @@ public final class HttpApiServer {
         private HttpRequest request;
         private ProposeResult result;
         private final ByteBuf okText = Unpooled.copiedBuffer("OK\r\n", CharsetUtil.UTF_8);
+        private AtomicInteger i = new AtomicInteger(0);
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) {
             ctx.flush();
+        }
+
+        private ProposeResult propose(ChannelHandlerContext ctx, ByteString value) {
+            try {
+                int i = 0;
+                ProposeResult r;
+                do {
+                    r = squad.propose(value);
+                    System.out.println("propose value " + value.toStringUtf8());
+                    i++;
+                } while (!r.isSuccess() && i < 3);
+                return r;
+            } catch (InterruptedException e) {
+                logger.info("Asked to be quit");
+                return null;
+            }
         }
 
         @Override
@@ -112,12 +130,10 @@ public final class HttpApiServer {
                 }
 
                 if (request.method().equals(HttpMethod.POST)) {
-                    try {
-                        this.result = squad.propose(ByteString.copyFromUtf8("Hello word!"));
-                        logger.debug("{}", this.result);
-                    }
-                    catch (InterruptedException e) {
-                        logger.info("Asked to be quit");
+                    int v = i.incrementAndGet();
+                    this.result = propose(ctx, ByteString.copyFromUtf8(" propose " + v));
+
+                    if (this.result == null) {
                         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
                         return;
                     }
@@ -131,7 +147,6 @@ public final class HttpApiServer {
                 }
             }
         }
-
 
         private boolean writeResponse(ProposeResult result, ChannelHandlerContext ctx) {
             FullHttpResponse response;

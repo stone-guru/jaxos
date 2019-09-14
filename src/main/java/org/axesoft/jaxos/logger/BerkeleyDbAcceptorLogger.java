@@ -48,7 +48,6 @@ public class BerkeleyDbAcceptorLogger implements AcceptorLogger {
     private Environment dbEnv;
     private StoredClassCatalog classCatalog;
     private EntryBinding promiseDataBinding;
-    private TransactionConfig txconfig;
 
     public BerkeleyDbAcceptorLogger(String path) {
         EnvironmentConfig config = new EnvironmentConfig();
@@ -76,7 +75,7 @@ public class BerkeleyDbAcceptorLogger implements AcceptorLogger {
         DatabaseEntry valueEntry = new DatabaseEntry();
         promiseDataBinding.objectToEntry(promise, valueEntry);
 
-        this.db.put(null, new DatabaseEntry(Longs.toByteArray(instanceId)), valueEntry);
+        this.db.put(null, keyOfInt(squadId), valueEntry);
     }
 
     @Override
