@@ -1,7 +1,6 @@
 package org.axesoft.jaxos;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.axesoft.jaxos.app.ArgumentParser;
+import org.axesoft.tans.server.ArgumentParser;
 import org.junit.Test;
 
 import java.util.Properties;
@@ -21,7 +20,7 @@ public class ArgumentParserTest {
         properties.put("peer.3", "127.0.0.1:130:139");
 
         String[] args = new String[]{"-i", "1", "-g", "-d", "./"};
-        JaxosConfig config = new ArgumentParser(properties).parse(args);
+        JaxosSettings config = new ArgumentParser(properties).parseJaxosConfig(args);
 
         assertEquals(1, config.serverId());
         assertEquals(110, config.self().port());

@@ -1,4 +1,4 @@
-package org.axesoft.idgen.domain;
+package org.axesoft.tans.domain;
 
 import org.junit.Test;
 

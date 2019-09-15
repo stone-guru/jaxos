@@ -14,21 +14,18 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
-import org.axesoft.jaxos.JaxosConfig;
-import org.axesoft.jaxos.algo.AcceptorLogger;
-import org.axesoft.jaxos.algo.Communicator;
-import org.axesoft.jaxos.algo.Event;
-import org.axesoft.jaxos.logger.BerkeleyDbAcceptorLogger;
+import org.axesoft.jaxos.JaxosSettings;
+import org.axesoft.jaxos.algo.*;
 import org.axesoft.jaxos.network.MessageCoder;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
-import org.axesoft.jaxos.algo.Squad;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * @author gaoyuan
@@ -37,25 +34,17 @@ import java.util.concurrent.TimeUnit;
 public class NettyJaxosNode {
     private static Logger logger = LoggerFactory.getLogger(NettyJaxosNode.class);
 
+    private JaxosSettings settings;
+    private Map<ChannelId, JaxosSettings.Peer> channelPeerMap = new ConcurrentHashMap<>();
     private MessageCoder<PaxosMessage.DataGram> messageCoder;
-    private JaxosConfig config;
     private Communicator communicator;
-    private Squad squad;
-    private AcceptorLogger acceptorLogger;
-    private Map<ChannelId, JaxosConfig.Peer> channelPeerMap = new ConcurrentHashMap<>();
+    private Supplier<EventDispatcher> eventDispatcherSupplier;
+    private Channel serverChannel;
 
-    public NettyJaxosNode(JaxosConfig config) {
-        this.config = config;
-        this.acceptorLogger = new BerkeleyDbAcceptorLogger(this.config.dbDirectory());
-        this.squad = new Squad(1, config, () -> communicator, acceptorLogger);
-
-        NettyCommunicatorFactory factory = new NettyCommunicatorFactory(config, squad);
-        this.communicator = factory.createCommunicator();
-        this.messageCoder = new ProtoMessageCoder(this.config);
-    }
-
-    public Squad instance(){
-        return this.squad;
+    public NettyJaxosNode(JaxosSettings settings, Supplier<EventDispatcher> eventDispatcherSupplier) {
+        this.settings = settings;
+        this.messageCoder = new ProtoMessageCoder(this.settings);
+        this.eventDispatcherSupplier = eventDispatcherSupplier;
     }
 
     public void startup() {
@@ -81,8 +70,8 @@ public class NettyJaxosNode {
                             .addLast(new JaxosChannelHandler());
                 }
             });
-            ChannelFuture channelFuture = serverBootstrap.bind(config.self().port()).sync();
-            logger.warn("Jaxos server {} started at {}", config.serverId(), config.self().port());
+            ChannelFuture channelFuture = serverBootstrap.bind(settings.self().port()).sync();
+            this.serverChannel = channelFuture.channel();
             channelFuture.channel().closeFuture().sync();
         }
         catch (Exception e) {
@@ -92,7 +81,6 @@ public class NettyJaxosNode {
             try {
                 worker.shutdownGracefully().sync();
                 boss.shutdownGracefully().sync();
-                this.acceptorLogger.close();
             }
             catch (InterruptedException e) {
                 logger.info("Interrupted");
@@ -101,11 +89,12 @@ public class NettyJaxosNode {
     }
 
     public void shutdown() {
+        this.serverChannel.close();
     }
 
 
     public class JaxosChannelHandler extends ChannelInboundHandlerAdapter {
-        private final PaxosMessage.DataGram heartBeatResponse = messageCoder.encode(new Event.HeartBeatResponse(config.serverId()));
+        private final PaxosMessage.DataGram heartBeatResponse = messageCoder.encode(new Event.HeartBeatResponse(settings.serverId()));
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -120,7 +109,12 @@ public class NettyJaxosNode {
                     //logger.info("Receive heart beat from server {}", e0.senderId());
                     ctx.writeAndFlush(heartBeatResponse);
                 } else {
-                    Event e1 = squad.process(e0);
+                    EventDispatcher dispatcher = eventDispatcherSupplier.get();
+                    if(dispatcher == null){
+                        logger.warn("System not read abandon event", e0);
+                        return;
+                    }
+                    Event e1 = dispatcher.process(e0);
                     if (e1 != null && e0.senderId() != -1) { //-1 is nothing, or other server's id
                         PaxosMessage.DataGram response = messageCoder.encode(e1);
                         ctx.writeAndFlush(response);

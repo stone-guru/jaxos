@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableBiMap;
 import com.google.common.primitives.Ints;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.axesoft.jaxos.JaxosConfig;
+import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.algo.Event;
 import org.axesoft.jaxos.network.CodingException;
 import org.axesoft.jaxos.network.MessageCoder;
@@ -26,10 +26,10 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
     private BiMap<PaxosMessage.Code, Event.Code> decodeMap;
     private Map<Event.Code, PaxosMessage.Code> encodeMap;
 
-    private JaxosConfig config;
+    private JaxosSettings config;
 
 
-    public ProtoMessageCoder(JaxosConfig config) {
+    public ProtoMessageCoder(JaxosSettings config) {
         decodeMap = ImmutableBiMap.<PaxosMessage.Code, Event.Code>builder()
                 .put(PaxosMessage.Code.NOOP, Event.Code.NOOP)
                 .put(PaxosMessage.Code.HEARTBEAT_REQ, Event.Code.HEART_BEAT)

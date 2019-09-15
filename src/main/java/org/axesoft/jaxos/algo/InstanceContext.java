@@ -1,13 +1,10 @@
 package org.axesoft.jaxos.algo;
 
-import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import com.sleepycat.je.*;
-import org.axesoft.jaxos.JaxosConfig;
+import org.axesoft.jaxos.JaxosSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -51,10 +48,10 @@ public class InstanceContext implements Learner {
     private ConcurrentMap<Long, ValueWithProposal> histValues = new ConcurrentHashMap<>();
     private volatile RequestRecord lastRequestRecord = new RequestRecord(-1, 0);
     private JaxosMetrics jaxosMetrics = new JaxosMetrics();
-    private JaxosConfig config;
+    private JaxosSettings config;
     private int squadId;
 
-    public InstanceContext(int squadId, JaxosConfig config) {
+    public InstanceContext(int squadId, JaxosSettings config) {
         this.config = config;
         this.squadId = squadId;
     }

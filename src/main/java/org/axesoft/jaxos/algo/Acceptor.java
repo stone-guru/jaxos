@@ -1,7 +1,7 @@
 package org.axesoft.jaxos.algo;
 
 import com.google.protobuf.ByteString;
-import org.axesoft.jaxos.JaxosConfig;
+import org.axesoft.jaxos.JaxosSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,10 +17,10 @@ public class Acceptor {
     private volatile ByteString acceptedValue;
     private final int squadId;
     private Learner learner;
-    private JaxosConfig config;
+    private JaxosSettings config;
     private AcceptorLogger acceptorLogger;
 
-    public Acceptor(JaxosConfig config, int squadId, Learner learner, AcceptorLogger acceptorLogger) {
+    public Acceptor(JaxosSettings config, int squadId, Learner learner, AcceptorLogger acceptorLogger) {
         this.squadId = squadId;
         this.config = config;
         this.learner = learner;

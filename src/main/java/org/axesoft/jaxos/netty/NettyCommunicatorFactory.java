@@ -20,9 +20,9 @@ import org.axesoft.jaxos.algo.Event;
 import org.axesoft.jaxos.network.CommunicatorFactory;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
-import org.axesoft.jaxos.JaxosConfig;
+import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.algo.Communicator;
-import org.axesoft.jaxos.algo.EventEntryPoint;
+import org.axesoft.jaxos.algo.EventDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,15 +38,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class NettyCommunicatorFactory implements CommunicatorFactory {
     private static Logger logger = LoggerFactory.getLogger(NettyCommunicatorFactory.class);
-    private JaxosConfig config;
+    private JaxosSettings config;
     private ProtoMessageCoder coder;
-    private EventEntryPoint localEventEntryPoint;
+    private EventDispatcher localEventDispatcher;
     private ChannelGroupCommunicator communicator;
 
-    public NettyCommunicatorFactory(JaxosConfig config, EventEntryPoint eventEntryPoint) {
+    public NettyCommunicatorFactory(JaxosSettings config, EventDispatcher eventDispatcher) {
         this.config = config;
         this.coder = new ProtoMessageCoder(config);
-        this.localEventEntryPoint = eventEntryPoint;
+        this.localEventDispatcher = eventDispatcher;
     }
 
     @Override
@@ -89,7 +89,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         private EventLoopGroup worker;
         private RateLimiter logLimiter = RateLimiter.create(1.0 / 15);
 
-        private Map<ChannelId, JaxosConfig.Peer> channelPeerMap = new ConcurrentHashMap<>();
+        private Map<ChannelId, JaxosSettings.Peer> channelPeerMap = new ConcurrentHashMap<>();
         private Map<Integer, ChannelId> channelIdMap = new ConcurrentHashMap<>();
 
         private PaxosMessage.DataGram heartBeatDataGram = coder.encode(new Event.HeartBeatRequest(config.serverId()));
@@ -106,13 +106,13 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         }
 
         public void start() {
-            for (JaxosConfig.Peer peer : config.peerMap().values()) {
+            for (JaxosSettings.Peer peer : config.peerMap().values()) {
                 connect(peer);
             }
         }
 
         private void connect(ChannelId channelId) {
-            JaxosConfig.Peer peer = channelPeerMap.remove(channelId);
+            JaxosSettings.Peer peer = channelPeerMap.remove(channelId);
             if (peer == null) {
                 logger.error("Peer for channel {} is not recorded", channelId);
             }
@@ -121,7 +121,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             }
         }
 
-        private void connect(JaxosConfig.Peer peer) {
+        private void connect(JaxosSettings.Peer peer) {
             ChannelFuture future = bootstrap.connect(new InetSocketAddress(peer.address(), peer.port()));
             future.addListener(f -> {
                 if (!f.isSuccess()) {
@@ -155,7 +155,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         @Override
         public void callAndBroadcast(Event event) {
-            localEventEntryPoint.process(event);
+            localEventDispatcher.process(event);
 
             PaxosMessage.DataGram dataGram = coder.encode(event);
             ChannelId id = channelIdMap.get(config.serverId());
@@ -166,7 +166,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             Channel c = ctx.channel();
 
             channels.remove(ctx.channel());
-            JaxosConfig.Peer p = channelPeerMap.get(c.id());
+            JaxosSettings.Peer p = channelPeerMap.get(c.id());
 
             logger.error("Disconnected from a server {}", p);
             if (p != null) {
@@ -209,7 +209,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                         //logger.info("Got heart beat response from server {}", event.senderId());
                     }
                     else {
-                        localEventEntryPoint.process(event);
+                        localEventDispatcher.process(event);
                     }
                 }
             }

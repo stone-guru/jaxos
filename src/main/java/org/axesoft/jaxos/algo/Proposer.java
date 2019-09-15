@@ -3,7 +3,7 @@ package org.axesoft.jaxos.algo;
 import com.google.protobuf.ByteString;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
-import org.axesoft.jaxos.JaxosConfig;
+import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.base.IntBitSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 public class Proposer {
     private static Logger logger = LoggerFactory.getLogger(Proposer.class);
 
-    private JaxosConfig config;
+    private JaxosSettings config;
     private Supplier<Communicator> communicator;
     private InstanceContext instanceContext;
     private HashedWheelTimer timer = new HashedWheelTimer(10, TimeUnit.MILLISECONDS);
@@ -43,7 +43,7 @@ public class Proposer {
 
     private AtomicInteger msgId = new AtomicInteger(1);
 
-    public Proposer(JaxosConfig config, InstanceContext instanceContext, Supplier<Communicator> communicator) {
+    public Proposer(JaxosSettings config, InstanceContext instanceContext, Supplier<Communicator> communicator) {
         this.config = config;
         this.communicator = communicator;
         this.instanceContext = instanceContext;

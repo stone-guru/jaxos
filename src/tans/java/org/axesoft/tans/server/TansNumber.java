@@ -1,4 +1,4 @@
-package org.axesoft.tans.statemachine;
+package org.axesoft.tans.server;
 
 public class TansNumber {
     private String name;
@@ -35,5 +35,15 @@ public class TansNumber {
 
     public TansNumber update(long v){
         return new TansNumber(this.name, this.version + 1, System.currentTimeMillis(), this.value + v);
+    }
+
+    @Override
+    public String toString() {
+        return "TansNumber{" +
+                "name='" + name + '\'' +
+                ", version=" + version +
+                ", timestamp=" + timestamp +
+                ", value=" + value +
+                '}';
     }
 }

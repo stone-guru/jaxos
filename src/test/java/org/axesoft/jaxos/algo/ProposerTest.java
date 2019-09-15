@@ -1,17 +1,17 @@
 package org.axesoft.jaxos.algo;
 
 import com.google.protobuf.ByteString;
-import org.axesoft.jaxos.JaxosConfig;
+import org.axesoft.jaxos.JaxosSettings;
 import org.junit.Test;
 
 public class ProposerTest {
 
     private Proposer createProposer() {
-        JaxosConfig config = JaxosConfig.builder()
+        JaxosSettings config = JaxosSettings.builder()
                 .setServerId(1)
-                .setSelf(new JaxosConfig.Peer(1, "localhost", 9991, 8081))
-                .addPeer(new JaxosConfig.Peer(2, "localhost", 9992, 8082))
-                .addPeer(new JaxosConfig.Peer(3, "localhost", 9993, 8083))
+                .setSelf(new JaxosSettings.Peer(1, "localhost", 9991, 8081))
+                .addPeer(new JaxosSettings.Peer(2, "localhost", 9992, 8082))
+                .addPeer(new JaxosSettings.Peer(3, "localhost", 9993, 8083))
                 .build();
 
         Communicator communicator = new Communicator() {

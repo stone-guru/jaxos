@@ -1,4 +1,4 @@
-package org.axesoft.tans.statemachine;
+package org.axesoft.tans.server;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -7,11 +7,10 @@ import org.axesoft.tans.protobuff.TansMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TansRepository implements StateMachine {
-    private static Logger logger = LoggerFactory.getLogger(TansRepository.class);
+public class TansService implements StateMachine {
+    private static Logger logger = LoggerFactory.getLogger(TansService.class);
 
     private ConcurrentHashMap<String, TansNumber> numbers = new ConcurrentHashMap<>();
 
@@ -32,15 +31,26 @@ public class TansRepository implements StateMachine {
         });
     }
 
-    public synchronized TansNumber acquire(String name, long v){
-        TansNumber n = numbers.get(name);
-        if(n == null){
-            return new TansNumber(name, v);
+    public synchronized ByteString acquire(String name, long v){
+        TansNumber n0 = numbers.get(name), n1;
+        if(n0 == null){
+            n1 = new TansNumber(name, v);
         } else {
-            return n.update(v);
+            n1 = n0.update(v);
         }
+
+        return toMessage(n1);
     }
 
+    private ByteString toMessage(TansNumber n){
+        return TansMessage.ProtoTansNumber.newBuilder()
+                .setName(n.name())
+                .setValue(n.value())
+                .setVersion(n.value())
+                .setTimestamp(n.timestamp())
+                .build()
+                .toByteString();
+    }
     private TansNumber fromMessage(ByteString message) {
         try {
             TansMessage.ProtoTansNumber number = TansMessage.ProtoTansNumber.parseFrom(message);

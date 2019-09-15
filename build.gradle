@@ -22,21 +22,17 @@ repositories {
     mavenCentral()
 }
 
-configurations{
-    runtime.exclude group: "ch.qos.logback", module: "logback-classic"
-}
-
 sourceSets {
     main {
         java {
             srcDirs "src/main/java"
-            srcDirs "src/idgen/java"
+            srcDirs "src/tans/java"
         }
     }
     test {
         java {
             srcDirs "src/test/java"
-            srcDirs "src/idgen-test/java"
+            srcDirs "src/tans-test/java"
         }
     }
 }
@@ -55,17 +51,18 @@ dependencies {
     //compile('io.netty:netty-example:4.1.39.Final')
     implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.9.1'
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
-    runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
-    //implementation group: 'ch.qos.logback', name: 'logback-core', version: '1.2.3'
-    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+    implementation group: 'ch.qos.logback', name: 'logback-core', version: '1.2.3'
+    //implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
     implementation group: 'com.sleepycat', name: 'je', version: '5.0.73'
     // Use JUnit test framework
     testImplementation 'junit:junit:4.10'
+
 }
 
 // Define the main class for the application
-mainClassName = 'org.axesoft.jaxos.app.ServerApp'
+mainClassName = 'org.axesoft.tans.server.ServerApp'
 applicationDefaultJvmArgs = ['-Xmx512m', '-XX:NewSize=256m',
                              '-XX:+UseG1GC', '-XX:MaxGCPauseMillis=5','-XX:+PrintGCDetails']

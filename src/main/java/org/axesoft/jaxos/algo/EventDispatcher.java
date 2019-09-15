@@ -4,6 +4,6 @@ package org.axesoft.jaxos.algo;
  * @author gaoyuan
  * @sine 2019/8/25.
  */
-public interface EventEntryPoint {
+public interface EventDispatcher {
     Event process(Event event);
 }
