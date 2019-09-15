@@ -8,6 +8,8 @@ message ProtoTansNumber {
   int64 value = 2;
   int64 version = 3;
   int64 timestamp = 4;
+  int64 version0 = 5;
+  int64 value0 = 6;
 }
 
 

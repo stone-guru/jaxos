@@ -25,7 +25,7 @@ public class StateMachineRunner implements Learner {
     }
 
     @Override
-    public long lastChosenInstanceId() {
+    public synchronized long lastChosenInstanceId() {
         return this.lastChosenInstanceId;
     }
 

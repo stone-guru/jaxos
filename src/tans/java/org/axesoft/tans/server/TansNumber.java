@@ -5,6 +5,8 @@ public class TansNumber {
     private long version;
     private long timestamp;
     private long value;
+    private long version0;
+    private long value0;
 
     public TansNumber(String name, long value){
         this(name, 0, System.currentTimeMillis(), value);
@@ -15,6 +17,15 @@ public class TansNumber {
         this.version = version;
         this.timestamp = timestamp;
         this.value = value;
+    }
+
+    public TansNumber(String name, long version, long timestamp, long value, long version0, long value0) {
+        this.name = name;
+        this.version = version;
+        this.timestamp = timestamp;
+        this.value = value;
+        this.version0 = version0;
+        this.value0 = value0;
     }
 
     public String name(){
@@ -33,8 +44,19 @@ public class TansNumber {
         return value;
     }
 
+    public long version0(){
+        return this.version0;
+    }
+
+    public long value0(){
+        return this.value0;
+    }
+
     public TansNumber update(long v){
-        return new TansNumber(this.name, this.version + 1, System.currentTimeMillis(), this.value + v);
+        TansNumber n = new TansNumber(this.name, this.version + 1, System.currentTimeMillis(), this.value + v);
+        n.value0 = this.value;
+        n.version0 = this.version;
+        return n;
     }
 
     @Override
@@ -44,6 +66,8 @@ public class TansNumber {
                 ", version=" + version +
                 ", timestamp=" + timestamp +
                 ", value=" + value +
+                ", version0=" + version0 +
+                ", value0=" + value0 +
                 '}';
     }
 }

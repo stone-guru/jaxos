@@ -197,7 +197,8 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             boolean keepAlive = HttpUtil.isKeepAlive(request);
 
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
-
+            response.headers().set(HttpHeaderNames.HOST, config.address());
+            response.headers().set(HttpHeaderNames.FROM, Integer.toString(config.httpPort()));
             if (keepAlive) {
                 response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
                 response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);

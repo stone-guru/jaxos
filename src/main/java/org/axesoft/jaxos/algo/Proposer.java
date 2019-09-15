@@ -50,7 +50,7 @@ public class Proposer {
         this.metricsRecorder = new MetricsRecorder(context.jaxosMetrics());
     }
 
-    public synchronized ProposeResult propose(ByteString value) throws InterruptedException {
+    public synchronized ProposeResult propose(long instanceId, ByteString value) throws InterruptedException {
         if (!communicator.get().available()) {
             return ProposeResult.NO_QUORUM;
         }
@@ -68,7 +68,7 @@ public class Proposer {
 //            startPrepare(0, this.config.serverId(), 1);
 //        }
 
-        startPrepare(0, this.config.serverId(), 1);
+        startPrepare(instanceId, this.config.serverId(), 1);
 
         this.execEndLatch.await(3, TimeUnit.SECONDS);
 
@@ -89,6 +89,16 @@ public class Proposer {
         this.result = r;
         this.prepareActor = null;
         this.acceptActor = null;
+
+        //wait this round end
+        while(this.instanceId < this.learner.lastChosenInstanceId()){
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         this.execEndLatch.countDown();
 
         logger.trace("{}: propose round for {} end with {} by {}",msgId.getAndIncrement(), this.instanceId, r.code(), reason);
@@ -144,13 +154,20 @@ public class Proposer {
         }
         else {
             ValueWithProposal v = actor.getResult();
-            if (v.ballot == Integer.MAX_VALUE) {
+            if (v.ballot == Integer.MAX_VALUE || (actor.maxOtherChosenInstanceId >= actor.instanceId)) {
                 endWith(ProposeResult.conflict(this.proposeValue), "CONFLICT other value chosen");
                 return;
             }
-            if (actor.times >= 2) {
-                sleepRandom("PREPARE");
+
+            if(actor.times > 3) {
+                endWith(ProposeResult.conflict(this.proposeValue), "PREPARE conflict 3 times");
+                return;
             }
+
+            if (actor.times >= 1) {
+                sleepRandom(actor.times, "PREPARE");
+            }
+
             startPrepare(actor.instanceId, nextProposal(actor.totalMaxProposal), actor.times + 1);
         }
     }
@@ -205,9 +222,9 @@ public class Proposer {
         });
     }
 
-    private void sleepRandom(String when) {
+    private void sleepRandom(int i, String when) {
         try {
-            long t = (long) (Math.random() * 5);
+            long t = (long) (Math.random() * 10 * i);
             logger.debug("{}: ({}) meet conflict sleep {} ms", msgId.getAndIncrement(), when, this.instanceId, t);
             Thread.sleep(t);
         } catch (InterruptedException e) {
@@ -305,6 +322,10 @@ public class Proposer {
                 }
             }
 
+            if(response.chosenInstanceId() >= this.maxOtherChosenInstanceId){
+                this.maxOtherChosenInstanceId = response.chosenInstanceId();
+            }
+
             repliedNodes.add(response.senderId());
         }
 
@@ -318,6 +339,10 @@ public class Proposer {
 
         private int totalMaxProposal() {
             return this.totalMaxProposal;
+        }
+
+        public long maxOtherChosenInstanceId(){
+            return this.maxOtherChosenInstanceId;
         }
 
         private synchronized ValueWithProposal getResult() {

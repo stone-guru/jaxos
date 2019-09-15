@@ -3,6 +3,9 @@
  */
 package org.axesoft.tans.client;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.hash.HashingOutputStream;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -11,43 +14,44 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class ClientApp {
-    private static final String DEFAULT_URL = "http://localhost:8081/acquire?key=billid&n=1";
-    private static final int PAR_FACTOR = 1;
+    private static final int PAR_FACTOR = 2;
+
+    public static final List<String> URLS = ImmutableList.of(
+            "http://localhost:8083/acquire?key=billid&n=1",
+            "http://localhost:8082/acquire?key=billid&n=2",
+            "http://localhost:8081/acquire?key=billid&n=3");
+
 
     public static void main(String[] args) throws Exception {
         ClientApp app = new ClientApp();
-        String url = (args != null && args.length > 0)? args[0] : DEFAULT_URL;
-        app.run(url);
+        app.run();
     }
-
-    private HttpRequest request;
-    private int n = 1;
+    private int n = 1000;
     private long start = 0;
     private AtomicInteger count = new AtomicInteger(0);
+    private List<HttpRequest> requests;
+    private List<URI> uris;
 
-    private HttpRequest createRequest(URI uri, String host) {
-        HttpRequest request = new DefaultFullHttpRequest(
-                HttpVersion.HTTP_1_1, HttpMethod.GET, uri.getPath() + "?" + uri.getQuery(), Unpooled.EMPTY_BUFFER);
-        request.headers().set(HttpHeaderNames.HOST, host);
-        request.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-        request.headers().set(HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.TEXT_PLAIN);
+    public void run() throws Exception {
 
-        return request;
-    }
-
-    public void run(String url) throws Exception {
-        URI uri = new URI(url);
-        String host = uri.getHost() == null? "127.0.0.1" : uri.getHost();
-        int port = uri.getPort();
-
-        this.request = createRequest(uri, host);
+        this.uris = Lists.transform(URLS, s -> {
+            try {
+                return new URI(s);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException();
+            }
+        });
+        this.requests = Lists.transform(uris, this::createRequest);
 
         // Configure the client.
         EventLoopGroup group = new NioEventLoopGroup();
@@ -58,33 +62,53 @@ public class ClientApp {
                     .handler(new HttpSnoopClientInitializer());
 
             List<Channel> channels = new ArrayList<>();
-            for(int i = 0; i < PAR_FACTOR; i++) {
+            for (int i = 0; i < Math.min(PAR_FACTOR, uris.size()); i++) {
                 // Make the connection attempt.
-                Channel ch = b.connect(host, port).sync().channel();
+                URI u = uris.get(i);
+                Channel ch = b.connect(u.getHost(), u.getPort()).sync().channel();
                 channels.add(ch);
             }
             // Prepare the HTTP request.
 
             this.start = System.nanoTime();
 
-            for(Channel ch : channels) {
+            for (Channel ch : channels) {
                 // Send the HTTP request.
-                ch.writeAndFlush(request);
+                int i = count.getAndIncrement();
+                ch.writeAndFlush(this.requests.get(i));
             }
 
-            for(Channel ch: channels ) {
+            for (Channel ch : channels) {
                 // Wait for the server to close the connection.
                 ch.closeFuture().sync();
             }
 
             double millis = (System.nanoTime() - start) / 1e+6;
-            double qps = n / (millis/1000.0);
+            double qps = n / (millis / 1000.0);
             System.out.println(String.format("POST %d in %.3f millis, QPS is %.0f", n, millis, qps));
 
         } finally {
             // Shut down executor threads to exit.
             group.shutdownGracefully();
         }
+    }
+
+
+    private HttpRequest createRequest(URI uri) {
+        HttpRequest request = new DefaultFullHttpRequest(
+                HttpVersion.HTTP_1_1, HttpMethod.GET, uri.getPath() + "?" + uri.getQuery(), Unpooled.EMPTY_BUFFER);
+        request.headers().set(HttpHeaderNames.HOST, uri.getHost());
+        request.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+        request.headers().set(HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.TEXT_PLAIN);
+
+        return request;
+    }
+
+    private HttpRequest selectRequest(int n) {
+        int i = n % requests.size();
+        HttpRequest r = requests.get(i);
+        //System.out.println(r);
+        return r;
     }
 
     public class HttpSnoopClientInitializer extends ChannelInitializer<SocketChannel> {
@@ -102,37 +126,43 @@ public class ClientApp {
     }
 
     public class HttpSnoopClientHandler extends SimpleChannelInboundHandler<HttpObject> {
+        HttpResponse response;
 
         @Override
         public void channelRead0(ChannelHandlerContext ctx, HttpObject msg) {
             if (msg instanceof HttpResponse) {
-                HttpResponse response = (HttpResponse) msg;
-
+                response = (HttpResponse) msg;
                 //System.err.println("STATUS: " + response.status());
             }
             if (msg instanceof HttpContent) {
                 HttpContent content = (HttpContent) msg;
 
-                int i = count.incrementAndGet();
+                int i = count.getAndIncrement();
 
-                if(i < 100 || i%1000 == 0 || n - i < 100) {
-                    System.err.print(content.content().toString(CharsetUtil.UTF_8));
+                if (i > 0 || i < 1000 || i % 1000 == 0 || n - i < 100) {
+                    String s = content.content().toString(CharsetUtil.UTF_8).lines().findFirst().orElseGet(() -> "");
+
+                    System.err.println(response.headers().get(HttpHeaderNames.HOST) + ","
+                            + response.headers().get(HttpHeaderNames.FROM) +
+                            "[" +  s + "]");
                 }
 
-                if(i == 100){
+                if (i == 100) {
                     System.err.println("...");
                 }
 
-                if(i < n){
+                if (i < n) {
                     try {
-                       if(i > 0) Thread.sleep((long)(Math.random() * 100));
+                        if (i > 0) {
+                            Thread.sleep((long) (Math.random() * 50));
+                        }
 
-                       ctx.writeAndFlush(request);
-                    }
-                    catch (InterruptedException e) {
+                        ctx.writeAndFlush(selectRequest(i));
+                    } catch (InterruptedException e) {
                         ctx.close();
                     }
-                } else {
+                }
+                else {
                     ctx.close();
                 }
             }

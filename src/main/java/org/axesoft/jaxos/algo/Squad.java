@@ -33,7 +33,7 @@ public class Squad implements EventDispatcher,Proponent {
      * @throws InterruptedException
      */
     @Override
-    public ProposeResult propose(ByteString v) throws InterruptedException {
+    public ProposeResult propose(long instanceId, ByteString v) throws InterruptedException {
         SquadContext.RequestRecord lastRequestRecord = this.context.getLastRequestRecord();
         //logger.info("last request is {}, current is {}", lastRequestInfo, new Date());
 
@@ -41,7 +41,7 @@ public class Squad implements EventDispatcher,Proponent {
             return ProposeResult.otherLeader(lastRequestRecord.serverId());
         }
         else {
-            return proposer.propose(v);
+            return proposer.propose(instanceId, v);
         }
     }
 
