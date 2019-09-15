@@ -1,8 +1,10 @@
 package org.axesoft.jaxos;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.protobuf.ByteString;
 
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author gaoyuan
@@ -51,6 +53,8 @@ public class JaxosSettings {
         private Peer self;
         private boolean ignoreLeader;
         private String dbDirectory;
+        private Function<ByteString, String> valueVerboser;
+
         private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
 
         public Builder setServerId(int serverId) {
@@ -78,6 +82,11 @@ public class JaxosSettings {
             return this;
         }
 
+        public Builder setValueVerboser(Function<ByteString, String> valueVerboser) {
+            this.valueVerboser = valueVerboser;
+            return this;
+        }
+
         public JaxosSettings build(){
             JaxosSettings config = new JaxosSettings();
             config.serverId = this.serverId;
@@ -85,6 +94,7 @@ public class JaxosSettings {
             config.ignoreLeader = this.ignoreLeader;
             config.leaderLeaseSeconds = 3;
             config.dbDirectory = this.dbDirectory;
+            config.valueVerboser = this.valueVerboser;
             return config;
         }
     }
@@ -94,6 +104,7 @@ public class JaxosSettings {
     private int leaderLeaseSeconds;
     private boolean ignoreLeader;
     private String dbDirectory;
+    private Function<ByteString, String> valueVerboser;
 
     private JaxosSettings() {
     }
@@ -132,6 +143,10 @@ public class JaxosSettings {
 
     public boolean reachQuorum(int n){
         return n > this.peerMap.size() / 2;
+    }
+
+    public Function<ByteString, String> valueVerboser(){
+        return this.valueVerboser;
     }
 
     @Override

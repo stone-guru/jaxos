@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientApp {
-    private static final String DEFAULT_URL = "http://localhost:8082";
-    private static final int PAR_FACTOR = 3;
+    private static final String DEFAULT_URL = "http://localhost:8081/acquire?key=billid&n=1";
+    private static final int PAR_FACTOR = 1;
 
     public static void main(String[] args) throws Exception {
         ClientApp app = new ClientApp();
@@ -28,13 +28,13 @@ public class ClientApp {
     }
 
     private HttpRequest request;
-    private int n = 2000;
+    private int n = 1;
     private long start = 0;
     private AtomicInteger count = new AtomicInteger(0);
 
     private HttpRequest createRequest(URI uri, String host) {
         HttpRequest request = new DefaultFullHttpRequest(
-                HttpVersion.HTTP_1_1, HttpMethod.POST, uri.getRawPath(), Unpooled.EMPTY_BUFFER);
+                HttpVersion.HTTP_1_1, HttpMethod.GET, uri.getPath() + "?" + uri.getQuery(), Unpooled.EMPTY_BUFFER);
         request.headers().set(HttpHeaderNames.HOST, host);
         request.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
         request.headers().set(HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.TEXT_PLAIN);
@@ -125,7 +125,7 @@ public class ClientApp {
 
                 if(i < n){
                     try {
-                       if(i > 0) Thread.sleep((long)(Math.random() * 10));
+                       if(i > 0) Thread.sleep((long)(Math.random() * 100));
 
                        ctx.writeAndFlush(request);
                     }

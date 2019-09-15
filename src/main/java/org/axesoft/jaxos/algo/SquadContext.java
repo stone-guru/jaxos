@@ -1,20 +1,17 @@
 package org.axesoft.jaxos.algo;
 
-import com.google.protobuf.ByteString;
 import org.axesoft.jaxos.JaxosSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author gaoyuan
  * @sine 2019/9/2.
  */
-public class InstanceContext implements Learner {
+public class SquadContext {
 
     public static class RequestRecord {
         private final int serverId;
@@ -42,16 +39,15 @@ public class InstanceContext implements Learner {
         }
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(InstanceContext.class);
+    private static final Logger logger = LoggerFactory.getLogger(SquadContext.class);
 
     private AtomicLong lastInstanceId = new AtomicLong(0);
-    private ConcurrentMap<Long, ValueWithProposal> histValues = new ConcurrentHashMap<>();
     private volatile RequestRecord lastRequestRecord = new RequestRecord(-1, 0);
     private JaxosMetrics jaxosMetrics = new JaxosMetrics();
     private JaxosSettings config;
     private int squadId;
 
-    public InstanceContext(int squadId, JaxosSettings config) {
+    public SquadContext(int squadId, JaxosSettings config) {
         this.config = config;
         this.squadId = squadId;
     }
@@ -60,35 +56,27 @@ public class InstanceContext implements Learner {
         return this.jaxosMetrics;
     }
 
-    public ValueWithProposal valueOf(long instanceId) {
-        return histValues.getOrDefault(instanceId, ValueWithProposal.NONE);
-    }
-
-    @Override
-    public long lastChosenInstanceId() {
-        return lastInstanceId.get();
-    }
-
-    @Override
-    public void learnValue(long instanceId, int proposal, ByteString value) {
-        ValueWithProposal v = ValueWithProposal.of(proposal, value);
-
-        long i0 = this.lastInstanceId.get();
-        if (instanceId > i0) {
-            if (this.lastInstanceId.compareAndSet(i0, instanceId)) {
-                return;
-            }
-        }
-    }
-
-    public boolean sameInHistory(long instanceId, int proposal) {
-        ValueWithProposal v = valueOf(instanceId);
-        return v.ballot == proposal;
-    }
-
-    public void recordLastRequest(int serverId, long timeStampMillis) {
-        this.lastRequestRecord = new RequestRecord(serverId, timeStampMillis);
-    }
+//    @Override
+//    public void learnLastChosenInstanceId(long instanceId) {
+//        lastInstanceId.set(instanceId);
+//    }
+//
+//    @Override
+//    public long lastChosenInstanceId() {
+//        return lastInstanceId.get();
+//    }
+//
+//    @Override
+//    public void learnValue(long instanceId, int proposal, ByteString value) {
+//        ValueWithProposal v = ValueWithProposal.of(proposal, value);
+//
+//        long i0 = this.lastInstanceId.get();
+//        if (instanceId > i0) {
+//            if (this.lastInstanceId.compareAndSet(i0, instanceId)) {
+//                return;
+//            }
+//        }
+//    }
 
     public RequestRecord getLastRequestRecord() {
         return this.lastRequestRecord;

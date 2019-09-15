@@ -32,7 +32,7 @@ public class Acceptor {
         AcceptorLogger.Promise promise = this.acceptorLogger.loadLastPromise(this.squadId);
         if (promise != null) {
             logger.info("Acceptor restore last instance {}", promise.instanceId);
-            learner.learnValue(promise.instanceId, promise.proposal, promise.value);
+            learner.learnLastChosenInstanceId(promise.instanceId);
         }
     }
 
@@ -104,8 +104,8 @@ public class Acceptor {
                 if (request.ballot() > this.acceptedBallot) {
                     this.acceptedBallot = this.maxBallot = request.ballot();
                     this.acceptedValue = request.value();
-                    logger.trace("Accept new value sender = {}, instance = {}, ballot = {}, value = {}",
-                            request.senderId(), request.instanceId(), acceptedBallot, acceptedValue.toStringUtf8());
+                    logger.trace("Accept new value sender = {}, instance = {}, ballot = {}, value = BX[{}]",
+                            request.senderId(), request.instanceId(), acceptedBallot, acceptedValue.size());
 
                     acceptorLogger.savePromise(this.squadId, request.instanceId(), this.maxBallot, this.acceptedValue);
                 }
@@ -120,7 +120,9 @@ public class Acceptor {
     }
 
     public synchronized void chose(Event.ChosenNotify notify) {
-        logger.trace("receive chose notify {}", notify);
+        if(logger.isTraceEnabled()) {
+            logger.trace("receive chose notify {}, value = {}", notify, valueToString(this.acceptedValue));
+        }
         long last = this.learner.lastChosenInstanceId();
         if (notify.instanceId() != last + 1) {
             logger.warn("unmatched instance id in chose notify({}), while my last instance id is {} ", notify.instanceId(), last);
@@ -132,5 +134,16 @@ public class Acceptor {
         this.maxBallot = 0;
         this.acceptedValue = ByteString.EMPTY;
         this.acceptedBallot = 0;
+    }
+
+    private String valueToString(ByteString value){
+        if(config.valueVerboser() != null){
+            try{
+                return config.valueVerboser().apply(value);
+            }catch (Exception e){
+                //ignore
+            }
+        }
+        return "BX[" + value.size() + "]";
     }
 }

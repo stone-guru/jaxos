@@ -23,7 +23,7 @@ public class Proposer {
 
     private JaxosSettings config;
     private Supplier<Communicator> communicator;
-    private InstanceContext instanceContext;
+    private Learner learner;
     private HashedWheelTimer timer = new HashedWheelTimer(10, TimeUnit.MILLISECONDS);
 
     private volatile long instanceId = 0;
@@ -43,11 +43,11 @@ public class Proposer {
 
     private AtomicInteger msgId = new AtomicInteger(1);
 
-    public Proposer(JaxosSettings config, InstanceContext instanceContext, Supplier<Communicator> communicator) {
+    public Proposer(JaxosSettings config, SquadContext context, Learner learner, Supplier<Communicator> communicator) {
         this.config = config;
         this.communicator = communicator;
-        this.instanceContext = instanceContext;
-        this.metricsRecorder = new MetricsRecorder(instanceContext.jaxosMetrics());
+        this.learner = learner;
+        this.metricsRecorder = new MetricsRecorder(context.jaxosMetrics());
     }
 
     public synchronized ProposeResult propose(ByteString value) throws InterruptedException {
@@ -61,12 +61,14 @@ public class Proposer {
         this.result = null;
         this.execEndLatch = new CountDownLatch(1);
 
-        if (this.instanceContext.isLeader() && (this == null)) {
-            startAccept(0, this.proposeValue, this.config.serverId());
-        }
-        else {
-            startPrepare(0, this.config.serverId(), 1);
-        }
+//        if (this.instanceContext.isLeader() && (this == null)) {
+//            startAccept(0, this.proposeValue, this.config.serverId());
+//        }
+//        else {
+//            startPrepare(0, this.config.serverId(), 1);
+//        }
+
+        startPrepare(0, this.config.serverId(), 1);
 
         this.execEndLatch.await(3, TimeUnit.SECONDS);
 
@@ -101,14 +103,14 @@ public class Proposer {
     }
 
     private void startPrepare(long instanceId, int proposal0, int times) {
-        long next = this.instanceContext.lastChosenInstanceId() + 1;
+        long next = this.learner.lastChosenInstanceId() + 1;
         if (instanceId > 0 && instanceId != next) {
             endWith(ProposeResult.conflict(this.proposeValue), "when prepare " + next + " again");
             return;
         }
 
-        this.prepareActor = new PrepareActor(next, this.proposeValue, proposal0, times);
-        this.prepareTimeout = Proposer.this.timer.newTimeout(t -> this.endPrepare(this.prepareActor), 1, TimeUnit.SECONDS);
+        final PrepareActor actor = this.prepareActor = new PrepareActor(next, this.proposeValue, proposal0, times);
+        this.prepareTimeout = Proposer.this.timer.newTimeout(t -> this.endPrepare(actor), 1, TimeUnit.SECONDS);
         this.prepareActor.begin();
     }
 
@@ -259,6 +261,7 @@ public class Proposer {
 
         private volatile boolean someOneReject = false;
         private volatile int acceptedCount = 0;
+        private volatile long maxOtherChosenInstanceId = 0;
 
         public PrepareActor(long instanceId, ByteString value, int proposal, int times) {
             this.instanceId = instanceId;
@@ -280,6 +283,7 @@ public class Proposer {
                 logger.warn("Duplicated PREPARE response {}", response);
                 return;
             }
+
 
             if (response.maxBallot() > this.totalMaxProposal) {
                 this.totalMaxProposal = response.maxBallot();

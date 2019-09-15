@@ -29,12 +29,17 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.CharsetUtil;
+import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.algo.Proponent;
 import org.axesoft.jaxos.algo.ProposeResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
@@ -49,12 +54,12 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
     private static final String SERVICE_NAME = "Take-A-Number System";
 
-    private Proponent proponent;
+    private TansService tansService;
     private TansConfig config;
     private Channel serverChannel;
 
-    public HttpApiService(Proponent proponent, TansConfig config) {
-        this.proponent = proponent;
+    public HttpApiService(TansConfig config, TansService tansService) {
+        this.tansService = tansService;
         this.config = config;
         addListener(new ServiceListener(), MoreExecutors.directExecutor());
     }
@@ -83,7 +88,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
     @Override
     protected void triggerShutdown() {
-        if(this.serverChannel != null){
+        if (this.serverChannel != null) {
             this.serverChannel.close();
         }
     }
@@ -100,30 +105,13 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
     public class HttpChannelHandler extends SimpleChannelInboundHandler<Object> {
         private HttpRequest request;
-        private ProposeResult result;
-        private final ByteBuf okText = Unpooled.copiedBuffer("OK\r\n", CharsetUtil.UTF_8);
-        private AtomicInteger i = new AtomicInteger(0);
+        private FullHttpResponse response;
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) {
             ctx.flush();
         }
 
-        private ProposeResult propose(ChannelHandlerContext ctx, ByteString value) {
-            try {
-                int i = 0;
-                ProposeResult r;
-                do {
-                    r = proponent.propose(value);
-                    logger.debug("propose value {}", value.toStringUtf8());
-                    i++;
-                } while (!r.isSuccess() && i < 3);
-                return r;
-            } catch (InterruptedException e) {
-                logger.info("Asked to be quit");
-                return null;
-            }
-        }
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
@@ -134,45 +122,78 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                     send100Continue(ctx);
                 }
 
-                if (request.method().equals(HttpMethod.POST)) {
-                    int v = i.incrementAndGet();
-                    this.result = propose(ctx, ByteString.copyFromUtf8(" propose " + v));
-
-                    if (this.result == null) {
-                        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-                        return;
-                    }
+                if (getRawUri(request.uri()).equals("/acquire")) {
+                    response = handleAcquire(request);
+                }
+                else {
+                    response = new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, Unpooled.copiedBuffer("Not Found", CharsetUtil.UTF_8));
                 }
             }
 
             if (msg instanceof LastHttpContent) {
-                if (!writeResponse(this.result, ctx)) {
+                if (!writeResponse(ctx)) {
                     // If keep-alive is off, close the connection once the content is fully written.
                     ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
                 }
             }
         }
 
-        private boolean writeResponse(ProposeResult result, ChannelHandlerContext ctx) {
-            FullHttpResponse response;
-            if (result.isSuccess()) {
-                long instanceId = (Long) result.param();
-                ByteBuf buf = Unpooled.copiedBuffer("OK  " + instanceId + "\r\n", CharsetUtil.UTF_8);
-                response = new DefaultFullHttpResponse(HTTP_1_1, OK, buf);
-            }
-            else if (result.code() == ProposeResult.Code.OTHER_LEADER) {
-                int httpPort = config.getPeerHttpPort((int)result.param());
-
-                JaxosSettings.Peer peer = (JaxosSettings.Peer) result.param();
-                response = new DefaultFullHttpResponse(
-                        HTTP_1_1, TEMPORARY_REDIRECT);
-                response.headers().set(HttpHeaderNames.LOCATION, String.format("http://%s:%s", peer.address(), httpPort));
+        private String getRawUri(String s) {
+            int i = s.indexOf("?");
+            if (i < 0) {
+                return s;
             }
             else {
-                response = new DefaultFullHttpResponse(HTTP_1_1, INTERNAL_SERVER_ERROR,
-                        Unpooled.copiedBuffer(result.code().toString() + "\r\n", CharsetUtil.UTF_8));
+                return s.substring(0, i);
+            }
+        }
+
+        private FullHttpResponse handleAcquire(HttpRequest request) {
+            QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.uri());
+            Map<String, List<String>> params = queryStringDecoder.parameters();
+
+            List<String> vx = params.get("key");
+            if (vx == null || vx.size() == 0) {
+                return new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST, Unpooled.copiedBuffer("Argument 'key' required", CharsetUtil.UTF_8));
+            }
+            String key = vx.get(0);
+
+            long n = 1;
+            List<String> nx = params.get("n");
+            if (nx != null && nx.size() > 0) {
+                n = Long.parseLong(nx.get(0));
             }
 
+            try {
+                Pair<Long, Long> p = tansService.acquire(key, n);
+                String content = p.getLeft() + "," + p.getRight();
+                return createResponse(OK, content);
+            } catch (IllegalArgumentException e) {
+                return createResponse(BAD_REQUEST, e.getMessage());
+            } catch (RedirectException e) {
+                return createRedirectResponse(e.getUrl());
+            } catch (ConflictException e) {
+                return createResponse(HttpResponseStatus.CONFLICT, "CONFLICT");
+            } catch (IllegalStateException e) {
+                return createResponse(INTERNAL_SERVER_ERROR, e.getMessage());
+            } catch (Exception e) {
+                logger.error("Exception ", e);
+                return createResponse(INTERNAL_SERVER_ERROR, "INTERNAL ERROR");
+            }
+        }
+
+        private FullHttpResponse createResponse(HttpResponseStatus status, String v) {
+            return new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.copiedBuffer(v + "\r\n", CharsetUtil.UTF_8));
+        }
+
+        private FullHttpResponse createRedirectResponse(String url) {
+            FullHttpResponse response = new DefaultFullHttpResponse(
+                    HTTP_1_1, TEMPORARY_REDIRECT);
+            response.headers().set(HttpHeaderNames.LOCATION, url);
+            return response;
+        }
+
+        private boolean writeResponse(ChannelHandlerContext ctx) {
             boolean keepAlive = HttpUtil.isKeepAlive(request);
 
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");

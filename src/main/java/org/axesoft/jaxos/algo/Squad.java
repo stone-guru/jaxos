@@ -16,14 +16,16 @@ public class Squad implements EventDispatcher,Proponent {
 
     private Acceptor acceptor;
     private Proposer proposer;
-    private InstanceContext context;
+    private SquadContext context;
     private JaxosSettings config;
     private int squadId = 1;
-    public Squad(int id, JaxosSettings config, Supplier<Communicator> communicator, AcceptorLogger acceptorLogger) {
+
+    public Squad(int id, JaxosSettings config, Supplier<Communicator> communicator, AcceptorLogger acceptorLogger, StateMachine machine) {
         this.config = config;
-        this.context = new InstanceContext(id, this.config);
-        this.proposer = new Proposer(this.config, context, communicator);
-        this.acceptor = new Acceptor(this.config, this.squadId, context, acceptorLogger);
+        this.context = new SquadContext(id, this.config);
+        Learner learner = new StateMachineRunner(machine);
+        this.proposer = new Proposer(this.config, this.context, learner, communicator);
+        this.acceptor = new Acceptor(this.config, this.squadId, learner, acceptorLogger);
     }
 
     /**
@@ -32,7 +34,7 @@ public class Squad implements EventDispatcher,Proponent {
      */
     @Override
     public ProposeResult propose(ByteString v) throws InterruptedException {
-        InstanceContext.RequestRecord lastRequestRecord = this.context.getLastRequestRecord();
+        SquadContext.RequestRecord lastRequestRecord = this.context.getLastRequestRecord();
         //logger.info("last request is {}, current is {}", lastRequestInfo, new Date());
 
         if (this.context.isOtherLeaderActive() && !this.config.ignoreLeader()) {
@@ -41,10 +43,6 @@ public class Squad implements EventDispatcher,Proponent {
         else {
             return proposer.propose(v);
         }
-    }
-
-    public long lastChosenInstance() {
-        return context.lastChosenInstanceId();
     }
 
     @Override

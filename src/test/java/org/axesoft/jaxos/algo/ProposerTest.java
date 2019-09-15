@@ -36,7 +36,7 @@ public class ProposerTest {
             }
         };
 
-        return new Proposer(config, new InstanceContext(1, config), () -> communicator);
+        return new Proposer(config, new SquadContext(1, config), () -> communicator);
     }
 
     @Test

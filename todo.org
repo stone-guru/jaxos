@@ -3,27 +3,30 @@
 * DONE Adopt JCommand to parse the config from args		       :base:
 * DONE client close network gracefully				    :network:
 * DONE use ProtoBuff.ByteString to store the general value	       :base:
-* TODO Proposal judge the majority				  :algorithm:
+* DONE Proposal judge the majority				  :algorithm:
 * NEXT implement basic multi-paxos.instance 			  :algorithm:
 ** DONE acceptor and adaptor use same instance context		  :algorithm:
 ** DONE Implement a HTTP service port for each server		       :base:
-* TODO save proposal to rocketDB 					:log:
+* DONE save proposal to localdb 					:log:
 * DONE add accepted message					    :network:
 * TODO add single learn request&response			    :learner:
 * TODO add range learn request&response				    :learner:
-* TODO add general state machine			       :statemachine:
+* DONE add general state machine			       :statemachine:
 * TODO add log reload							:log:
 * TODO optimize the thread model				       :base:
-* NEXT support timeout by TimeWheel				    :network:
+* DONE NEXT support timeout by TimeWheel			    :network:
 * DONE set a fixed gradle version					:dev:
 * DONE use config file for peers' address			       :base:
 * DONE connect to other peers lazily  
-* TODO use netty local chanel to unify the broachcast interface	    :network:
-* TODO Implment a distributed KV store based on berkely DB	:application:
-* TODO the ballot is not reset after one instance finished	       :base:
-* TODO close DB when application exit					:log:
+* DONE use netty local chanel to unify the broachcast interface	    :network:
+  The notify message to local acceptor is by direct call, all others 
+are by netty
+* DONE Implment a distributed KV store based on berkely DB	:application:
+* DONE the ballot is not reset after one instance finished	       :base:
+* DONE close DB when application exit					:log:
 * DONE [#C] the proposer blocked at "executingSignal"		       :base:
 * DONE implement a HTTP client on netty				    :network:
+* TODO A case of Chosen notify message lost making that server hang :network:
 * related infors
 ** Quorum algo(NWR)
 * token 8c8caa4dce5df2901c628ca6ec9ba4354c4b3889

@@ -23,7 +23,7 @@ public class JaxosService extends AbstractExecutionThreadService {
         this.settings = settings;
         this.machine = machine;
         this.acceptorLogger = new BerkeleyDbAcceptorLogger(this.settings.dbDirectory());
-        this.squad = new Squad(1, settings, () -> communicator, acceptorLogger);
+        this.squad = new Squad(1, settings, () -> communicator, acceptorLogger, machine);
         super.addListener(new JaxosServiceListener(), MoreExecutors.directExecutor());
     }
 
