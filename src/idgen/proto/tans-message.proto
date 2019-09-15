@@ -1,0 +1,14 @@
+syntax = "proto3";
+package  org.axesoft.tans.protobuff;
+
+option java_outer_classname="TansMessage";
+
+message ProtoTansNumber {
+  string name = 1;
+  int64 value = 2;
+  int64 version = 3;
+  int64 timestamp = 4;
+}
+
+
+

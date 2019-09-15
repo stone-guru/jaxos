@@ -18,12 +18,12 @@ public class Squad implements EventEntryPoint {
     private Proposer proposer;
     private InstanceContext context;
     private JaxosConfig config;
-
+    private int squadId = 1;
     public Squad(int id, JaxosConfig config, Supplier<Communicator> communicator, AcceptorLogger acceptorLogger) {
         this.config = config;
         this.context = new InstanceContext(id, this.config);
         this.proposer = new Proposer(this.config, context, communicator);
-        this.acceptor = new Acceptor(this.config, context, acceptorLogger);
+        this.acceptor = new Acceptor(this.config, this.squadId, context, acceptorLogger);
     }
 
     /**
@@ -43,7 +43,7 @@ public class Squad implements EventEntryPoint {
     }
 
     public long lastChosenInstance() {
-        return context.lastInstanceId();
+        return context.lastChosenInstanceId();
     }
 
     @Override

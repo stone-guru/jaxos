@@ -63,12 +63,13 @@ public class InstanceContext implements Learner {
         return this.jaxosMetrics;
     }
 
-    public long lastInstanceId() {
-        return lastInstanceId.get();
-    }
-
     public ValueWithProposal valueOf(long instanceId) {
         return histValues.getOrDefault(instanceId, ValueWithProposal.NONE);
+    }
+
+    @Override
+    public long lastChosenInstanceId() {
+        return lastInstanceId.get();
     }
 
     @Override

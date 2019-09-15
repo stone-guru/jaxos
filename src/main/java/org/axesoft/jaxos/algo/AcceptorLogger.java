@@ -10,11 +10,23 @@ public interface AcceptorLogger {
         public long instanceId;
         public int proposal;
         public ByteString value;
+
+        @Override
+        public String toString() {
+            return "Promise{" +
+                    "squadId=" + squadId +
+                    ", instanceId=" + instanceId +
+                    ", proposal=" + proposal +
+                    ", value=B[" + value.size() + "]" +
+                    '}';
+        }
     }
 
-    void saveLastPromise(int squadId, long instanceId, int proposal, ByteString value);
+    void savePromise(int squadId, long instanceId, int proposal, ByteString value);
 
     Promise loadLastPromise(int squadId);
+
+    Promise loadPromise(int squadId, long instanceId);
 
     void close();
 }

@@ -8,7 +8,6 @@ import org.axesoft.jaxos.base.IntBitSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,6 +38,10 @@ public class Proposer {
     private volatile ProposeResult result = null;
 
     private MetricsRecorder metricsRecorder;
+    private final int squadId = 1;
+    private AtomicInteger round = new AtomicInteger(0);
+
+    private AtomicInteger msgId = new AtomicInteger(1);
 
     public Proposer(JaxosConfig config, InstanceContext instanceContext, Supplier<Communicator> communicator) {
         this.config = config;
@@ -59,7 +62,7 @@ public class Proposer {
         this.execEndLatch = new CountDownLatch(1);
 
         if (this.instanceContext.isLeader() && (this == null)) {
-            startAccept(this.instanceContext.lastInstanceId() + 1, this.proposeValue, this.config.serverId());
+            startAccept(0, this.proposeValue, this.config.serverId());
         }
         else {
             startPrepare(0, this.config.serverId(), 1);
@@ -86,7 +89,7 @@ public class Proposer {
         this.acceptActor = null;
         this.execEndLatch.countDown();
 
-        logger.trace("propose round for {} end with {} by {}", this.instanceId, r.code(), reason);
+        logger.trace("{}: propose round for {} end with {} by {}",msgId.getAndIncrement(), this.instanceId, r.code(), reason);
     }
 
     private boolean checkMajority(int n, String step) {
@@ -98,7 +101,7 @@ public class Proposer {
     }
 
     private void startPrepare(long instanceId, int proposal0, int times) {
-        long next = this.instanceContext.lastInstanceId() + 1;
+        long next = this.instanceContext.lastChosenInstanceId() + 1;
         if (instanceId > 0 && instanceId != next) {
             endWith(ProposeResult.conflict(this.proposeValue), "when prepare " + next + " again");
             return;
@@ -111,11 +114,11 @@ public class Proposer {
 
 
     public void processPrepareResponse(Event.PrepareResponse response) {
-        logger.trace("RECEIVED {}", response);
+        logger.trace("{}: RECEIVED {}", msgId.getAndIncrement(), response);
 
         PrepareActor actor = this.prepareActor;
         if (actor == null) {
-            logger.warn("Not at the state of preparing for {}", response);
+            logger.warn("{}: Not at the state of preparing for {}", msgId.getAndIncrement(), response);
             return;
         }
 
@@ -133,7 +136,7 @@ public class Proposer {
             return;
         }
 
-        if (actor.isAllAccepted()) {
+        if (actor.isAccepted()) {
             ValueWithProposal v = actor.getResult();
             startAccept(actor.instanceId, v.content, actor.proposal);
         }
@@ -157,7 +160,7 @@ public class Proposer {
     }
 
     public void onAcceptReply(Event.AcceptResponse response) {
-        logger.trace("RECEIVED {}", response);
+        logger.trace("{}: RECEIVED {}", msgId.getAndIncrement(), response);
 
         AcceptActor actor = this.acceptActor;
         if (actor == null) {
@@ -172,7 +175,7 @@ public class Proposer {
     }
 
     private void endAccept() {
-        logger.trace("End Accept");
+        logger.trace("{}: End Accept", msgId.getAndIncrement());
         this.acceptTimeout.cancel();
         AcceptActor actor = this.acceptActor;
         if (actor == null) {
@@ -183,7 +186,7 @@ public class Proposer {
                 return;
             }
 
-            if (actor.isAllAccepted()) {
+            if (actor.isAccepted()) {
                 actor.notifyChosen();
                 endWith(ProposeResult.success(actor.instanceId), "OK");
             }
@@ -203,7 +206,7 @@ public class Proposer {
     private void sleepRandom(String when) {
         try {
             long t = (long) (Math.random() * 5);
-            logger.debug("({}) meet conflict sleep {} ms", when, this.instanceId, t);
+            logger.debug("{}: ({}) meet conflict sleep {} ms", msgId.getAndIncrement(), when, this.instanceId, t);
             Thread.sleep(t);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -253,7 +256,9 @@ public class Proposer {
         private volatile int maxAcceptedProposal = 0;
         private volatile ByteString acceptedValue = ByteString.EMPTY;
         private IntBitSet repliedNodes = new IntBitSet();
-        private volatile boolean allAccepted = true;
+
+        private volatile boolean someOneReject = false;
+        private volatile int acceptedCount = 0;
 
         public PrepareActor(long instanceId, ByteString value, int proposal, int times) {
             this.instanceId = instanceId;
@@ -264,12 +269,12 @@ public class Proposer {
 
         public void begin() {
             Proposer.this.instanceId = this.instanceId;
-            Event.PrepareRequest req = new Event.PrepareRequest(config.serverId(), this.instanceId, this.proposal);
+            Event.PrepareRequest req = new Event.PrepareRequest(config.serverId(), squadId, this.instanceId, this.times, this.proposal);
             communicator.get().broadcast(req);
         }
 
         public synchronized void onReply(Event.PrepareResponse response) {
-            logger.trace("got PREPARE reply {}", response);
+            logger.trace("{}: On PREPARE reply {}", msgId.getAndIncrement(), response);
 
             if (repliedNodes.get(response.senderId())) {
                 logger.warn("Duplicated PREPARE response {}", response);
@@ -285,9 +290,17 @@ public class Proposer {
                 this.acceptedValue = response.acceptedValue();
             }
 
-            if (!response.success()) {
-                allAccepted = false;
+            switch (response.result()){
+                case Event.RESULT_SUCCESS: {
+                    acceptedCount++;
+                    break;
+                }
+                case Event.RESULT_REJECT: {
+                    someOneReject = true;
+                    break;
+                }
             }
+
             repliedNodes.add(response.senderId());
         }
 
@@ -295,8 +308,8 @@ public class Proposer {
             return repliedNodes.count() == config.peerCount();
         }
 
-        private boolean isAllAccepted() {
-            return this.allAccepted;
+        private boolean isAccepted() {
+            return !this.someOneReject && acceptedCount > config.peerCount()/2;
         }
 
         private int totalMaxProposal() {
@@ -304,16 +317,16 @@ public class Proposer {
         }
 
         private synchronized ValueWithProposal getResult() {
-            logger.trace("on all prepared max accepted ballot = {}, total max ballot ={}, my ballot = {}",
-                    maxAcceptedProposal, totalMaxProposal, this.proposal);
+            logger.trace("{}: on all prepared max accepted ballot = {}, total max ballot ={}, my ballot = {}",
+                    msgId.getAndIncrement(), maxAcceptedProposal, totalMaxProposal, this.proposal);
 
             ByteString value;
             if (maxAcceptedProposal == 0) {
-                logger.trace("End prepare({}) No other chose value, max ballot is {}, use my value", this.instanceId, this.totalMaxProposal);
+                logger.trace("{}: End prepare({}) No other chose value, max ballot is {}, use my value", msgId.getAndIncrement(), this.instanceId, this.totalMaxProposal);
                 value = this.value;
             }
             else {
-                logger.trace("End prepare({}) use another accepted value with proposal {}", this.instanceId, maxAcceptedProposal);
+                logger.trace("{}: End prepare({}) use another accepted value with proposal {}", msgId.getAndIncrement(), this.instanceId, maxAcceptedProposal);
                 value = this.acceptedValue;
             }
 
@@ -329,6 +342,7 @@ public class Proposer {
         private final AtomicInteger maxProposal = new AtomicInteger(0);
         private volatile boolean allAccepted = true;
         private IntBitSet repliedNodes = new IntBitSet();
+        private int acceptedCount = 0;
         private volatile boolean chosenByOther;
 
         public AcceptActor(long instanceId, ByteString value, int proposal) {
@@ -339,21 +353,24 @@ public class Proposer {
         }
 
         public void begin() {
-            logger.debug("start accept instance {} with proposal  {} ", this.instanceId, this.proposal);
+            logger.debug("{}: start accept instance {} with proposal  {} ", msgId.getAndIncrement(), this.instanceId, this.proposal);
             Proposer.this.instanceId = this.instanceId;
 
-            Event.AcceptRequest request = new Event.AcceptRequest(config.serverId(), this.instanceId, this.proposal, this.value);
+            Event.AcceptRequest request = new Event.AcceptRequest(config.serverId(), squadId, this.instanceId, round.get(), this.proposal, this.value);
             Proposer.this.communicator.get().broadcast(request);
         }
 
-        public void onReply(Event.AcceptResponse response) {
+        public synchronized void onReply(Event.AcceptResponse response) {
             if (this.repliedNodes.get(response.senderId())) {
-                logger.warn("Duplicated ACCEPT response {}", response);
+                logger.warn("{}: Duplicated ACCEPT response {}", msgId.getAndIncrement(), response);
                 return;
             }
-            if (!response.accepted()) {
+            if (response.result() == Event.RESULT_REJECT) {
                 this.allAccepted = false;
+            } else if (response.result() == Event.RESULT_SUCCESS){
+                this.acceptedCount++;
             }
+
             if (response.maxBallot() == Integer.MAX_VALUE) {
                 this.chosenByOther = true;
             }
@@ -362,8 +379,8 @@ public class Proposer {
             this.repliedNodes.add(response.senderId());
         }
 
-        public boolean isAllAccepted() {
-            return this.allAccepted;
+        public boolean isAccepted() {
+            return this.allAccepted && config.reachQuorum(acceptedCount);
         }
 
         public boolean isAllReplied() {
@@ -379,9 +396,11 @@ public class Proposer {
         }
 
         public void notifyChosen() {
-            logger.debug("Notify instance {} chosen", this.instanceId);
-            Event notify = new Event.ChosenNotify(config.serverId(), this.instanceId, this.proposal);
-            communicator.get().broadcast(notify);
+            logger.debug("{}: Notify instance {} chosen", msgId.getAndIncrement(), this.instanceId);
+
+            //Then notify other peers
+            Event notify = new Event.ChosenNotify(config.serverId(), squadId, this.instanceId, this.proposal);
+            communicator.get().callAndBroadcast(notify);
         }
     }
 

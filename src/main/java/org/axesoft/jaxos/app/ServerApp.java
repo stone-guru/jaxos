@@ -1,12 +1,8 @@
 package org.axesoft.jaxos.app;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.joran.JoranConfigurator;
-import ch.qos.logback.core.joran.spi.JoranException;
 import org.axesoft.jaxos.JaxosConfig;
 import org.axesoft.jaxos.httpserver.HttpApiServer;
 import org.axesoft.jaxos.netty.NettyJaxosNode;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author gaoyuan

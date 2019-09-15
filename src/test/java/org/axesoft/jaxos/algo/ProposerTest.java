@@ -26,6 +26,11 @@ public class ProposerTest {
             }
 
             @Override
+            public void callAndBroadcast(Event msg) {
+
+            }
+
+            @Override
             public void close() {
 
             }
@@ -41,11 +46,9 @@ public class ProposerTest {
         Thread.sleep(2);
 
         new Thread(() -> {
-            p.processPrepareResponse(new Event.PrepareResponse(1, 1, true, 0, 0, ByteString.EMPTY));
-            p.processPrepareResponse(new Event.PrepareResponse(2, 1, true, 0, 0, ByteString.EMPTY));
-            p.processPrepareResponse(new Event.PrepareResponse(3, 1, true, 0, 0, ByteString.EMPTY));
+//            p.processPrepareResponse(new Event.PrepareResponse(1, 1, 1, 0, true, 0, 0, ByteString.EMPTY));
+//            p.processPrepareResponse(new Event.PrepareResponse(2, 1, 1, 0, true, 0, 0, ByteString.EMPTY));
+//            p.processPrepareResponse(new Event.PrepareResponse(3, 1, 1, 0, true, 0, 0, ByteString.EMPTY));
         }).start();
-
-        Thread.sleep(10000);
     }
 }

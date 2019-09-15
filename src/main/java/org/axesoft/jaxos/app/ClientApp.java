@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientApp {
     private static final String DEFAULT_URL = "http://localhost:8082";
-    private static final int PAR_FACTOR = 4;
+    private static final int PAR_FACTOR = 3;
 
     public static void main(String[] args) throws Exception {
         ClientApp app = new ClientApp();
@@ -29,7 +29,7 @@ public class ClientApp {
     }
 
     private HttpRequest request;
-    private int n = 10000;
+    private int n = 200000;
     private long start = 0;
     private AtomicInteger count = new AtomicInteger(0);
 
@@ -118,6 +118,10 @@ public class ClientApp {
 
                 if(i < 100 || i%1000 == 0 || n - i < 100) {
                     System.err.print(content.content().toString(CharsetUtil.UTF_8));
+                }
+
+                if(i == 100){
+                    System.err.println("...");
                 }
 
                 if(i < n){

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package  org.jaxos.network.protobuff;
+package  org.axesoft.jaxos.network.protobuff;
 
 option java_outer_classname="PaxosMessage";
 
@@ -16,26 +16,33 @@ enum Code {
   
   ACCEPTED_NOTIFY = 7;
   ACCEPTED_ACK = 8;
-  
+
   NOOP=10;
+
+  LEARN_REQ = 11;
+  LEARN_RES = 12;
 }
 
 message DataGram {
   Code code = 1;
   int32 sender = 2;
-  int64 instanceId = 3;
-  bytes body = 4;
+  int32 squadId = 3;
+  int64 instanceId = 4;
+  int32 round = 5;
+  bytes body = 6;
 }
 
 message PrepareReq {
   int32 ballot = 1;
 }
 
+
 message PrepareRes {
-  bool success = 1;
+  int32 result = 1;
   int32 maxBallot = 2;
   int32 acceptedBallot = 3;
   bytes acceptedValue = 4;
+  int64 chosenInstanceId = 5;
 }
 
 message AcceptReq {
@@ -44,9 +51,21 @@ message AcceptReq {
 }
 
 message AcceptRes {
-  bool success = 1;
-  int32 maxBallot = 2;
+  int64 chosenInstanceId = 1;
+  int32 result = 2;
+  int32 maxBallot = 3;
 }
 
 
+message LearnReq {
+  int64 highInstanceId = 1;
+}
 
+message LearnRes {
+  repeated InstanceRecord records = 1;
+}
+
+message InstanceRecord {
+  int64 instanceId = 1;
+  bytes value = 2;
+}

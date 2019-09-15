@@ -3,12 +3,15 @@ package org.axesoft.jaxos.app;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Strings;
+import com.sun.jdi.connect.Connector;
 import org.axesoft.jaxos.JaxosConfig;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @author gaoyuan
@@ -25,8 +28,20 @@ public class ArgumentParser {
         @Parameter(names = {"-g"}, description = "ignore other leader, always do propose")
         private boolean ignoreLeader = false;
 
-        @Parameter(names = {"-d"}, description ="Directory of DB")
+        @Parameter(names = {"-d"}, description = "Directory of DB")
         private String dbDirectory;
+    }
+
+    private Properties properties;
+
+    public ArgumentParser() {
+    }
+
+    /**
+     * @param properties provided properties will take over the property file
+     */
+    public ArgumentParser(Properties properties) {
+        this.properties = checkNotNull(properties);
     }
 
     public JaxosConfig parse(String[] sx) {
@@ -37,7 +52,7 @@ public class ArgumentParser {
                 .build()
                 .parse(sx);
 
-        if(Strings.isNullOrEmpty(args.dbDirectory)){
+        if (Strings.isNullOrEmpty(args.dbDirectory)) {
             throw new IllegalArgumentException("parameter \"-d\" dbDirectory not set");
         }
 
@@ -46,22 +61,26 @@ public class ArgumentParser {
                 .setDbDirectory(args.dbDirectory)
                 .setIgnoreLeader(args.ignoreLeader);
 
-        loadAddressFromFile(b, args.configFilename, args.id);
+        if(this.properties == null) {
+            this.properties = new Properties();
+            try {
+                properties.load(new BufferedReader(new FileReader(args.configFilename)));
+            } catch (IOException e) {
+                this.properties = null;
+                throw new RuntimeException(e);
+            }
+        }
+
+        loadAddressFromFile(b, this.properties, args.id);
 
         return b.build();
     }
 
-    private JaxosConfig.Builder loadAddressFromFile(JaxosConfig.Builder builder, String fileName, int selfId){
-        Properties properties = new Properties();
-        try {
-            properties.load(new BufferedReader(new FileReader(fileName)));
-        }
-        catch (IOException e) {
-            return builder;
-        }
+    private JaxosConfig.Builder loadAddressFromFile(JaxosConfig.Builder builder, Properties properties, int selfId) {
+
         boolean selfPortSet = false;
-        for(String k : properties.stringPropertyNames()){
-            if(!k.startsWith("peer.")){
+        for (String k : properties.stringPropertyNames()) {
+            if (!k.startsWith("peer.")) {
                 continue;
             }
             String[] sx = k.split("\\.");
@@ -74,17 +93,16 @@ public class ArgumentParser {
 
             JaxosConfig.Peer peer = new JaxosConfig.Peer(id, address, port, httpPort);
             if (id == selfId) {
-                if(selfPortSet){
+                if (selfPortSet) {
                     throw new IllegalArgumentException("more than one self");
                 }
                 builder.setSelf(peer);
                 selfPortSet = true;
-            } else {
-                builder.addPeer(peer);
             }
+            builder.addPeer(peer);
         }
 
-        if(!selfPortSet){
+        if (!selfPortSet) {
             throw new IllegalArgumentException("self setting not found selfId=" + selfId);
         }
 

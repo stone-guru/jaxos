@@ -39,6 +39,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .put(PaxosMessage.Code.PREPARE_REQ, Event.Code.PREPARE)
                 .put(PaxosMessage.Code.PREPARE_RES, Event.Code.PREPARE_RESPONSE)
                 .put(PaxosMessage.Code.ACCEPTED_NOTIFY, Event.Code.ACCEPTED_NOTIFY)
+                .put(PaxosMessage.Code.ACCEPTED_ACK, Event.Code.ACCEPTED_NOTIFY_RESPONSE)
                 .build();
         encodeMap = decodeMap.inverse();
         this.config = config;
@@ -86,7 +87,9 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         return PaxosMessage.DataGram.newBuilder()
                 .setSender(event.senderId())
                 .setCode(toProtoCode(event.code()))
+                .setSquadId(event.squadId())
                 .setInstanceId(event.instanceId())
+                .setRound(event.round())
                 .setBody(body)
                 .build();
     }
@@ -100,10 +103,11 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
 
     private ByteString encodeBody(Event.PrepareResponse resp) {
         return PaxosMessage.PrepareRes.newBuilder()
-                .setSuccess(resp.success())
+                .setResult(resp.result())
                 .setMaxBallot(resp.maxBallot())
                 .setAcceptedBallot(resp.acceptedBallot())
                 .setAcceptedValue(resp.acceptedValue())
+                .setChosenInstanceId(resp.chosenInstanceId())
                 .build()
                 .toByteString();
 
@@ -120,7 +124,8 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
     private ByteString encodeBody(Event.AcceptResponse resp) {
         return PaxosMessage.AcceptRes.newBuilder()
                 .setMaxBallot(resp.maxBallot())
-                .setSuccess(resp.accepted())
+                .setResult(resp.result())
+                .setChosenInstanceId(resp.chosenInstanceId())
                 .build()
                 .toByteString();
     }
@@ -167,27 +172,31 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
 
     private Event decodePrepareReq(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.PrepareReq prepareReq = PaxosMessage.PrepareReq.parseFrom(dataGram.getBody());
-        return new Event.PrepareRequest(dataGram.getSender(), dataGram.getInstanceId(), prepareReq.getBallot());
+        return new Event.PrepareRequest(dataGram.getSender(), dataGram.getSquadId(), dataGram.getInstanceId(), dataGram.getRound(), prepareReq.getBallot());
     }
 
     private Event decodePrepareResponse(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.PrepareRes res = PaxosMessage.PrepareRes.parseFrom(dataGram.getBody());
-        return new Event.PrepareResponse(dataGram.getSender(), dataGram.getInstanceId(),
-                res.getSuccess(), res.getMaxBallot(), res.getAcceptedBallot(), res.getAcceptedValue());
+        return new Event.PrepareResponse.Builder(dataGram.getSender(), dataGram.getSquadId(), dataGram.getInstanceId(), dataGram.getRound())
+                .setResult(res.getResult())
+                .setAccepted(res.getAcceptedBallot(), res.getAcceptedValue())
+                .setMaxProposal(res.getMaxBallot())
+                .setChosenInstanceId(res.getChosenInstanceId())
+                .build();
     }
 
     private Event decodeAcceptReq(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.AcceptReq req = PaxosMessage.AcceptReq.parseFrom(dataGram.getBody());
-        return new Event.AcceptRequest(dataGram.getSender(), dataGram.getInstanceId(), req.getBallot(), req.getValue());
+        return new Event.AcceptRequest(dataGram.getSender(), dataGram.getSquadId(), dataGram.getInstanceId(), dataGram.getRound(), req.getBallot(), req.getValue());
     }
 
     private Event decodeAcceptResponse(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.AcceptRes res = PaxosMessage.AcceptRes.parseFrom(dataGram.getBody());
-        return new Event.AcceptResponse(dataGram.getSender(), dataGram.getInstanceId(), res.getMaxBallot(), res.getSuccess());
+        return new Event.AcceptResponse(dataGram.getSender(), dataGram.getSquadId(), dataGram.getInstanceId(), dataGram.getRound(), res.getMaxBallot(), res.getResult(), res.getChosenInstanceId());
     }
 
     private Event decodeAcceptedNotify(PaxosMessage.DataGram dataGram){
         int ballot = Ints.fromByteArray(dataGram.getBody().toByteArray());
-        return new Event.ChosenNotify(dataGram.getSender(), dataGram.getInstanceId(), ballot);
+        return new Event.ChosenNotify(dataGram.getSender(), dataGram.getSquadId(), dataGram.getInstanceId(), ballot);
     }
 }

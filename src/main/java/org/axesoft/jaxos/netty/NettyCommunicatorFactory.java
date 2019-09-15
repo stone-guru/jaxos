@@ -77,8 +77,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             this.communicator = new ChannelGroupCommunicator(worker, bootstrap);
             this.communicator.start();
             return this.communicator;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -89,7 +88,10 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         private Bootstrap bootstrap;
         private EventLoopGroup worker;
         private RateLimiter logLimiter = RateLimiter.create(1.0 / 15);
+
         private Map<ChannelId, JaxosConfig.Peer> channelPeerMap = new ConcurrentHashMap<>();
+        private Map<Integer, ChannelId> channelIdMap = new ConcurrentHashMap<>();
+
         private PaxosMessage.DataGram heartBeatDataGram = coder.encode(new Event.HeartBeatRequest(config.serverId()));
 
         public ChannelGroupCommunicator(EventLoopGroup worker, Bootstrap bootstrap) {
@@ -130,7 +132,11 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                 }
                 else {
                     logger.info("Connected to {}", peer);
-                    channelPeerMap.put(future.channel().id(), peer);
+                    Channel c = future.channel();
+
+                    channels.add(c);
+                    channelPeerMap.put(c.id(), peer);
+                    channelIdMap.put(peer.id(), c.id());
                 }
             });
         }
@@ -145,20 +151,27 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             logger.trace("Broadcast {} " + event);
             PaxosMessage.DataGram dataGram = coder.encode(event);
             channels.writeAndFlush(dataGram);
-            Event ret = localEventEntryPoint.process(event);
-            if (ret != null) {
-                localEventEntryPoint.process(ret);
-            }
         }
 
-        public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            channels.add(ctx.channel());
+        @Override
+        public void callAndBroadcast(Event event) {
+            localEventEntryPoint.process(event);
+
+            PaxosMessage.DataGram dataGram = coder.encode(event);
+            ChannelId id = channelIdMap.get(config.serverId());
+            channels.writeAndFlush(dataGram, c -> !c.id().equals(id));
         }
 
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             Channel c = ctx.channel();
-            logger.error("Disconnected from a server {}", channelPeerMap.get(c.id()));
+
             channels.remove(ctx.channel());
+            JaxosConfig.Peer p = channelPeerMap.get(c.id());
+
+            logger.error("Disconnected from a server {}", p);
+            if (p != null) {
+                channelIdMap.remove(p.id());
+            }
 
             connect(c.id());
         }
@@ -168,19 +181,13 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             try {
                 channels.close().sync();
                 worker.shutdownGracefully().sync();
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
     private class JaxosClientHandler extends ChannelInboundHandlerAdapter {
-        @Override
-        public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            communicator.channelActive(ctx);
-        }
-
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             communicator.channelInactive(ctx);

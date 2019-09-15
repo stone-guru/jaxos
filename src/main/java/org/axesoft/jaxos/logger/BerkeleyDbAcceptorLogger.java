@@ -1,10 +1,8 @@
 package org.axesoft.jaxos.logger;
 
-import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.sleepycat.bind.EntryBinding;
-import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.bind.tuple.TupleInput;
@@ -50,6 +48,8 @@ public class BerkeleyDbAcceptorLogger implements AcceptorLogger {
     private EntryBinding promiseDataBinding;
 
     public BerkeleyDbAcceptorLogger(String path) {
+        tryCreateDir(path);
+
         EnvironmentConfig config = new EnvironmentConfig();
         config.setAllowCreate(true);
         config.setTransactional(true);
@@ -64,8 +64,21 @@ public class BerkeleyDbAcceptorLogger implements AcceptorLogger {
         this.promiseDataBinding = new PromiseTupleBinding();
     }
 
+    private void tryCreateDir(String path){
+        File f = new File(path);
+        if(f.exists()){
+            if(!f.isDirectory()){
+                throw new RuntimeException(path + " is not a directory");
+            }
+        } else {
+            if(!f.mkdir()){
+                throw new RuntimeException("can not mkdir at " + path);
+            }
+        }
+    }
+
     @Override
-    public void saveLastPromise(int squadId, long instanceId, int proposal, ByteString value) {
+    public void savePromise(int squadId, long instanceId, int proposal, ByteString value) {
         Promise promise = new Promise();
         promise.squadId = squadId;
         promise.instanceId = instanceId;
@@ -75,12 +88,39 @@ public class BerkeleyDbAcceptorLogger implements AcceptorLogger {
         DatabaseEntry valueEntry = new DatabaseEntry();
         promiseDataBinding.objectToEntry(promise, valueEntry);
 
-        this.db.put(null, keyOfInt(squadId), valueEntry);
+        this.db.put(null, keyOfInt(instanceId), valueEntry);
     }
 
     @Override
     public Promise loadLastPromise(int squadId) {
-        DatabaseEntry key = keyOfInt(squadId);
+        DatabaseEntry key = new DatabaseEntry();
+        DatabaseEntry value = new DatabaseEntry();
+
+        Cursor cursor = null;
+        Promise result = null;
+        try {
+            cursor = this.db.openCursor(null, null);
+
+            if (cursor.getPrev(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+                if(value.getSize() <= 1){
+                    return null;
+                }
+                return (Promise) this.promiseDataBinding.entryToObject(value);
+                //System.out.println(p.value.toStringUtf8());
+                //System.out.println(p);
+            }
+            return null;
+        }finally{
+            if(cursor != null){
+                cursor.close();
+            }
+        }
+
+    }
+
+    @Override
+    public Promise loadPromise(int squadId, long instanceId) {
+        DatabaseEntry key = keyOfInt(instanceId);
         DatabaseEntry value = new DatabaseEntry();
 
         OperationStatus status = this.db.get(null, key, value, LockMode.DEFAULT);
@@ -101,7 +141,7 @@ public class BerkeleyDbAcceptorLogger implements AcceptorLogger {
         }
     }
 
-    private DatabaseEntry keyOfInt(int i){
-        return new DatabaseEntry(Ints.toByteArray(i));
+    private DatabaseEntry keyOfInt(long i){
+        return new DatabaseEntry(Longs.toByteArray(i));
     }
 }

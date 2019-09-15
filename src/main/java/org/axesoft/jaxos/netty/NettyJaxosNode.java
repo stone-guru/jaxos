@@ -101,7 +101,6 @@ public class NettyJaxosNode {
     }
 
     public void shutdown() {
-
     }
 
 

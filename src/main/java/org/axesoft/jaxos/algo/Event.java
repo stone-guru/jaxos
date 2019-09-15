@@ -2,74 +2,90 @@ package org.axesoft.jaxos.algo;
 
 import com.google.protobuf.ByteString;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * @author gaoyuan
  * @sine 2019/8/22.
  */
-public interface Event {
-    enum Code {
+public abstract class Event {
+    public enum Code {
         NOOP, HEART_BEAT, HEART_BEAT_RESPONSE, PREPARE, PREPARE_RESPONSE, ACCEPT, ACCEPT_RESPONSE,
-        ACCEPTED_NOTIFY
+        ACCEPTED_NOTIFY, ACCEPTED_NOTIFY_RESPONSE
     }
 
-    Code code();
-    int senderId();
-    long instanceId();
+    //FIXME refact to enum
+    public static final int RESULT_REJECT = 0;
+    public static final int RESULT_SUCCESS = 1;
+    public static final int RESULT_STANDBY = 3;
 
-    class HeartBeatRequest implements Event {
-        private final int senderId;
+    private int senderId;
+    private int squadId;
+    private long instanceId;
+    private int round;
 
+    public Event(int senderId, int squadId, long instanceId, int round) {
+        this.senderId = senderId;
+        this.squadId = squadId;
+        this.instanceId = instanceId;
+        this.round = round;
+    }
+
+    abstract public Code code();
+
+    public int senderId() {
+        return this.senderId;
+    }
+
+    public int squadId() {
+        return this.squadId;
+    }
+
+    public long instanceId() {
+        return this.instanceId;
+    }
+
+    public int round() {
+        return this.round;
+    }
+
+
+    @Override
+    public String toString() {
+        return "senderId=" + senderId +
+                ", squadId=" + squadId +
+                ", instanceId=" + instanceId +
+                ", round=" + round;
+    }
+
+    public static class HeartBeatRequest extends Event {
         public HeartBeatRequest(int senderId) {
-            this.senderId = senderId;
+            super(senderId, 0, 0, 0);
         }
 
         @Override
         public Code code() {
             return Code.HEART_BEAT;
         }
-
-        @Override
-        public int senderId() {
-            return this.senderId;
-        }
-
-        @Override
-        public long instanceId() {
-            return 0;
-        }
     }
 
-    class HeartBeatResponse implements Event {
-        private final int senderId;
-
+    public static class HeartBeatResponse extends Event {
         public HeartBeatResponse(int senderId) {
-            this.senderId = senderId;
+            super(senderId, 0, 0, 0);
+            super.senderId = senderId;
         }
 
         @Override
         public Code code() {
             return Code.HEART_BEAT_RESPONSE;
         }
-
-        @Override
-        public int senderId() {
-            return this.senderId;
-        }
-
-        @Override
-        public long instanceId() {
-            return 0;
-        }
     }
 
-    class PrepareRequest implements Event {
-        private int sender;
-        private long instanceId;
+    public static class PrepareRequest extends Event {
         private int ballot;
 
-        public PrepareRequest(int sender, long instanceId, int ballot) {
-            this.sender = sender;
-            this.instanceId = instanceId;
+        public PrepareRequest(int sender, int squadId, long instanceId, int round, int ballot) {
+            super(sender, squadId, instanceId, round);
             this.ballot = ballot;
         }
 
@@ -78,60 +94,62 @@ public interface Event {
             return Code.PREPARE;
         }
 
-        @Override
-        public int senderId() {
-            return sender;
-        }
-
-        @Override
-        public long instanceId() {
-            return instanceId;
-        }
 
         public int ballot() {
             return ballot;
         }
 
-        public PrepareRequest setSender(int sender) {
-            this.sender = sender;
-            return this;
-        }
-
-        public PrepareRequest setInstanceId(long instanceId) {
-            this.instanceId = instanceId;
-            return this;
-        }
-
-        public PrepareRequest setBallot(int ballot) {
-            this.ballot = ballot;
-            return this;
-        }
-
         @Override
         public String toString() {
-            return "PrepareRequest{" +
-                    "sender=" + sender +
-                    ", instanceId=" + instanceId +
-                    ", ballot=" + ballot +
+            return "PrepareRequest{" + super.toString() +
+                    ", ballot=" + this.ballot +
                     '}';
         }
     }
 
-    class PrepareResponse implements Event {
-        private int sender;
-        private long instanceId;
-        private boolean success;
+
+    public static class PrepareResponse extends Event {
+        private int result;
         private int maxBallot;
         private int acceptedBallot;
         private ByteString acceptedValue;
+        private long chosenInstanceId;
 
-        public PrepareResponse(int sender, long instanceId, boolean success, int maxBallot, int acceptedBallot, ByteString acceptedValue) {
-            this.sender = sender;
-            this.instanceId = instanceId;
-            this.success = success;
-            this.maxBallot = maxBallot;
-            this.acceptedBallot = acceptedBallot;
-            this.acceptedValue = acceptedValue;
+        public static class Builder {
+            private PrepareResponse resp;
+
+            public Builder(int sender, int squadId, long instanceId, int round) {
+                resp = new PrepareResponse(sender, squadId, instanceId, round);
+            }
+
+            public Builder setResult(int result) {
+                resp.result = result;
+                return this;
+            }
+
+            public Builder setMaxProposal(int proposal) {
+                resp.maxBallot = proposal;
+                return this;
+            }
+
+            public Builder setAccepted(int proposal, ByteString value) {
+                resp.acceptedBallot = proposal;
+                resp.acceptedValue = checkNotNull(value);
+                return this;
+            }
+
+            public Builder setChosenInstanceId(long i) {
+                resp.chosenInstanceId = i;
+                return this;
+            }
+
+            public PrepareResponse build() {
+                return resp;
+            }
+        }
+
+        private PrepareResponse(int sender, int squadId, long instanceId, int round) {
+            super(sender, squadId, instanceId, round);
         }
 
         @Override
@@ -139,18 +157,8 @@ public interface Event {
             return Code.PREPARE_RESPONSE;
         }
 
-        @Override
-        public int senderId() {
-            return this.sender;
-        }
-
-        @Override
-        public long instanceId() {
-            return this.instanceId;
-        }
-
-        public boolean success(){
-            return this.success;
+        public int result() {
+            return this.result;
         }
 
         public int maxBallot() {
@@ -165,45 +173,35 @@ public interface Event {
             return this.acceptedValue;
         }
 
+        public long chosenInstanceId() {
+            return this.chosenInstanceId;
+        }
+
         @Override
         public String toString() {
-            return "PrepareResponse{" +
-                    "sender=" + sender +
-                    ", instanceId=" + instanceId +
-                    ", success=" + success +
+            return "PrepareResponse{" + super.toString() +
+                    ", result =" + result +
                     ", maxBallot=" + maxBallot +
                     ", acceptedBallot=" + acceptedBallot +
-                    ", acceptedValue=" + acceptedValue.toStringUtf8() + //FIXME not string in future
+                    ", acceptedValue=B[" + acceptedValue.size() + "]" +
+                    ", chosenInstanceId=" + chosenInstanceId +
                     '}';
         }
     }
 
-    class AcceptRequest implements Event {
-        private int sender;
-        private long instanceId;
+    public static class AcceptRequest extends Event {
         private int ballot;
         private ByteString value;
 
-        public AcceptRequest(int sender, long instanceId, int ballot, ByteString value) {
-            this.sender = sender;
-            this.instanceId = instanceId;
+        public AcceptRequest(int sender, int squadId, long instanceId, int round, int ballot, ByteString value) {
+            super(sender, squadId, instanceId, round);
             this.ballot = ballot;
-            this.value = value;
+            this.value = checkNotNull(value);
         }
 
         @Override
         public Code code() {
             return Code.ACCEPT;
-        }
-
-        @Override
-        public int senderId() {
-            return this.sender;
-        }
-
-        @Override
-        public long instanceId() {
-            return this.instanceId;
         }
 
         public int ballot() {
@@ -216,26 +214,23 @@ public interface Event {
 
         @Override
         public String toString() {
-            return "AcceptRequest{" +
-                    "sender=" + sender +
-                    ", instanceId=" + instanceId +
+            return "AcceptRequest{" + super.toString() +
                     ", ballot=" + ballot +
-                    ", value=" + value.toStringUtf8() + //FIXME not string in future
+                    ", value=B[" + value.size() + "]" +
                     '}';
         }
     }
 
-    class AcceptResponse implements Event {
-        private int sender;
-        private long instanceId;
+    public static class AcceptResponse extends Event {
         private int maxBallot;
-        private boolean accepted;
+        private int result;
+        private long chosenInstanceId;
 
-        public AcceptResponse(int sender, long instanceId, int maxBallot, boolean accepted) {
-            this.sender = sender;
-            this.instanceId = instanceId;
+        public AcceptResponse(int sender, int squadId, long instanceId, int round, int maxBallot, int result, long chosenInstanceId) {
+            super(sender, squadId, instanceId, round);
             this.maxBallot = maxBallot;
-            this.accepted = accepted;
+            this.result = result;
+            this.chosenInstanceId = chosenInstanceId;
         }
 
         @Override
@@ -243,43 +238,33 @@ public interface Event {
             return Code.ACCEPT_RESPONSE;
         }
 
-        @Override
-        public int senderId() {
-            return this.sender;
-        }
-
-        @Override
-        public long instanceId() {
-            return this.instanceId;
-        }
-
         public int maxBallot() {
             return this.maxBallot;
         }
 
-        public boolean accepted(){
-            return this.accepted;
+        public int result() {
+            return this.result;
+        }
+
+        public long chosenInstanceId() {
+            return this.chosenInstanceId;
         }
 
         @Override
         public String toString() {
-            return "AcceptResponse{" +
-                    "sender=" + sender +
-                    ", instanceId=" + instanceId +
-                    ", ballot=" + maxBallot +
-                    ", accepted=" + accepted +
+            return "AcceptResponse{" + super.toString() +
+                    ", maxBallot=" + maxBallot +
+                    ", result=" + result +
+                    ", chosenInstanceId=" + chosenInstanceId +
                     '}';
         }
     }
 
-    class ChosenNotify implements Event {
-        private int sender;
-        private long instanceId;
+    public static class ChosenNotify extends Event {
         private int ballot;
 
-        public ChosenNotify(int sender, long instanceId, int ballot) {
-            this.sender = sender;
-            this.instanceId = instanceId;
+        public ChosenNotify(int sender, int squadId, long instanceId, int ballot) {
+            super(sender, squadId, instanceId, 0);
             this.ballot = ballot;
         }
 
@@ -288,25 +273,13 @@ public interface Event {
             return Code.ACCEPTED_NOTIFY;
         }
 
-        @Override
-        public int senderId() {
-            return this.sender;
-        }
-
-        @Override
-        public long instanceId() {
-            return this.instanceId;
-        }
-
         public int ballot() {
             return this.ballot;
         }
 
         @Override
         public String toString() {
-            return "AcceptedNotify{" +
-                    "sender=" + sender +
-                    ", instanceId=" + instanceId +
+            return "AcceptedNotify{" + super.toString() +
                     ", ballot=" + ballot +
                     '}';
         }

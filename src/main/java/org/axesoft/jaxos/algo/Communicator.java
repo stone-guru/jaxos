@@ -10,5 +10,6 @@ public interface Communicator  {
      */
     boolean available();
     void broadcast(Event msg);
+    void callAndBroadcast(Event msg);
     void close();
 }

@@ -88,7 +88,6 @@ public class JaxosConfig {
         public JaxosConfig build(){
             JaxosConfig config = new JaxosConfig();
             config.serverId = this.serverId;
-            config.self = this.self;
             config.peerMap = this.peerBuilder.build();
             config.ignoreLeader = this.ignoreLeader;
             config.leaderLeaseSeconds = 3;
@@ -99,7 +98,6 @@ public class JaxosConfig {
 
     private Map<Integer, Peer> peerMap;
     private int serverId;
-    private Peer self;
     private int leaderLeaseSeconds;
     private boolean ignoreLeader;
     private String dbDirectory;
@@ -120,11 +118,11 @@ public class JaxosConfig {
     }
 
     public Peer self() {
-        return this.self;
+        return this.peerMap.get(this.serverId);
     }
 
     public int peerCount() {
-        return this.peerMap.size() + 1;
+        return this.peerMap.size();
     }
 
     public int leaderLeaseSeconds(){
@@ -138,12 +136,16 @@ public class JaxosConfig {
     public String dbDirectory(){
         return this.dbDirectory;
     }
+
+    public boolean reachQuorum(int n){
+        return n > this.peerMap.size() / 2;
+    }
+
     @Override
     public String toString() {
         return "JaxosConfig{" +
                 "peerMap=" + peerMap +
                 ", serverId=" + serverId +
-                ", self=" + self +
                 ", leaderLeaseSeconds=" + leaderLeaseSeconds +
                 '}';
     }
