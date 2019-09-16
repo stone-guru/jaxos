@@ -99,7 +99,7 @@ public class TansService implements StateMachine {
             i++;
 
             if (!result.isSuccess()) {
-                logger.warn("Request on key({}) failed by {}", k, result.code());
+                logger.debug("Try acquire on key({}) abort by {}", k, result.code());
             }
 
             if (result.code() == ProposeResult.Code.OTHER_LEADER) {

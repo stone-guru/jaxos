@@ -80,13 +80,13 @@ public class Acceptor {
             if (request.ballot() > this.maxBallot) {
                 this.maxBallot = request.ballot();
                 success = true;
-                //acceptorLogger.savePromise(this.squadId, request.instanceId(), request.ballot(), this.acceptedValue);
+                this.acceptorLogger.savePromise(this.squadId, request.instanceId(), request.ballot(), this.acceptedValue);
             }
 
             return new Event.PrepareResponse.Builder(config.serverId(), this.squadId, request.instanceId(), request.round())
                     .setResult(success ? Event.RESULT_SUCCESS : Event.RESULT_REJECT)
                     .setMaxProposal(b0)
-                    .setAccepted(acceptedBallot, acceptedValue)
+                    .setAccepted(this.acceptedBallot, this.acceptedValue)
                     .setChosenInstanceId(last)
                     .build();
         }

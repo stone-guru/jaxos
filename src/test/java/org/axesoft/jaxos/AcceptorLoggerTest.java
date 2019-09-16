@@ -3,7 +3,7 @@ package org.axesoft.jaxos;
 import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.time.StopWatch;
 import org.axesoft.jaxos.algo.AcceptorLogger;
-import org.axesoft.jaxos.logger.BerkeleyDbAcceptorLogger;
+import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -25,8 +25,7 @@ public class AcceptorLoggerTest {
         if(!dir.exists()){
             dir.mkdir();
         }
-        logger = new BerkeleyDbAcceptorLogger(DB_DIR);
-        //logger = new FileAcceptorLogger(DB_DIR);
+        logger = new LevelDbAcceptorLogger(DB_DIR);
     }
 
     @AfterClass

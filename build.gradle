@@ -56,7 +56,8 @@ dependencies {
     //implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
-    implementation group: 'com.sleepycat', name: 'je', version: '5.0.73'
+    implementation group: 'org.iq80.leveldb', name: 'leveldb', version: '0.12'
+    implementation group: 'org.iq80.leveldb', name: 'leveldb-api', version: '0.12'
     // Use JUnit test framework
     testImplementation 'junit:junit:4.10'
 

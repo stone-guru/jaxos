@@ -19,7 +19,7 @@
     <appender-ref ref="FILE"/>
   </root>
 
-  <logger name="org.axesoft.jaxos" level="INFO"/>
-  <logger name="org.axesoft.tans.server.TansService" level="INFO"/>
+  <logger name="org.axesoft.jaxos" level="WARN"/>
+  <logger name="org.axesoft.tans.server.TansService" level="WARN"/>
   <logger name="org.axesoft.jaxos.network.protobuff" level="INFO"/>
 </configuration>

@@ -3,7 +3,7 @@ package org.axesoft.jaxos;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.axesoft.jaxos.algo.*;
-import org.axesoft.jaxos.logger.BerkeleyDbAcceptorLogger;
+import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
 import org.axesoft.jaxos.netty.NettyCommunicatorFactory;
 import org.axesoft.jaxos.netty.NettyJaxosNode;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ public class JaxosService extends AbstractExecutionThreadService {
     public JaxosService(JaxosSettings settings, StateMachine machine) {
         this.settings = settings;
         this.machine = machine;
-        this.acceptorLogger = new BerkeleyDbAcceptorLogger(this.settings.dbDirectory());
+        this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory());
         this.squad = new Squad(1, settings, () -> communicator, acceptorLogger, machine);
         super.addListener(new JaxosServiceListener(), MoreExecutors.directExecutor());
     }

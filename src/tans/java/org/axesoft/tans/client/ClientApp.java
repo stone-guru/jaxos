@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ClientApp {
-    private static final int PAR_FACTOR = 2;
+    private static final int PAR_FACTOR = 1;
 
     public static final List<String> URLS = ImmutableList.of(
             "http://localhost:8083/acquire?key=billid&n=1",
@@ -36,7 +36,7 @@ public class ClientApp {
         ClientApp app = new ClientApp();
         app.run();
     }
-    private int n = 200000;
+    private int n = 2000;
     private long start = 0;
     private AtomicInteger count = new AtomicInteger(0);
     private List<HttpRequest> requests;
