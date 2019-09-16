@@ -36,7 +36,7 @@ public class ClientApp {
         ClientApp app = new ClientApp();
         app.run();
     }
-    private int n = 1000;
+    private int n = 200000;
     private long start = 0;
     private AtomicInteger count = new AtomicInteger(0);
     private List<HttpRequest> requests;
@@ -139,7 +139,7 @@ public class ClientApp {
 
                 int i = count.getAndIncrement();
 
-                if (i > 0 || i < 1000 || i % 1000 == 0 || n - i < 100) {
+                if (i < 1000 || i % 1000 == 0 || n - i < 100) {
                     String s = content.content().toString(CharsetUtil.UTF_8).lines().findFirst().orElseGet(() -> "");
 
                     System.err.println(response.headers().get(HttpHeaderNames.HOST) + ","
@@ -153,8 +153,8 @@ public class ClientApp {
 
                 if (i < n) {
                     try {
-                        if (i > 0) {
-                            Thread.sleep((long) (Math.random() * 50));
+                        if (i == 0) {
+                            Thread.sleep((long) (Math.random() * 1));
                         }
 
                         ctx.writeAndFlush(selectRequest(i));

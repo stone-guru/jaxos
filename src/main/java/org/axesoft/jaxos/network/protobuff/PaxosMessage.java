@@ -987,6 +987,11 @@ public final class PaxosMessage {
      * <code>optional int32 ballot = 1;</code>
      */
     int getBallot();
+
+    /**
+     * <code>optional int32 lastChosenBallot = 2;</code>
+     */
+    int getLastChosenBallot();
   }
   /**
    * Protobuf type {@code org.axesoft.jaxos.network.protobuff.PrepareReq}
@@ -1001,6 +1006,7 @@ public final class PaxosMessage {
     }
     private PrepareReq() {
       ballot_ = 0;
+      lastChosenBallot_ = 0;
     }
 
     @java.lang.Override
@@ -1031,6 +1037,11 @@ public final class PaxosMessage {
             case 8: {
 
               ballot_ = input.readInt32();
+              break;
+            }
+            case 16: {
+
+              lastChosenBallot_ = input.readInt32();
               break;
             }
           }
@@ -1065,6 +1076,15 @@ public final class PaxosMessage {
       return ballot_;
     }
 
+    public static final int LASTCHOSENBALLOT_FIELD_NUMBER = 2;
+    private int lastChosenBallot_;
+    /**
+     * <code>optional int32 lastChosenBallot = 2;</code>
+     */
+    public int getLastChosenBallot() {
+      return lastChosenBallot_;
+    }
+
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -1080,6 +1100,9 @@ public final class PaxosMessage {
       if (ballot_ != 0) {
         output.writeInt32(1, ballot_);
       }
+      if (lastChosenBallot_ != 0) {
+        output.writeInt32(2, lastChosenBallot_);
+      }
     }
 
     public int getSerializedSize() {
@@ -1090,6 +1113,10 @@ public final class PaxosMessage {
       if (ballot_ != 0) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(1, ballot_);
+      }
+      if (lastChosenBallot_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, lastChosenBallot_);
       }
       memoizedSize = size;
       return size;
@@ -1109,6 +1136,8 @@ public final class PaxosMessage {
       boolean result = true;
       result = result && (getBallot()
           == other.getBallot());
+      result = result && (getLastChosenBallot()
+          == other.getLastChosenBallot());
       return result;
     }
 
@@ -1121,6 +1150,8 @@ public final class PaxosMessage {
       hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + BALLOT_FIELD_NUMBER;
       hash = (53 * hash) + getBallot();
+      hash = (37 * hash) + LASTCHOSENBALLOT_FIELD_NUMBER;
+      hash = (53 * hash) + getLastChosenBallot();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -1241,6 +1272,8 @@ public final class PaxosMessage {
         super.clear();
         ballot_ = 0;
 
+        lastChosenBallot_ = 0;
+
         return this;
       }
 
@@ -1264,6 +1297,7 @@ public final class PaxosMessage {
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq(this);
         result.ballot_ = ballot_;
+        result.lastChosenBallot_ = lastChosenBallot_;
         onBuilt();
         return result;
       }
@@ -1307,6 +1341,9 @@ public final class PaxosMessage {
         if (other == org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.getDefaultInstance()) return this;
         if (other.getBallot() != 0) {
           setBallot(other.getBallot());
+        }
+        if (other.getLastChosenBallot() != 0) {
+          setLastChosenBallot(other.getLastChosenBallot());
         }
         onChanged();
         return this;
@@ -1356,6 +1393,32 @@ public final class PaxosMessage {
       public Builder clearBallot() {
         
         ballot_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int lastChosenBallot_ ;
+      /**
+       * <code>optional int32 lastChosenBallot = 2;</code>
+       */
+      public int getLastChosenBallot() {
+        return lastChosenBallot_;
+      }
+      /**
+       * <code>optional int32 lastChosenBallot = 2;</code>
+       */
+      public Builder setLastChosenBallot(int value) {
+        
+        lastChosenBallot_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 lastChosenBallot = 2;</code>
+       */
+      public Builder clearLastChosenBallot() {
+        
+        lastChosenBallot_ = 0;
         onChanged();
         return this;
       }
@@ -4859,24 +4922,24 @@ public final class PaxosMessage {
       "am\0227\n\004code\030\001 \001(\0162).org.axesoft.jaxos.net" +
       "work.protobuff.Code\022\016\n\006sender\030\002 \001(\005\022\017\n\007s" +
       "quadId\030\003 \001(\005\022\022\n\ninstanceId\030\004 \001(\003\022\r\n\005roun" +
-      "d\030\005 \001(\005\022\014\n\004body\030\006 \001(\014\"\034\n\nPrepareReq\022\016\n\006b" +
-      "allot\030\001 \001(\005\"x\n\nPrepareRes\022\016\n\006result\030\001 \001(" +
-      "\005\022\021\n\tmaxBallot\030\002 \001(\005\022\026\n\016acceptedBallot\030\003" +
-      " \001(\005\022\025\n\racceptedValue\030\004 \001(\014\022\030\n\020chosenIns" +
-      "tanceId\030\005 \001(\003\"*\n\tAcceptReq\022\016\n\006ballot\030\001 \001",
-      "(\005\022\r\n\005value\030\002 \001(\014\"H\n\tAcceptRes\022\030\n\020chosen" +
-      "InstanceId\030\001 \001(\003\022\016\n\006result\030\002 \001(\005\022\021\n\tmaxB" +
-      "allot\030\003 \001(\005\"\"\n\010LearnReq\022\026\n\016highInstanceI" +
-      "d\030\001 \001(\003\"P\n\010LearnRes\022D\n\007records\030\001 \003(\01323.o" +
-      "rg.axesoft.jaxos.network.protobuff.Insta" +
-      "nceRecord\"3\n\016InstanceRecord\022\022\n\ninstanceI" +
-      "d\030\001 \001(\003\022\r\n\005value\030\002 \001(\014*\307\001\n\004Code\022\010\n\004NONE\020" +
-      "\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021\n\rHEARTBEAT_RES\020\002\022" +
-      "\017\n\013PREPARE_REQ\020\003\022\017\n\013PREPARE_RES\020\004\022\016\n\nACC" +
-      "EPT_REQ\020\005\022\016\n\nACCEPT_RES\020\006\022\023\n\017ACCEPTED_NO",
-      "TIFY\020\007\022\020\n\014ACCEPTED_ACK\020\010\022\010\n\004NOOP\020\n\022\r\n\tLE" +
-      "ARN_REQ\020\013\022\r\n\tLEARN_RES\020\014B\016B\014PaxosMessage" +
-      "b\006proto3"
+      "d\030\005 \001(\005\022\014\n\004body\030\006 \001(\014\"6\n\nPrepareReq\022\016\n\006b" +
+      "allot\030\001 \001(\005\022\030\n\020lastChosenBallot\030\002 \001(\005\"x\n" +
+      "\nPrepareRes\022\016\n\006result\030\001 \001(\005\022\021\n\tmaxBallot" +
+      "\030\002 \001(\005\022\026\n\016acceptedBallot\030\003 \001(\005\022\025\n\raccept" +
+      "edValue\030\004 \001(\014\022\030\n\020chosenInstanceId\030\005 \001(\003\"",
+      "*\n\tAcceptReq\022\016\n\006ballot\030\001 \001(\005\022\r\n\005value\030\002 " +
+      "\001(\014\"H\n\tAcceptRes\022\030\n\020chosenInstanceId\030\001 \001" +
+      "(\003\022\016\n\006result\030\002 \001(\005\022\021\n\tmaxBallot\030\003 \001(\005\"\"\n" +
+      "\010LearnReq\022\026\n\016highInstanceId\030\001 \001(\003\"P\n\010Lea" +
+      "rnRes\022D\n\007records\030\001 \003(\01323.org.axesoft.jax" +
+      "os.network.protobuff.InstanceRecord\"3\n\016I" +
+      "nstanceRecord\022\022\n\ninstanceId\030\001 \001(\003\022\r\n\005val" +
+      "ue\030\002 \001(\014*\307\001\n\004Code\022\010\n\004NONE\020\000\022\021\n\rHEARTBEAT" +
+      "_REQ\020\001\022\021\n\rHEARTBEAT_RES\020\002\022\017\n\013PREPARE_REQ" +
+      "\020\003\022\017\n\013PREPARE_RES\020\004\022\016\n\nACCEPT_REQ\020\005\022\016\n\nA",
+      "CCEPT_RES\020\006\022\023\n\017ACCEPTED_NOTIFY\020\007\022\020\n\014ACCE" +
+      "PTED_ACK\020\010\022\010\n\004NOOP\020\n\022\r\n\tLEARN_REQ\020\013\022\r\n\tL" +
+      "EARN_RES\020\014B\016B\014PaxosMessageb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -4901,7 +4964,7 @@ public final class PaxosMessage {
     internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor,
-        new java.lang.String[] { "Ballot", });
+        new java.lang.String[] { "Ballot", "LastChosenBallot", });
     internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_fieldAccessorTable = new

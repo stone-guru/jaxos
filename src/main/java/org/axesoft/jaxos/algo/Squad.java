@@ -63,7 +63,7 @@ public class Squad implements EventDispatcher,Proponent {
                 return null;
             }
             case ACCEPTED_NOTIFY: {
-                acceptor.chose(((Event.ChosenNotify) event));
+                acceptor.onChoseNotify(((Event.ChosenNotify) event));
                 return null;
             }
             default: {

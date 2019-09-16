@@ -11,7 +11,7 @@ public class StateMachineRunner implements Learner {
     private static Logger logger = LoggerFactory.getLogger(StateMachineRunner.class);
 
     private StateMachine machine;
-    private long lastChosenInstanceId;
+    private volatile LastChosen lastChosen;
 
     public StateMachineRunner(StateMachine machine) {
         this.machine = checkNotNull(machine);
@@ -19,26 +19,25 @@ public class StateMachineRunner implements Learner {
 
     @Override
     public synchronized void learnLastChosenInstanceId(long instanceId) {
-        if(instanceId > lastChosenInstanceId){
-            lastChosenInstanceId = instanceId;
-        }
+        this.lastChosen = new LastChosen(instanceId, 0);
+        machine.learnLastChosenVersion(instanceId);
+    }
+
+    @Override
+    public synchronized LastChosen lastChosen() {
+        return this.lastChosen;
     }
 
     @Override
     public synchronized long lastChosenInstanceId() {
-        return this.lastChosenInstanceId;
+        return this.lastChosen.instanceId;
     }
 
     @Override
     public synchronized void learnValue(long instanceId, int proposal, ByteString value) {
         try {
-            if (this.lastChosenInstanceId < instanceId) {
-                this.lastChosenInstanceId = instanceId;
-                machine.consume(instanceId, value);
-            }
-            else {
-                logger.error("New instance id {} less than last chosen instance id {}", instanceId, this.lastChosenInstanceId);
-            }
+            this.lastChosen = new LastChosen(instanceId, proposal);
+            machine.consume(instanceId, value);
         } catch (Exception e) {
             //FIXME hold the whole jaxos system
             throw new RuntimeException(e);

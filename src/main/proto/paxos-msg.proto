@@ -34,6 +34,7 @@ message DataGram {
 
 message PrepareReq {
   int32 ballot = 1;
+  int32 lastChosenBallot = 2;
 }
 
 

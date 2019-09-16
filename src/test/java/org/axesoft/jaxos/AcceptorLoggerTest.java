@@ -1,6 +1,7 @@
 package org.axesoft.jaxos;
 
 import com.google.protobuf.ByteString;
+import org.apache.commons.lang3.time.StopWatch;
 import org.axesoft.jaxos.algo.AcceptorLogger;
 import org.axesoft.jaxos.logger.BerkeleyDbAcceptorLogger;
 import org.junit.AfterClass;
@@ -8,13 +9,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 
 
 public class AcceptorLoggerTest {
-    final static String DB_DIR = "/mnt/ram/jaxosdb";
+    final static String DB_DIR = "/tmp/jaxosdb";
     static AcceptorLogger logger;
 
     @BeforeClass
@@ -24,6 +26,7 @@ public class AcceptorLoggerTest {
             dir.mkdir();
         }
         logger = new BerkeleyDbAcceptorLogger(DB_DIR);
+        //logger = new FileAcceptorLogger(DB_DIR);
     }
 
     @AfterClass
@@ -33,16 +36,22 @@ public class AcceptorLoggerTest {
 
     @Test
     public void testSave(){
-        for(int i = 0; i < 100; i++) {
+        final int n = 100;
+        StopWatch w = StopWatch.createStarted();
+        for(int i = 0; i < n; i++) {
             logger.savePromise(1, 1000 + i, 1 + i, ByteString.copyFromUtf8("Hello" + i));
         }
+
+        w.stop();;
+        double seconds = w.getTime(TimeUnit.MILLISECONDS)/1000.0;
+        System.out.println(String.format("Insert %d records in %.2f s, OPS = %.2f", n, seconds, ((double)n)/seconds));
 
         AcceptorLogger.Promise p = logger.loadLastPromise(1);
         assertNotNull(p);
 
         assertEquals(1, p.squadId);
-        assertEquals(1099, p.instanceId);
-        assertEquals(100, p.proposal);
-        assertEquals("Hello99", p.value.toStringUtf8());
+        assertEquals(1000 + n - 1, p.instanceId);
+        assertEquals(n, p.proposal);
+        assertEquals("Hello" + (n - 1), p.value.toStringUtf8());
     }
 }

@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TansService implements StateMachine {
     private static Logger logger = LoggerFactory.getLogger(TansService.class);
 
-    private Map<String, TansNumber> numbers = new HashMap<>();
+    private final Map<String, TansNumber> numbers = new HashMap<>();
     private Supplier<Proponent> proponent;
     private TansConfig config;
     private volatile  long lastInstanceId;
@@ -33,11 +33,26 @@ public class TansService implements StateMachine {
     }
 
     @Override
+    public void learnLastChosenVersion(long instanceId) {
+        this.lastInstanceId = instanceId;
+    }
+
+    @Override
+    public long currentVersion() {
+        synchronized (numbers){
+            return this.lastInstanceId;
+        }
+    }
+
+    @Override
     public void consume(long instanceId, ByteString message) {
         TansNumber n1 = fromMessage(message);
 
         logger.trace("TANS state machine consumer event {}", n1);
         synchronized (numbers) {
+            if(instanceId != this.lastInstanceId + 1){
+                throw new IllegalStateException(String.format("dolog %d when current is %d", instanceId, this.lastInstanceId));
+            }
             numbers.compute(n1.name(), (k, n0) -> {
                 if (n0 == null) {
                     return n1;
@@ -90,7 +105,7 @@ public class TansService implements StateMachine {
             if (result.code() == ProposeResult.Code.OTHER_LEADER) {
                 throw new RedirectException(getTargetUrl((int) result.param()));
             }
-        } while (i < 3 && !result.isSuccess());
+        } while (i < 2 && !result.isSuccess());
 
         if (result.isSuccess()) {
             return Pair.of(n.value() - v, n.value() - 1);

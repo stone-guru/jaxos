@@ -1,5 +1,5 @@
 #!/bin/bash
-rm -rf ./log/*
-mkdir ./log/db1
-mkdir ./log/db2
-mkdir ./log/db3
+rm -rf ./logs/*.log
+
+rm -rf ./log/db*
+rm -rf /mnt/ram/db*

@@ -49,7 +49,7 @@ public class NettyJaxosNode {
 
     public void startup() {
         EventLoopGroup boss = new NioEventLoopGroup(1);
-        EventLoopGroup worker = new NioEventLoopGroup();
+        EventLoopGroup worker = new NioEventLoopGroup(4);
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap()
                     .group(boss, worker)

@@ -43,11 +43,14 @@ public class Proposer {
 
     private AtomicInteger msgId = new AtomicInteger(1);
 
+    private ProposalNumHolder proposalNumHolder;
+
     public Proposer(JaxosSettings config, SquadContext context, Learner learner, Supplier<Communicator> communicator) {
         this.config = config;
         this.communicator = communicator;
         this.learner = learner;
         this.metricsRecorder = new MetricsRecorder(context.jaxosMetrics());
+        this.proposalNumHolder = new ProposalNumHolder(config.serverId(), 16);
     }
 
     public synchronized ProposeResult propose(long instanceId, ByteString value) throws InterruptedException {
@@ -61,14 +64,7 @@ public class Proposer {
         this.result = null;
         this.execEndLatch = new CountDownLatch(1);
 
-//        if (this.instanceContext.isLeader() && (this == null)) {
-//            startAccept(0, this.proposeValue, this.config.serverId());
-//        }
-//        else {
-//            startPrepare(0, this.config.serverId(), 1);
-//        }
-
-        startPrepare(instanceId, this.config.serverId(), 1);
+        startPrepare(instanceId, proposalNumHolder.getProposal0(), 1);
 
         this.execEndLatch.await(3, TimeUnit.SECONDS);
 
@@ -90,15 +86,6 @@ public class Proposer {
         this.prepareActor = null;
         this.acceptActor = null;
 
-        //wait this round end
-        while(this.instanceId < this.learner.lastChosenInstanceId()){
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
         this.execEndLatch.countDown();
 
         logger.trace("{}: propose round for {} end with {} by {}",msgId.getAndIncrement(), this.instanceId, r.code(), reason);
@@ -113,13 +100,14 @@ public class Proposer {
     }
 
     private void startPrepare(long instanceId, int proposal0, int times) {
-        long next = this.learner.lastChosenInstanceId() + 1;
+        Learner.LastChosen chosen = this.learner.lastChosen();
+        long next = chosen.instanceId + 1;
         if (instanceId > 0 && instanceId != next) {
             endWith(ProposeResult.conflict(this.proposeValue), "when prepare " + next + " again");
             return;
         }
 
-        final PrepareActor actor = this.prepareActor = new PrepareActor(next, this.proposeValue, proposal0, times);
+        final PrepareActor actor = this.prepareActor = new PrepareActor(next, this.proposeValue, proposal0,  times, chosen.proposal);
         this.prepareTimeout = Proposer.this.timer.newTimeout(t -> this.endPrepare(actor), 1, TimeUnit.SECONDS);
         this.prepareActor.begin();
     }
@@ -168,7 +156,7 @@ public class Proposer {
                 sleepRandom(actor.times, "PREPARE");
             }
 
-            startPrepare(actor.instanceId, nextProposal(actor.totalMaxProposal), actor.times + 1);
+            startPrepare(actor.instanceId, proposalNumHolder.nextProposal(actor.totalMaxProposal), actor.times + 1);
         }
     }
 
@@ -233,16 +221,6 @@ public class Proposer {
         }
     }
 
-
-    private int nextProposal(int b) {
-        return nextProposal(b, 10, this.config.serverId());
-    }
-
-    private static int nextProposal(int b, int m, int id) {
-        return ((b / m) + 1) * m + id;
-    }
-
-
     public static void accumulateMax(AtomicInteger a, int v) {
         int v0;
         do {
@@ -271,6 +249,8 @@ public class Proposer {
         private final int proposal;
         private final ByteString value;
         private final int times;
+        private final int chosenProposal;
+
         private volatile int totalMaxProposal = 0;
         private volatile int maxAcceptedProposal = 0;
         private volatile ByteString acceptedValue = ByteString.EMPTY;
@@ -280,16 +260,17 @@ public class Proposer {
         private volatile int acceptedCount = 0;
         private volatile long maxOtherChosenInstanceId = 0;
 
-        public PrepareActor(long instanceId, ByteString value, int proposal, int times) {
+        public PrepareActor(long instanceId, ByteString value, int proposal, int times, int chosenProposal) {
             this.instanceId = instanceId;
             this.value = value;
             this.proposal = proposal;
             this.times = times;
+            this.chosenProposal = chosenProposal;
         }
 
         public void begin() {
             Proposer.this.instanceId = this.instanceId;
-            Event.PrepareRequest req = new Event.PrepareRequest(config.serverId(), squadId, this.instanceId, this.times, this.proposal);
+            Event.PrepareRequest req = new Event.PrepareRequest(config.serverId(), squadId, this.instanceId, this.times, this.proposal, this.chosenProposal);
             communicator.get().broadcast(req);
         }
 

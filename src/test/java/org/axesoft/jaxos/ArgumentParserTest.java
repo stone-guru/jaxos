@@ -24,7 +24,6 @@ public class ArgumentParserTest {
 
         assertEquals(1, config.serverId());
         assertEquals(110, config.self().port());
-        assertEquals(119, config.self().httpPort());
         assertEquals("./", config.dbDirectory());
         assertTrue(config.ignoreLeader());
 
