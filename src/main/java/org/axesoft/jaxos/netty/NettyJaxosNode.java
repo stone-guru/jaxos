@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 /**
  * @author gaoyuan
@@ -37,19 +36,18 @@ public class NettyJaxosNode {
     private JaxosSettings settings;
     private Map<ChannelId, JaxosSettings.Peer> channelPeerMap = new ConcurrentHashMap<>();
     private MessageCoder<PaxosMessage.DataGram> messageCoder;
-    private Communicator communicator;
-    private Supplier<EventDispatcher> eventDispatcherSupplier;
     private Channel serverChannel;
+    private EventWorkerPool workerPool;
 
-    public NettyJaxosNode(JaxosSettings settings, Supplier<EventDispatcher> eventDispatcherSupplier) {
+    public NettyJaxosNode(JaxosSettings settings, EventWorkerPool workerPool) {
         this.settings = settings;
         this.messageCoder = new ProtoMessageCoder(this.settings);
-        this.eventDispatcherSupplier = eventDispatcherSupplier;
+        this.workerPool = workerPool;
     }
 
     public void startup() {
         EventLoopGroup boss = new NioEventLoopGroup(1);
-        EventLoopGroup worker = new NioEventLoopGroup(4);
+        EventLoopGroup worker = new NioEventLoopGroup(2);
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap()
                     .group(boss, worker)
@@ -75,15 +73,15 @@ public class NettyJaxosNode {
             channelFuture.channel().closeFuture().sync();
         }
         catch (Exception e) {
-            logger.error("start server error", e);
+            logger.error("Netty server error", e);
         }
         finally {
             try {
                 worker.shutdownGracefully().sync();
                 boss.shutdownGracefully().sync();
             }
-            catch (InterruptedException e) {
-                logger.info("Interrupted");
+            catch (Exception e) {
+                logger.info("error when shutdown netty jaxos server ", e);
             }
         }
     }
@@ -103,22 +101,17 @@ public class NettyJaxosNode {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-            if(msg instanceof PaxosMessage.DataGram){
-                Event e0 = messageCoder.decode((PaxosMessage.DataGram)msg);
-                if(e0.code() == Event.Code.HEART_BEAT){
+            if (msg instanceof PaxosMessage.DataGram) {
+                Event e0 = messageCoder.decode((PaxosMessage.DataGram) msg);
+                if (e0.code() == Event.Code.HEART_BEAT) {
                     //logger.info("Receive heart beat from server {}", e0.senderId());
                     ctx.writeAndFlush(heartBeatResponse);
-                } else {
-                    EventDispatcher dispatcher = eventDispatcherSupplier.get();
-                    if(dispatcher == null){
-                        logger.warn("System not read abandon event", e0);
-                        return;
-                    }
-                    Event e1 = dispatcher.process(e0);
-                    if (e1 != null && e0.senderId() != -1) { //-1 is nothing, or other server's id
+                }
+                else {
+                    NettyJaxosNode.this.workerPool.submit(e0, e1 -> {
                         PaxosMessage.DataGram response = messageCoder.encode(e1);
                         ctx.writeAndFlush(response);
-                    }
+                    });
                 }
             }
         }
@@ -137,9 +130,9 @@ public class NettyJaxosNode {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object obj) throws Exception {
             super.userEventTriggered(ctx, obj);
-            if(obj instanceof IdleStateEvent){
-                IdleStateEvent event = (IdleStateEvent)obj;
-                if (event.state() == IdleState.READER_IDLE || event.state() == IdleState.ALL_IDLE){
+            if (obj instanceof IdleStateEvent) {
+                IdleStateEvent event = (IdleStateEvent) obj;
+                if (event.state() == IdleState.READER_IDLE || event.state() == IdleState.ALL_IDLE) {
                     logger.warn("connection from {} idle, close it", channelPeerMap.get(ctx.channel().id()));
                     ctx.channel().close();
                 }

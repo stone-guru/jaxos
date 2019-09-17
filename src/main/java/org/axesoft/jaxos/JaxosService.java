@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.axesoft.jaxos.algo.*;
 import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
+import org.axesoft.jaxos.algo.EventWorkerPool;
 import org.axesoft.jaxos.netty.NettyCommunicatorFactory;
 import org.axesoft.jaxos.netty.NettyJaxosNode;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ public class JaxosService extends AbstractExecutionThreadService {
     private AcceptorLogger acceptorLogger;
     private Communicator communicator;
     private NettyJaxosNode node;
+    private EventWorkerPool eventWorkerPool;
 
     public JaxosService(JaxosSettings settings, StateMachine machine) {
         this.settings = settings;
@@ -33,15 +35,17 @@ public class JaxosService extends AbstractExecutionThreadService {
 
     @Override
     protected void triggerShutdown() {
+        this.communicator.close();
         this.node.shutdown();
         this.acceptorLogger.close();
     }
 
     @Override
     protected void run() throws Exception {
-        this.node = new NettyJaxosNode(this.settings, () -> this.squad);
+        this.eventWorkerPool = new EventWorkerPool(1, () -> this.squad);
+        this.node = new NettyJaxosNode(this.settings, this.eventWorkerPool);
 
-        NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, squad);
+        NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, this.eventWorkerPool);
         this.communicator = factory.createCommunicator();
 
         this.node.startup();

@@ -24,19 +24,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ClientApp {
-    private static final int PAR_FACTOR = 1;
+    private static final int PAR_FACTOR = 2;
 
     public static final List<String> URLS = ImmutableList.of(
-            "http://localhost:8083/acquire?key=billid&n=1",
+            "http://localhost:8081/acquire?key=billid&n=1",
             "http://localhost:8082/acquire?key=billid&n=2",
-            "http://localhost:8081/acquire?key=billid&n=3");
+            "http://localhost:8083/acquire?key=billid&n=3");
 
 
     public static void main(String[] args) throws Exception {
         ClientApp app = new ClientApp();
         app.run();
     }
-    private int n = 2000;
+    private int n = 20000;
     private long start = 0;
     private AtomicInteger count = new AtomicInteger(0);
     private List<HttpRequest> requests;

@@ -24,21 +24,22 @@ public class Proposer {
     private JaxosSettings config;
     private Supplier<Communicator> communicator;
     private Learner learner;
+    private final int squadId = 1;
+
     private HashedWheelTimer timer = new HashedWheelTimer(10, TimeUnit.MILLISECONDS);
 
-    private volatile long instanceId = 0;
-    private volatile ByteString proposeValue;
-
-    private volatile PrepareActor prepareActor;
-    private volatile Timeout prepareTimeout;
-    private volatile AcceptActor acceptActor;
-    private volatile Timeout acceptTimeout;
+    private long instanceId = 0;
+    private ByteString proposeValue;
+    private PrepareActor prepareActor;
+    private Timeout prepareTimeout;
+    private AcceptActor acceptActor;
+    private Timeout acceptTimeout;
 
     private CountDownLatch execEndLatch;
     private volatile ProposeResult result = null;
 
     private MetricsRecorder metricsRecorder;
-    private final int squadId = 1;
+
     private AtomicInteger round = new AtomicInteger(0);
 
     private AtomicInteger msgId = new AtomicInteger(1);
@@ -88,7 +89,9 @@ public class Proposer {
 
         this.execEndLatch.countDown();
 
-        logger.trace("{}: propose round for {} end with {} by {}",msgId.getAndIncrement(), this.instanceId, r.code(), reason);
+        if(logger.isTraceEnabled()) {
+            logger.trace("{}: propose round for {} end with {} by {}", msgId.getAndIncrement(), this.instanceId, r.code(), reason);
+        }
     }
 
     private boolean checkMajority(int n, String step) {
@@ -251,14 +254,14 @@ public class Proposer {
         private final int times;
         private final int chosenProposal;
 
-        private volatile int totalMaxProposal = 0;
-        private volatile int maxAcceptedProposal = 0;
-        private volatile ByteString acceptedValue = ByteString.EMPTY;
-        private IntBitSet repliedNodes = new IntBitSet();
+        private int totalMaxProposal = 0;
+        private int maxAcceptedProposal = 0;
+        private ByteString acceptedValue = ByteString.EMPTY;
+        private final IntBitSet repliedNodes = new IntBitSet();
 
-        private volatile boolean someOneReject = false;
-        private volatile int acceptedCount = 0;
-        private volatile long maxOtherChosenInstanceId = 0;
+        private boolean someOneReject = false;
+        private int acceptedCount = 0;
+        private long maxOtherChosenInstanceId = 0;
 
         public PrepareActor(long instanceId, ByteString value, int proposal, int times, int chosenProposal) {
             this.instanceId = instanceId;
@@ -410,7 +413,7 @@ public class Proposer {
 
             //Then notify other peers
             Event notify = new Event.ChosenNotify(config.serverId(), squadId, this.instanceId, this.proposal);
-            communicator.get().callAndBroadcast(notify);
+            communicator.get().selfFirstBroadcast(notify);
         }
     }
 

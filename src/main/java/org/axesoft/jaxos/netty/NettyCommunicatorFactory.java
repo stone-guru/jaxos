@@ -17,12 +17,12 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.axesoft.jaxos.algo.Event;
+import org.axesoft.jaxos.algo.EventWorkerPool;
 import org.axesoft.jaxos.network.CommunicatorFactory;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
 import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.algo.Communicator;
-import org.axesoft.jaxos.algo.EventDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,13 +40,13 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
     private static Logger logger = LoggerFactory.getLogger(NettyCommunicatorFactory.class);
     private JaxosSettings config;
     private ProtoMessageCoder coder;
-    private EventDispatcher localEventDispatcher;
     private ChannelGroupCommunicator communicator;
+    private EventWorkerPool eventWorkerPool;
 
-    public NettyCommunicatorFactory(JaxosSettings config, EventDispatcher eventDispatcher) {
+    public NettyCommunicatorFactory(JaxosSettings config, EventWorkerPool eventWorkerPool) {
         this.config = config;
         this.coder = new ProtoMessageCoder(config);
-        this.localEventDispatcher = eventDispatcher;
+        this.eventWorkerPool = eventWorkerPool;
     }
 
     @Override
@@ -77,7 +77,8 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             this.communicator = new ChannelGroupCommunicator(worker, bootstrap);
             this.communicator.start();
             return this.communicator;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -107,7 +108,9 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         public void start() {
             for (JaxosSettings.Peer peer : config.peerMap().values()) {
-                connect(peer);
+                if (peer.id() != config.serverId()) {
+                    connect(peer);
+                }
             }
         }
 
@@ -143,7 +146,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         @Override
         public boolean available() {
-            return channels.size() >= config.peerCount() / 2;
+            return channels.size() + 1 >= config.peerCount() / 2;
         }
 
         @Override
@@ -151,11 +154,12 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             logger.trace("Broadcast {} " + event);
             PaxosMessage.DataGram dataGram = coder.encode(event);
             channels.writeAndFlush(dataGram);
+            eventWorkerPool.submitToSelf(event);
         }
 
         @Override
-        public void callAndBroadcast(Event event) {
-            localEventDispatcher.process(event);
+        public void selfFirstBroadcast(Event event) {
+            eventWorkerPool.submitToSelf(event);
 
             PaxosMessage.DataGram dataGram = coder.encode(event);
             ChannelId id = channelIdMap.get(config.serverId());
@@ -181,8 +185,12 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             try {
                 channels.close().sync();
                 worker.shutdownGracefully().sync();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            }
+            catch (InterruptedException e) {
+                logger.info("Interrupted at communicator.close()");
+            }
+            catch (Exception e) {
+                logger.error("error when do communicator.close()", e);
             }
         }
     }
@@ -209,7 +217,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                         //logger.info("Got heart beat response from server {}", event.senderId());
                     }
                     else {
-                        localEventDispatcher.process(event);
+                        eventWorkerPool.submitToSelf(event);
                     }
                 }
             }
