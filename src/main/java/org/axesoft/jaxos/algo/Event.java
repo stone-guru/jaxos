@@ -11,7 +11,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class Event {
     public enum Code {
         NOOP, HEART_BEAT, HEART_BEAT_RESPONSE, PREPARE, PREPARE_RESPONSE, ACCEPT, ACCEPT_RESPONSE,
-        ACCEPTED_NOTIFY, ACCEPTED_NOTIFY_RESPONSE
+        ACCEPTED_NOTIFY, ACCEPTED_NOTIFY_RESPONSE, PREPARE_TIMEOUT, ACCEPT_TIMEOUT
     }
 
     //FIXME refact to enum
@@ -289,6 +289,38 @@ public abstract class Event {
             return "AcceptedNotify{" + super.toString() +
                     ", ballot=" + ballot +
                     '}';
+        }
+    }
+
+    public static class PrepareTimeout extends Event {
+        public PrepareTimeout(int senderId, int squadId, long instanceId, int round) {
+            super(senderId, squadId, instanceId, round);
+        }
+        @Override
+        public Code code() {
+            return Code.PREPARE_TIMEOUT;
+        }
+
+
+        @Override
+        public String toString() {
+            return "PrepareTimeout{" + super.toString() + "}";
+        }
+    }
+
+    public static class AcceptTimeout extends Event {
+        public AcceptTimeout(int senderId, int squadId, long instanceId, int round) {
+            super(senderId, squadId, instanceId, round);
+        }
+
+        @Override
+        public Code code() {
+            return Code.ACCEPT_TIMEOUT;
+        }
+
+        @Override
+        public String toString() {
+            return "AcceptTimeout{" + super.toString() + "}";
         }
     }
 }

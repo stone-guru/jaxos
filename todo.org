@@ -13,7 +13,7 @@
 * TODO add range learn request&response				    :learner:
 * DONE add general state machine			       :statemachine:
 * TODO add log reload							:log:
-* TODO optimize the thread model				       :base:
+* DONE optimize the thread model				       :base:
 * DONE NEXT support timeout by TimeWheel			    :network:
 * DONE set a fixed gradle version					:dev:
 * DONE use config file for peers' address			       :base:
@@ -26,6 +26,7 @@ are by netty
 * DONE close DB when application exit					:log:
 * DONE [#C] the proposer blocked at "executingSignal"		       :base:
 * DONE implement a HTTP client on netty				    :network:
+* TODO Ignore Exceptions from channel broken when shudown the server :network:
 * TODO A case of Chosen notify message lost making that server hang :network:
 * related infors
 ** Quorum algo(NWR)

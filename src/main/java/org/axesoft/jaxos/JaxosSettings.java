@@ -53,6 +53,9 @@ public class JaxosSettings {
         private Peer self;
         private boolean ignoreLeader;
         private String dbDirectory;
+        private long wholeProposalTimeoutMillis = 1500;
+        private long prepareTimeoutMillis = 150;
+        private long acceptTimeoutMillis =  150;
         private Function<ByteString, String> valueVerboser;
 
         private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
@@ -82,6 +85,21 @@ public class JaxosSettings {
             return this;
         }
 
+        public Builder setWholeProposalTimeoutMillis(long wholeProposalTimeoutMillis) {
+            this.wholeProposalTimeoutMillis = wholeProposalTimeoutMillis;
+            return this;
+        }
+
+        public Builder setPrepareTimeoutMillis(long prepareTimeoutMillis) {
+            this.prepareTimeoutMillis = prepareTimeoutMillis;
+            return this;
+        }
+
+        public Builder setAcceptTimeoutMillis(long acceptTimeoutMillis) {
+            this.acceptTimeoutMillis = acceptTimeoutMillis;
+            return this;
+        }
+
         public Builder setValueVerboser(Function<ByteString, String> valueVerboser) {
             this.valueVerboser = valueVerboser;
             return this;
@@ -95,6 +113,9 @@ public class JaxosSettings {
             config.leaderLeaseSeconds = 3;
             config.dbDirectory = this.dbDirectory;
             config.valueVerboser = this.valueVerboser;
+            config.wholeProposalTimeoutMillis = this.wholeProposalTimeoutMillis;
+            config.prepareTimeoutMillis = this.prepareTimeoutMillis;
+            config.acceptTimeoutMillis = this.acceptTimeoutMillis;
             return config;
         }
     }
@@ -104,6 +125,10 @@ public class JaxosSettings {
     private int leaderLeaseSeconds;
     private boolean ignoreLeader;
     private String dbDirectory;
+    private long wholeProposalTimeoutMillis;
+    private long prepareTimeoutMillis;
+    private long acceptTimeoutMillis;
+
     private Function<ByteString, String> valueVerboser;
 
     private JaxosSettings() {
@@ -141,9 +166,22 @@ public class JaxosSettings {
         return this.dbDirectory;
     }
 
+    public long wholeProposalTimeoutMillis(){
+        return this.wholeProposalTimeoutMillis;
+    }
+
+    public long prepareTimeoutMillis(){
+        return this.prepareTimeoutMillis;
+    }
+
+    public long acceptTimeoutMillis(){
+        return this.acceptTimeoutMillis;
+    }
+
     public boolean reachQuorum(int n){
         return n > this.peerMap.size() / 2;
     }
+
 
     public Function<ByteString, String> valueVerboser(){
         return this.valueVerboser;
@@ -151,10 +189,15 @@ public class JaxosSettings {
 
     @Override
     public String toString() {
-        return "JaxosConfig{" +
+        return "JaxosSettings{" +
                 "peerMap=" + peerMap +
                 ", serverId=" + serverId +
                 ", leaderLeaseSeconds=" + leaderLeaseSeconds +
+                ", ignoreLeader=" + ignoreLeader +
+                ", dbDirectory='" + dbDirectory + '\'' +
+                ", wholeProposalTimeoutMillis=" + wholeProposalTimeoutMillis +
+                ", prepareTimeoutMillis=" + prepareTimeoutMillis +
+                ", acceptTimeoutMillis=" + acceptTimeoutMillis +
                 '}';
     }
 }

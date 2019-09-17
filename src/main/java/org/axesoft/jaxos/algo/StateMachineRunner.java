@@ -18,8 +18,8 @@ public class StateMachineRunner implements Learner {
     }
 
     @Override
-    public synchronized void learnLastChosenInstanceId(long instanceId) {
-        this.lastChosen = new LastChosen(instanceId, 0);
+    public void learnLastChosen(long instanceId, int proposal) {
+        this.lastChosen = new LastChosen(instanceId, proposal);
         machine.learnLastChosenVersion(instanceId);
     }
 

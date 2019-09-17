@@ -25,7 +25,7 @@ public class JaxosService extends AbstractExecutionThreadService {
         this.settings = settings;
         this.machine = machine;
         this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory());
-        this.squad = new Squad(1, settings, () -> communicator, acceptorLogger, machine);
+        this.squad = new Squad(1, settings, () -> communicator, acceptorLogger, machine, () -> this.eventWorkerPool);
         super.addListener(new JaxosServiceListener(), MoreExecutors.directExecutor());
     }
 

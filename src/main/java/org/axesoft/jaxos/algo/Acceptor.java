@@ -30,12 +30,12 @@ public class Acceptor {
         this.acceptedValue = ByteString.EMPTY;
 
         AcceptorLogger.Promise promise = this.acceptorLogger.loadLastPromise(this.squadId);
-        long lastId = 0;
         if (promise != null) {
             logger.info("Acceptor restore last instance {}", promise.instanceId);
-            lastId = promise.instanceId;
+            learner.learnLastChosen(promise.instanceId, promise.proposal);
+        } else {
+            learner.learnLastChosen(0, 0);
         }
-        learner.learnLastChosenInstanceId(lastId);
     }
 
     public synchronized Event.PrepareResponse prepare(Event.PrepareRequest request) {

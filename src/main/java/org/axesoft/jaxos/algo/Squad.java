@@ -20,11 +20,11 @@ public class Squad implements EventDispatcher,Proponent {
     private JaxosSettings config;
     private int squadId = 1;
 
-    public Squad(int id, JaxosSettings config, Supplier<Communicator> communicator, AcceptorLogger acceptorLogger, StateMachine machine) {
+    public Squad(int id, JaxosSettings config, Supplier<Communicator> communicator, AcceptorLogger acceptorLogger, StateMachine machine, Supplier<EventTimer> timerSupplier) {
         this.config = config;
         this.context = new SquadContext(id, this.config);
         Learner learner = new StateMachineRunner(machine);
-        this.proposer = new Proposer(this.config, this.context, learner, communicator);
+        this.proposer = new Proposer(this.config, this.context, learner, communicator, timerSupplier);
         this.acceptor = new Acceptor(this.config, this.squadId, learner, acceptorLogger);
     }
 
@@ -55,11 +55,19 @@ public class Squad implements EventDispatcher,Proponent {
                 proposer.processPrepareResponse((Event.PrepareResponse) event);
                 return null;
             }
+            case PREPARE_TIMEOUT: {
+                proposer.onPrepareTimeout((Event.PrepareTimeout)event);
+                return null;
+            }
             case ACCEPT: {
                 return acceptor.accept((Event.AcceptRequest) event);
             }
             case ACCEPT_RESPONSE: {
                 proposer.onAcceptReply((Event.AcceptResponse) event);
+                return null;
+            }
+            case ACCEPT_TIMEOUT:{
+                proposer.onAcceptTimeout((Event.AcceptTimeout)event);
                 return null;
             }
             case ACCEPTED_NOTIFY: {

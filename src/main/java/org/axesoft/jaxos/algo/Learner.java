@@ -17,7 +17,7 @@ public interface Learner {
         }
     }
 
-    void learnLastChosenInstanceId(long instanceId);
+    void learnLastChosen(long instanceId, int proposal);
     LastChosen lastChosen();
     long lastChosenInstanceId();
     void learnValue(long instanceId, int proposal, ByteString value);
