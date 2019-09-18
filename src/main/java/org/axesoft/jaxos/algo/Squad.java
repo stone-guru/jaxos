@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * @author gaoyuan
  * @sine 2019/8/25.
  */
-public class Squad implements EventDispatcher,Proponent {
+public class Squad implements EventDispatcher{
     private static final Logger logger = LoggerFactory.getLogger(Squad.class);
 
     private Acceptor acceptor;
@@ -31,7 +31,6 @@ public class Squad implements EventDispatcher,Proponent {
      * @param v value to be proposed
      * @throws InterruptedException
      */
-    @Override
     public ProposeResult propose(long instanceId, ByteString v) throws InterruptedException {
         SquadContext.RequestRecord lastRequestRecord = this.context.getLastRequestRecord();
         //logger.info("last request is {}, current is {}", lastRequestInfo, new Date());

@@ -159,7 +159,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         @Override
         public void selfFirstBroadcast(Event event) {
-            eventWorkerPool.submitToSelf(event);
+            eventWorkerPool.directCallSelf(event);
 
             PaxosMessage.DataGram dataGram = coder.encode(event);
             ChannelId id = channelIdMap.get(config.serverId());

@@ -58,6 +58,7 @@ public class JaxosSettings {
         private long wholeProposalTimeoutMillis = 1500;
         private long prepareTimeoutMillis = 150;
         private long acceptTimeoutMillis =  150;
+        private int partitionNumber = 1;
         private Function<ByteString, String> valueVerboser;
 
         private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
@@ -107,6 +108,11 @@ public class JaxosSettings {
             return this;
         }
 
+        public Builder setPartitionNumber(int partitionNumber) {
+            this.partitionNumber = partitionNumber;
+            return this;
+        }
+
         public JaxosSettings build(){
             JaxosSettings config = new JaxosSettings();
             config.serverId = this.serverId;
@@ -118,6 +124,7 @@ public class JaxosSettings {
             config.wholeProposalTimeoutMillis = this.wholeProposalTimeoutMillis;
             config.prepareTimeoutMillis = this.prepareTimeoutMillis;
             config.acceptTimeoutMillis = this.acceptTimeoutMillis;
+            config.partitionNumber = this.partitionNumber;
             return config;
         }
     }
@@ -130,6 +137,7 @@ public class JaxosSettings {
     private long wholeProposalTimeoutMillis;
     private long prepareTimeoutMillis;
     private long acceptTimeoutMillis;
+    private int partitionNumber;
 
     private Function<ByteString, String> valueVerboser;
 
@@ -184,6 +192,9 @@ public class JaxosSettings {
         return n > this.peerMap.size() / 2;
     }
 
+    public int partitionNumber(){
+        return this.partitionNumber;
+    }
 
     public Function<ByteString, String> valueVerboser(){
         return this.valueVerboser;
@@ -200,6 +211,7 @@ public class JaxosSettings {
                 ", wholeProposalTimeoutMillis=" + wholeProposalTimeoutMillis +
                 ", prepareTimeoutMillis=" + prepareTimeoutMillis +
                 ", acceptTimeoutMillis=" + acceptTimeoutMillis +
+                ", partitionNumber=" + partitionNumber +
                 '}';
     }
 }

@@ -30,6 +30,9 @@ public class ArgumentParser {
 
         @Parameter(names = {"-d"}, description = "Directory of DB")
         private String dbDirectory;
+
+        @Parameter(names = {"-p"}, description = "Partition number")
+        private Integer partitionNumber = 1;
     }
 
     private Properties properties;
@@ -66,6 +69,7 @@ public class ArgumentParser {
         JaxosSettings.Builder b = JaxosSettings.builder()
                 .setServerId(args.id)
                 .setDbDirectory(args.dbDirectory)
+                .setPartitionNumber(args.partitionNumber)
                 .setIgnoreLeader(args.ignoreLeader);
 
         if(this.properties == null) {

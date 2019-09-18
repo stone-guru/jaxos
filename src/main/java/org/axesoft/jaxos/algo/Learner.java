@@ -8,17 +8,22 @@ import com.google.protobuf.ByteString;
  */
 public interface Learner {
     class LastChosen {
+        final int squadId;
         final long instanceId;
         final int proposal;
 
-        public LastChosen(long instanceId, int proposal) {
+        public LastChosen(int squadId, long instanceId, int proposal) {
+            this.squadId = squadId;
             this.instanceId = instanceId;
             this.proposal = proposal;
         }
     }
 
-    void learnLastChosen(long instanceId, int proposal);
-    LastChosen lastChosen();
-    long lastChosenInstanceId();
-    void learnValue(long instanceId, int proposal, ByteString value);
+    void learnLastChosen(int squadId, long instanceId, int proposal);
+
+    LastChosen lastChosen(int squadId);
+
+    long lastChosenInstanceId(int squadId);
+
+    void learnValue(int squadId, long instanceId, int proposal, ByteString value);
 }

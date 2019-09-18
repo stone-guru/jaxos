@@ -17,8 +17,8 @@ import java.io.*;
 public class LevelDbAcceptorLogger implements AcceptorLogger {
     private static final Logger logger = LoggerFactory.getLogger(LevelDbAcceptorLogger.class);
 
-    private static byte CATEGORY_PROMISE = 2;
-    private static byte CATEGORY_SQUAD_LAST = 1;
+    private static final byte CATEGORY_PROMISE = 2;
+    private static final byte CATEGORY_SQUAD_LAST = 1;
 
     private DB db;
     private String path;
@@ -152,7 +152,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     private byte[] keyOfSquadLast(int squadId){
         byte[] key = new byte[5];
         key[0] = CATEGORY_SQUAD_LAST;
-        System.arraycopy(Longs.toByteArray(squadId), 0, key, 1, 4);
+        System.arraycopy(Ints.toByteArray(squadId), 0, key, 1, 4);
         return key;
     }
 }

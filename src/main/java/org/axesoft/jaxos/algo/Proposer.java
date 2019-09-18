@@ -23,8 +23,8 @@ public class Proposer {
         NONE, PREPARING, ACCEPTING
     }
 
-    private final int squadId = 1;
     private final JaxosSettings config;
+    private final SquadContext context;
     private final Supplier<Communicator> communicator;
     private final Learner learner;
     private final Supplier<EventTimer> timerSupplier;
@@ -47,6 +47,7 @@ public class Proposer {
 
     public Proposer(JaxosSettings config, SquadContext context, Learner learner, Supplier<Communicator> communicator, Supplier<EventTimer> timerSupplier) {
         this.config = config;
+        this.context = context;
         this.communicator = communicator;
         this.learner = learner;
         this.metricsRecorder = new MetricsRecorder(context.jaxosMetrics());
@@ -104,7 +105,7 @@ public class Proposer {
     }
 
     private void startPrepare(int proposal0) {
-        Learner.LastChosen chosen = this.learner.lastChosen();
+        Learner.LastChosen chosen = this.learner.lastChosen(this.context.squadId());
         if (instanceId != chosen.instanceId + 1) {
             endWith(ProposeResult.conflict(this.proposeValue),
                     String.format("when prepare instance %d while last chosen is %d", instanceId, chosen.instanceId));
@@ -117,7 +118,7 @@ public class Proposer {
         this.prepareActor.startNewRound(this.proposeValue, proposal0, chosen.proposal);
 
         this.prepareTimeout = timerSupplier.get().createTimeout(this.config.prepareTimeoutMillis(), TimeUnit.MILLISECONDS,
-                new Event.PrepareTimeout(this.config.serverId(), this.squadId, this.instanceId, this.messageMark));
+                new Event.PrepareTimeout(this.config.serverId(), this.context.squadId(), this.instanceId, this.messageMark));
     }
 
 
@@ -160,7 +161,8 @@ public class Proposer {
             startAccept(v.content, this.prepareActor.myProposal());
         }
         else {
-            if (v.ballot == Integer.MAX_VALUE || (this.prepareActor.maxOtherChosenInstanceId() >= this.instanceId)) {
+            if (this.prepareActor.totalMaxProposal == Integer.MAX_VALUE
+                    || this.prepareActor.maxOtherChosenInstanceId() >= this.instanceId) {
                 endWith(ProposeResult.conflict(this.proposeValue), "CONFLICT other value chosen");
                 return;
             }
@@ -183,7 +185,7 @@ public class Proposer {
         this.acceptActor.startAccept(value, proposal);
 
         this.acceptTimeout = timerSupplier.get().createTimeout(this.config.acceptTimeoutMillis(), TimeUnit.MILLISECONDS,
-                new Event.AcceptTimeout(config.serverId(), this.squadId, this.instanceId, this.messageMark));
+                new Event.AcceptTimeout(config.serverId(), this.context.squadId(), this.instanceId, this.messageMark));
     }
 
     public void onAcceptReply(Event.AcceptResponse response) {
@@ -234,7 +236,7 @@ public class Proposer {
         }
         else {
             //use another prepare status to detect, whether this value chosen
-            //FIXME handle case of someone reject
+            //FIXME handle case of someone reject, or self message delay or repeated
             startPrepare(this.proposalNumHolder.getProposal0());
         }
     }
@@ -299,7 +301,7 @@ public class Proposer {
             this.chosenProposal = chosenProposal;
 
             Event.PrepareRequest req = new Event.PrepareRequest(
-                    Proposer.this.config.serverId(), Proposer.this.squadId,
+                    Proposer.this.config.serverId(), Proposer.this.context.squadId(),
                     Proposer.this.instanceId, Proposer.this.messageMark,
                     this.proposal, this.chosenProposal);
 
@@ -378,7 +380,7 @@ public class Proposer {
             }
 
             ByteString value;
-            if (maxAcceptedProposal == 0) {
+            if (this.maxAcceptedProposal == 0) {
                 if (logger.isTraceEnabled()) {
                     logger.trace("Result of prepare({}) No other chose value, total max ballot is {}, use my value",
                             Proposer.this.instanceId, this.totalMaxProposal);
@@ -418,7 +420,7 @@ public class Proposer {
             logger.debug("Start accept instance {} with proposal  {} ", Proposer.this.instanceId, proposal);
 
             Event.AcceptRequest request = new Event.AcceptRequest(
-                    Proposer.this.config.serverId(),  Proposer.this.squadId, Proposer.this.instanceId,  Proposer.this.messageMark,
+                    Proposer.this.config.serverId(),  Proposer.this.context.squadId(), Proposer.this.instanceId,  Proposer.this.messageMark,
                     proposal, value);
             Proposer.this.communicator.get().broadcast(request);
         }
@@ -475,15 +477,17 @@ public class Proposer {
             logger.debug("Notify instance {} chosen",  Proposer.this.instanceId);
 
             //Then notify other peers
-            Event notify = new Event.ChosenNotify(Proposer.this.config.serverId(), Proposer.this.squadId,
+            Event notify = new Event.ChosenNotify(Proposer.this.config.serverId(), Proposer.this.context.squadId(),
                     Proposer.this.instanceId, this.proposal);
             communicator.get().selfFirstBroadcast(notify);
         }
     }
 
     private static class MetricsRecorder {
-        private volatile long totalTimesLast = 0;
-        private volatile long totalNanosLast = 0;
+        private long totalTimesLast = 0;
+        private long totalNanosLast = 0;
+        private long conflictTimesLast = 0;
+
         private JaxosMetrics metrics;
         private AtomicInteger times = new AtomicInteger(0);
 
@@ -497,15 +501,18 @@ public class Proposer {
             if (times.incrementAndGet() % 1000 == 0) {
                 long timesDelta = metrics.proposeTimes() - this.totalTimesLast;
                 double avgNanos = (metrics.proposeTotalNanos() - this.totalNanosLast) / (double) timesDelta;
+                long conflictTimesDelta = metrics.conflictTimes() - this.conflictTimesLast;
+                double conflictRate = conflictTimesDelta /(double)timesDelta;
 
                 double total = metrics.proposeTimes();
-                String msg = String.format("Elapsed %.3f ms(recent %d), Total %.0f s, success rate %.3f, conflict rate %.3f",
-                        avgNanos / 1e+6, timesDelta,
-                        total, metrics.successTimes() / total, metrics.conflictTimes() / total);
+                String msg = String.format("Recent %d elapsed %.3f ms conflict %.3f, Total %.0f s and success rate %.3f",
+                        timesDelta, avgNanos / 1e+6, conflictRate,
+                        total, metrics.successTimes() / total);
                 logger.info(msg);
 
                 this.totalTimesLast = metrics.proposeTimes();
                 this.totalNanosLast = metrics.proposeTotalNanos();
+                this.conflictTimesLast = metrics.conflictTimes();
             }
         }
     }

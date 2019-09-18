@@ -24,7 +24,7 @@ public class EventWorkerPool implements EventTimer{
         this.eventDispatcherSupplier = eventDispatcherSupplier;
         this.executors = new ExecutorService[threadNum];
         for (int i = 0; i < threadNum; i++) {
-            final int threadNo = i + 1;
+            final int threadNo = i;
             this.executors[i] = Executors.newSingleThreadExecutor((r) -> {
                 String name = "EventWorkerThread-" + threadNo;
                 Thread thread = new Thread(r, name);
@@ -47,6 +47,10 @@ public class EventWorkerPool implements EventTimer{
                 resultConsumer.accept(result);
             }
         });
+    }
+
+    public void directCallSelf(Event event){
+        this.eventDispatcherSupplier.get().process(event);
     }
 
     @Override

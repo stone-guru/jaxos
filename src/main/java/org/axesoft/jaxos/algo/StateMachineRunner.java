@@ -18,26 +18,26 @@ public class StateMachineRunner implements Learner {
     }
 
     @Override
-    public void learnLastChosen(long instanceId, int proposal) {
-        this.lastChosen = new LastChosen(instanceId, proposal);
-        machine.learnLastChosenVersion(instanceId);
+    public void learnLastChosen(int squadId, long instanceId, int proposal) {
+        this.lastChosen = new LastChosen(squadId, instanceId, proposal);
+        machine.learnLastChosenVersion(squadId, instanceId);
     }
 
     @Override
-    public synchronized LastChosen lastChosen() {
+    public synchronized LastChosen lastChosen(int squadId) {
         return this.lastChosen;
     }
 
     @Override
-    public synchronized long lastChosenInstanceId() {
+    public synchronized long lastChosenInstanceId(int squadId) {
         return this.lastChosen.instanceId;
     }
 
     @Override
-    public synchronized void learnValue(long instanceId, int proposal, ByteString value) {
+    public synchronized void learnValue(int squadId, long instanceId, int proposal, ByteString value) {
         try {
-            this.lastChosen = new LastChosen(instanceId, proposal);
-            machine.consume(instanceId, value);
+            this.lastChosen = new LastChosen(squadId, instanceId, proposal);
+            machine.consume(squadId, instanceId, value);
         } catch (Exception e) {
             //FIXME hold the whole jaxos system
             throw new RuntimeException(e);

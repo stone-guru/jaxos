@@ -30,18 +30,20 @@ public class Acceptor {
         this.acceptedValue = ByteString.EMPTY;
 
         AcceptorLogger.Promise promise = this.acceptorLogger.loadLastPromise(this.squadId);
-        if (promise != null) {
-            logger.info("Acceptor restore last instance {}", promise.instanceId);
-            learner.learnLastChosen(promise.instanceId, promise.proposal);
-        } else {
-            learner.learnLastChosen(0, 0);
+        if (promise == null) {
+            promise = new AcceptorLogger.Promise(this.squadId, 0, 0, ByteString.EMPTY);
         }
+
+        logger.info("Acceptor restore squad {}, instance {}, proposal {}", promise.squadId, promise.instanceId, promise.proposal);
+        learner.learnLastChosen(promise.squadId, promise.instanceId, promise.proposal);
     }
 
     public synchronized Event.PrepareResponse prepare(Event.PrepareRequest request) {
-        logger.trace("On prepare {} ", request);
+        if(logger.isTraceEnabled()) {
+            logger.trace("On prepare {} ", request);
+        }
 
-        long last = this.learner.lastChosenInstanceId();
+        long last = this.learner.lastChosenInstanceId(this.squadId);
 
         //maybe the chosen notify event lost for me
         if (request.instanceId() == last + 2) {
@@ -95,7 +97,7 @@ public class Acceptor {
     public synchronized Event.AcceptResponse accept(Event.AcceptRequest request) {
         logger.trace("On Accept {}", request);
 
-        long last = this.learner.lastChosenInstanceId();
+        long last = this.learner.lastChosenInstanceId(this.squadId);
 
         if (request.instanceId() <= last) {
             logger.debug("AcceptResponse: historical in accept(instance id = {}), while my instance id is {} ",
@@ -127,14 +129,14 @@ public class Acceptor {
 
     private Event.AcceptResponse buildAcceptResponse(Event.AcceptRequest request, int proposal, int result) {
         return new Event.AcceptResponse(config.serverId(), this.squadId, request.instanceId(), request.round(),
-                proposal, result, this.learner.lastChosenInstanceId());
+                proposal, result, this.learner.lastChosenInstanceId(this.squadId));
     }
 
     public synchronized void onChoseNotify(Event.ChosenNotify notify) {
         if (logger.isTraceEnabled()) {
             logger.trace("NOTIFY: receive chose notify {}, value = {}", notify, valueToString(this.acceptedValue));
         }
-        long last = this.learner.lastChosenInstanceId();
+        long last = this.learner.lastChosenInstanceId(this.squadId);
         if (notify.instanceId() == last + 1) {
             chose(notify.instanceId(), notify.ballot());
         }
@@ -147,7 +149,7 @@ public class Acceptor {
     }
 
     private void chose(long instanceId, int proposal) {
-        learner.learnValue(instanceId, proposal, this.acceptedValue);
+        learner.learnValue(this.squadId, instanceId, proposal, this.acceptedValue);
         this.maxBallot = 0;
         this.acceptedValue = ByteString.EMPTY;
         this.acceptedBallot = 0;

@@ -20,7 +20,7 @@ public class ServerApp {
         TansService tansService = new TansService(config, () -> proponent);
 
         final JaxosService jaxosService = new JaxosService(config.jaxConfig(), tansService);
-        ServerApp.proponent = jaxosService.getProponent();
+        ServerApp.proponent = jaxosService;
 
         final HttpApiService httpApiService = new HttpApiService(config, tansService);
 
