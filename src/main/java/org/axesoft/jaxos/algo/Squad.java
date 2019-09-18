@@ -18,14 +18,13 @@ public class Squad implements EventDispatcher,Proponent {
     private Proposer proposer;
     private SquadContext context;
     private JaxosSettings config;
-    private int squadId = 1;
 
-    public Squad(int id, JaxosSettings config, Supplier<Communicator> communicator, AcceptorLogger acceptorLogger, StateMachine machine, Supplier<EventTimer> timerSupplier) {
+    public Squad(int squadId, JaxosSettings config, Supplier<Communicator> communicator, AcceptorLogger acceptorLogger, StateMachine machine, Supplier<EventTimer> timerSupplier) {
         this.config = config;
-        this.context = new SquadContext(id, this.config);
+        this.context = new SquadContext(squadId, this.config);
         Learner learner = new StateMachineRunner(machine);
         this.proposer = new Proposer(this.config, this.context, learner, communicator, timerSupplier);
-        this.acceptor = new Acceptor(this.config, this.squadId, learner, acceptorLogger);
+        this.acceptor = new Acceptor(this.config, this.context.squadId(), learner, acceptorLogger);
     }
 
     /**
@@ -52,7 +51,7 @@ public class Squad implements EventDispatcher,Proponent {
                 return acceptor.prepare((Event.PrepareRequest) event);
             }
             case PREPARE_RESPONSE: {
-                proposer.processPrepareResponse((Event.PrepareResponse) event);
+                proposer.onPrepareReply((Event.PrepareResponse) event);
                 return null;
             }
             case PREPARE_TIMEOUT: {

@@ -11,6 +11,8 @@ import java.util.function.Function;
  * @sine 2019/8/24.
  */
 public class JaxosSettings {
+    public static final int SERVER_ID_RANGE = 128;
+
     public static class Peer {
         private int id;
         private String address;
