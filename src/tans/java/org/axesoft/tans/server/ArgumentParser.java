@@ -108,7 +108,6 @@ public class ArgumentParser {
                 if (selfPortSet) {
                     throw new IllegalArgumentException("more than one self");
                 }
-                builder.setSelf(peer);
                 selfPortSet = true;
             }
             builder.addPeer(peer);

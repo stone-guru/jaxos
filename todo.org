@@ -6,7 +6,6 @@
 * DONE Proposal judge the majority				  :algorithm:
 * NEXT implement basic multi-paxos.instance 			  :algorithm:
 ** DONE acceptor and adaptor use same instance context		  :algorithm:
-** DONE Implement a HTTP service port for each server		       :base:
 * DONE save proposal to localdb 					:log:
 * DONE add accepted message					    :network:
 * TODO add single learn request&response			    :learner:
@@ -25,7 +24,9 @@ are by netty
 * DONE the ballot is not reset after one instance finished	       :base:
 * DONE close DB when application exit					:log:
 * DONE [#C] the proposer blocked at "executingSignal"		       :base:
+* DONE Implement a HTTP id service for each server 		       :base:
 * DONE implement a HTTP client on netty				    :network:
+* TODO Provide proposal BATCH strategy to improve the throughput  :algorithm:
 * TODO Ignore Exceptions from channel broken when shudown the server :network:
 * TODO A case of Chosen notify message lost making that server hang :network:
 * related infors

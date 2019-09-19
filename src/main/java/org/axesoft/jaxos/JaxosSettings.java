@@ -52,7 +52,6 @@ public class JaxosSettings {
 
     public static class Builder {
         private int serverId;
-        private Peer self;
         private boolean ignoreLeader;
         private String dbDirectory;
         private long wholeProposalTimeoutMillis = 1500;
@@ -65,11 +64,6 @@ public class JaxosSettings {
 
         public Builder setServerId(int serverId) {
             this.serverId = serverId;
-            return this;
-        }
-
-        public Builder setSelf(Peer self) {
-            this.self = self;
             return this;
         }
 
@@ -118,7 +112,7 @@ public class JaxosSettings {
             config.serverId = this.serverId;
             config.peerMap = this.peerBuilder.build();
             config.ignoreLeader = this.ignoreLeader;
-            config.leaderLeaseSeconds = 3;
+            config.leaderLeaseSeconds = 5 * 60;
             config.dbDirectory = this.dbDirectory;
             config.valueVerboser = this.valueVerboser;
             config.wholeProposalTimeoutMillis = this.wholeProposalTimeoutMillis;

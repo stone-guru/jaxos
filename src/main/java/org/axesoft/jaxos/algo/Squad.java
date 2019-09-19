@@ -24,7 +24,7 @@ public class Squad implements EventDispatcher{
         this.context = new SquadContext(squadId, this.config);
         Learner learner = new StateMachineRunner(machine);
         this.proposer = new Proposer(this.config, this.context, learner, communicator, timerSupplier);
-        this.acceptor = new Acceptor(this.config, this.context.squadId(), learner, acceptorLogger);
+        this.acceptor = new Acceptor(this.config, this.context, learner, acceptorLogger);
     }
 
     /**
@@ -32,11 +32,11 @@ public class Squad implements EventDispatcher{
      * @throws InterruptedException
      */
     public ProposeResult propose(long instanceId, ByteString v) throws InterruptedException {
-        SquadContext.RequestRecord lastRequestRecord = this.context.getLastRequestRecord();
+        SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessPrepare();
         //logger.info("last request is {}, current is {}", lastRequestInfo, new Date());
 
         if (this.context.isOtherLeaderActive() && !this.config.ignoreLeader()) {
-            return ProposeResult.otherLeader(lastRequestRecord.serverId());
+            return ProposeResult.otherLeader(lastSuccessRequestRecord.serverId());
         }
         else {
             return proposer.propose(instanceId, v);

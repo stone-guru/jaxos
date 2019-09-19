@@ -41,7 +41,6 @@ public class Proposer {
     private int messageMark = 0;
     private int round = 0;
     private Stage stage;
-    private boolean acceptMyValue;
     private CountDownLatch execEndLatch;
     private volatile ProposeResult result;
 
@@ -68,10 +67,16 @@ public class Proposer {
         this.proposeValue = value;
         this.round = 0;
         this.result = null;
-        this.acceptMyValue = false;
 
         this.execEndLatch = new CountDownLatch(1);
-        startPrepare(proposalNumHolder.getProposal0());
+
+        if(context.isOtherLeaderActive()){
+            return ProposeResult.otherLeader(context.lastSuccessPrepare().serverId());
+        } else if (context.isLeader()) {
+            startAccept(this.proposeValue, context.lastSuccessPrepare().proposal());
+        } else {
+            startPrepare(proposalNumHolder.getProposal0());
+        }
 
         this.execEndLatch.await(this.config.wholeProposalTimeoutMillis(), TimeUnit.MILLISECONDS);
         if (this.result == null) {
@@ -153,11 +158,6 @@ public class Proposer {
 
         ValueWithProposal v = this.prepareActor.getResult();
         if (this.prepareActor.isAccepted()) {
-            this.acceptMyValue = v.content == this.proposeValue;
-            if (!this.acceptMyValue && logger.isTraceEnabled()) {
-                logger.trace("Prepare({}) got another accepted value", this.instanceId);
-            }
-
             startAccept(v.content, this.prepareActor.myProposal());
         }
         else {
@@ -222,7 +222,7 @@ public class Proposer {
 
         if (this.acceptActor.isAccepted()) {
             this.acceptActor.notifyChosen();
-            if(this.acceptMyValue) {
+            if(this.acceptActor.sentValue() == this.proposeValue) {
                 endWith(ProposeResult.success(this.instanceId), "Chosen");
             } else {
                 endWith(ProposeResult.conflict(this.proposeValue), "Accept send other value");
@@ -407,6 +407,7 @@ public class Proposer {
         private boolean chosenByOther;
         private int proposal;
         private int votedCount = 0;
+        private ByteString sentValue;
 
         public void startAccept(ByteString value, int proposal) {
             this.maxProposal = 0;
@@ -416,6 +417,7 @@ public class Proposer {
             this.chosenByOther = false;
             this.votedCount = 0;
             this.proposal = proposal;
+            this.sentValue = value;
 
             logger.debug("Start accept instance {} with proposal  {} ", Proposer.this.instanceId, proposal);
 
@@ -457,23 +459,27 @@ public class Proposer {
             }
         }
 
-        public boolean isAccepted() {
+        boolean isAccepted() {
             return !this.someoneReject && config.reachQuorum(acceptedCount);
         }
 
-        public boolean isAllReplied() {
+        boolean isAllReplied() {
             return this.repliedNodes.count() == config.peerCount();
         }
 
-        public boolean isChosenByOther() {
+        boolean isChosenByOther() {
             return this.chosenByOther;
         }
 
-        private int votedCount() {
+        int votedCount() {
             return this.votedCount;
         }
 
-        public void notifyChosen() {
+        ByteString sentValue(){
+            return this.sentValue;
+        }
+
+        void notifyChosen() {
             logger.debug("Notify instance {} chosen",  Proposer.this.instanceId);
 
             //Then notify other peers

@@ -24,19 +24,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TansService implements StateMachine {
     private static Logger logger = LoggerFactory.getLogger(TansService.class);
 
-    private final Map<String, TansNumber> numbers = new HashMap<>();
     private Supplier<Proponent> proponent;
     private TansConfig config;
-    private volatile long lastInstanceId;
 
     private TansNumberMap[] numberMaps;
+    private Object[] machineLocks;
 
     public TansService(TansConfig config, Supplier<Proponent> proponent) {
         this.proponent = checkNotNull(proponent);
         this.config = config;
+
         this.numberMaps = new TansNumberMap[config.jaxConfig().partitionNumber()];
+        this.machineLocks = new Object[config.jaxConfig().partitionNumber()];
         for(int i = 0; i < numberMaps.length; i++){
             this.numberMaps[i] = new TansNumberMap();
+            this.machineLocks[i] = new Object();
         }
     }
 
@@ -78,30 +80,36 @@ public class TansService implements StateMachine {
         checkArgument(v > 0, "required number {} is negative");
         logger.trace("TanService acquire {} for {}", k, v);
 
+        int squadId = selectSquadId(k);
+
         int i = 0;
         ProposeResult result;
         TansNumber n;
-        do {
-            TansNumberProposal p = createProposal(k, v);
-            n = p.number;
-            logger.trace("TansService prepare proposal {}", p);
-            ByteString bx = toMessage(p.number);
-            try {
-                result = proponent.get().propose(p.squadId, p.instanceId, bx);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
-            }
-            i++;
 
-            if (!result.isSuccess()) {
-                logger.debug("Try acquire on key({}) abort by {}", k, result.code());
-            }
+        synchronized (machineLocks[squadId]) {
+            do {
+                TansNumberProposal p = createProposal(squadId, k, v);
+                n = p.number;
+                logger.trace("TansService prepare proposal {}", p);
+                ByteString bx = toMessage(p.number);
+                try {
+                    result = proponent.get().propose(p.squadId, p.instanceId, bx);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
+                i++;
 
-            if (result.code() == ProposeResult.Code.OTHER_LEADER) {
-                throw new RedirectException(getTargetUrl((int) result.param()));
-            }
-        } while (i < 2 && !result.isSuccess());
+                if (!result.isSuccess()) {
+                    logger.debug("Try acquire on key({}) abort by {}", k, result.code());
+                }
+
+                if (result.code() == ProposeResult.Code.OTHER_LEADER) {
+                    throw new RedirectException(getTargetUrl((int) result.param()));
+                }
+            } while (i < 2 && !result.isSuccess());
+        }
 
         if (result.isSuccess()) {
             return Pair.of(n.value() - v, n.value() - 1);
@@ -120,8 +128,7 @@ public class TansService implements StateMachine {
         return String.format("http://%s:%s", peer.address(), httpPort);
     }
 
-    private TansNumberProposal createProposal(String name, long v) {
-        int squadId = selectSquadId(name);
+    private TansNumberProposal createProposal(int squadId, String name, long v) {
         Pair<Long, TansNumber> p = this.numberMaps[squadId].createProposal(name, v);
         return new TansNumberProposal(squadId, p.getLeft(), p.getRight());
     }

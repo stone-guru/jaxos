@@ -12,18 +12,25 @@ import java.util.concurrent.atomic.AtomicLong;
  * @sine 2019/9/2.
  */
 public class SquadContext {
+    private static final Logger logger = LoggerFactory.getLogger(SquadContext.class);
 
-    public static class RequestRecord {
+    public static class SuccessRequestRecord {
         private final int serverId;
         private final long timestampMillis;
+        private final int proposal;
 
-        public RequestRecord(int serverId, long timestampMillis) {
+        public SuccessRequestRecord(int serverId, long timestampMillis, int proposal) {
             this.serverId = serverId;
             this.timestampMillis = timestampMillis;
+            this.proposal = proposal;
         }
 
         public int serverId() {
             return this.serverId;
+        }
+
+        public int proposal(){
+            return this.proposal;
         }
 
         public long timestampMillis() {
@@ -39,13 +46,10 @@ public class SquadContext {
         }
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(SquadContext.class);
-
-    private AtomicLong lastInstanceId = new AtomicLong(0);
-    private volatile RequestRecord lastRequestRecord = new RequestRecord(-1, 0);
     private JaxosMetrics jaxosMetrics = new JaxosMetrics();
     private JaxosSettings config;
     private int squadId;
+    private volatile SuccessRequestRecord lastSuccessRequestRecord = new SuccessRequestRecord(-1, 0, 0);
 
     public SquadContext(int squadId, JaxosSettings config) {
         this.config = config;
@@ -56,39 +60,21 @@ public class SquadContext {
         return this.jaxosMetrics;
     }
 
-//    @Override
-//    public void learnLastChosenInstanceId(long instanceId) {
-//        lastInstanceId.set(instanceId);
-//    }
-//
-//    @Override
-//    public long lastChosenInstanceId() {
-//        return lastInstanceId.get();
-//    }
-//
-//    @Override
-//    public void learnValue(long instanceId, int proposal, ByteString value) {
-//        ValueWithProposal v = ValueWithProposal.of(proposal, value);
-//
-//        long i0 = this.lastInstanceId.get();
-//        if (instanceId > i0) {
-//            if (this.lastInstanceId.compareAndSet(i0, instanceId)) {
-//                return;
-//            }
-//        }
-//    }
+    public void setPrepareSuccessRecord(int serverId, int proposal){
+        this.lastSuccessRequestRecord = new SuccessRequestRecord(serverId, System.currentTimeMillis(), proposal);
+    }
 
-    public RequestRecord getLastRequestRecord() {
-        return this.lastRequestRecord;
+    public SuccessRequestRecord lastSuccessPrepare() {
+        return this.lastSuccessRequestRecord;
     }
 
     public boolean isOtherLeaderActive() {
-        return lastRequestRecord.serverId() != -1 && lastRequestRecord.serverId() != config.serverId()
-                && !leaderLeaseExpired(lastRequestRecord.timestampMillis());
+        return lastSuccessRequestRecord.serverId() != -1 && lastSuccessRequestRecord.serverId() != config.serverId()
+                && !leaderLeaseExpired(lastSuccessRequestRecord.timestampMillis());
     }
 
     public boolean isLeader() {
-        return (lastRequestRecord.serverId() == config.serverId()) && !leaderLeaseExpired(lastRequestRecord.timestampMillis());
+        return (lastSuccessRequestRecord.serverId() == config.serverId()) && !leaderLeaseExpired(lastSuccessRequestRecord.timestampMillis());
     }
 
     public int squadId() {
