@@ -49,6 +49,7 @@ message PrepareRes {
 message AcceptReq {
   int32 ballot = 1;
   bytes value = 2;
+  int32 lastChosenBallot = 3;
 }
 
 message AcceptRes {
@@ -63,10 +64,10 @@ message LearnReq {
 }
 
 message LearnRes {
-  repeated InstanceRecord records = 1;
+  repeated InstanceValue records = 1;
 }
 
-message InstanceRecord {
+message InstanceValue {
   int64 instanceId = 1;
   bytes value = 2;
 }

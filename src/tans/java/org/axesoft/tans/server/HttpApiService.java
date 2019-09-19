@@ -80,7 +80,8 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             this.serverChannel = b.bind(config.httpPort()).sync().channel();
 
             this.serverChannel.closeFuture().sync();
-        } finally {
+        }
+        finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }
@@ -117,6 +118,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
             if (msg instanceof HttpRequest) {
                 HttpRequest request = this.request = (HttpRequest) msg;
+                logger.trace("Got http request {}", request);
 
                 if (HttpUtil.is100ContinueExpected(request)) {
                     send100Continue(ctx);
@@ -167,16 +169,22 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             try {
                 Pair<Long, Long> p = tansService.acquire(key, n);
                 String content = p.getLeft() + "," + p.getRight();
+
                 return createResponse(OK, content);
-            } catch (IllegalArgumentException e) {
+            }
+            catch (IllegalArgumentException e) {
                 return createResponse(BAD_REQUEST, e.getMessage());
-            } catch (RedirectException e) {
-                return createRedirectResponse(e.getUrl());
-            } catch (ConflictException e) {
+            }
+            catch (RedirectException e) {
+                return createRedirectResponse(e.getServerId(), key, n);
+            }
+            catch (ConflictException e) {
                 return createResponse(HttpResponseStatus.CONFLICT, "CONFLICT");
-            } catch (IllegalStateException e) {
+            }
+            catch (IllegalStateException e) {
                 return createResponse(INTERNAL_SERVER_ERROR, e.getMessage());
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 logger.error("Exception ", e);
                 return createResponse(INTERNAL_SERVER_ERROR, "INTERNAL ERROR");
             }
@@ -186,7 +194,11 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             return new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.copiedBuffer(v + "\r\n", CharsetUtil.UTF_8));
         }
 
-        private FullHttpResponse createRedirectResponse(String url) {
+        private FullHttpResponse createRedirectResponse(int serverId, String key, long n) {
+            int httpPort = config.getPeerHttpPort(serverId);
+            JaxosSettings.Peer peer = config.jaxConfig().getPeer(serverId);
+            String url = String.format("http://%s:%s/acquire?key=%s&n=%d", peer.address(), httpPort, key, n);
+
             FullHttpResponse response = new DefaultFullHttpResponse(
                     HTTP_1_1, TEMPORARY_REDIRECT);
             response.headers().set(HttpHeaderNames.LOCATION, url);

@@ -106,7 +106,7 @@ public class TansService implements StateMachine {
                 }
 
                 if (result.code() == ProposeResult.Code.OTHER_LEADER) {
-                    throw new RedirectException(getTargetUrl((int) result.param()));
+                    throw new RedirectException((int) result.param());
                 }
             } while (i < 2 && !result.isSuccess());
         }
@@ -122,11 +122,6 @@ public class TansService implements StateMachine {
         }
     }
 
-    private String getTargetUrl(int serverId) {
-        int httpPort = config.getPeerHttpPort(serverId);
-        JaxosSettings.Peer peer = config.jaxConfig().getPeer(serverId);
-        return String.format("http://%s:%s", peer.address(), httpPort);
-    }
 
     private TansNumberProposal createProposal(int squadId, String name, long v) {
         Pair<Long, TansNumber> p = this.numberMaps[squadId].createProposal(name, v);

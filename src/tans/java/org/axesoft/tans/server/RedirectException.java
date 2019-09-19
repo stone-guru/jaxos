@@ -1,11 +1,13 @@
 package org.axesoft.tans.server;
 
 public class RedirectException extends  RuntimeException {
-    public RedirectException(String url) {
-        super(url);
+    private int serverId;
+    public RedirectException(int serverId) {
+        super();
+        this.serverId = serverId;
     }
 
-    public String getUrl(){
-        return super.getMessage();
+    public int getServerId(){
+        return this.serverId;
     }
 }

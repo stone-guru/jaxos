@@ -32,7 +32,7 @@ public class ArgumentParser {
         private String dbDirectory;
 
         @Parameter(names = {"-p"}, description = "Partition number")
-        private Integer partitionNumber = 1;
+        private Integer partitionNumber = 0;
     }
 
     private Properties properties;
@@ -48,7 +48,7 @@ public class ArgumentParser {
         this.properties = checkNotNull(properties);
     }
 
-    public TansConfig parse(String[] sx){
+    public TansConfig parse(String[] sx) {
         JaxosSettings config = parseJaxosConfig(sx);
 
         return new TansConfig(config, this.peerHttpMap);
@@ -66,13 +66,8 @@ public class ArgumentParser {
             throw new IllegalArgumentException("parameter \"-d\" dbDirectory not set");
         }
 
-        JaxosSettings.Builder b = JaxosSettings.builder()
-                .setServerId(args.id)
-                .setDbDirectory(args.dbDirectory)
-                .setPartitionNumber(args.partitionNumber)
-                .setIgnoreLeader(args.ignoreLeader);
 
-        if(this.properties == null) {
+        if (this.properties == null) {
             this.properties = new Properties();
             try {
                 properties.load(new BufferedReader(new FileReader(args.configFilename)));
@@ -82,37 +77,55 @@ public class ArgumentParser {
             }
         }
 
-        loadAddressFromFile(b, this.properties, args.id);
+        //first: load from file
+        //second: command arguments may overwrite it
+        JaxosSettings.Builder builder = loadConfigFromFile(this.properties, args.id)
+                .setServerId(args.id)
+                .setDbDirectory(args.dbDirectory)
+                .setIgnoreLeader(args.ignoreLeader);
 
-        return b.build();
+        if (args.partitionNumber > 0) {
+            builder.setPartitionNumber(args.partitionNumber);
+        }
+
+        return builder.build();
     }
 
-    private void loadAddressFromFile(JaxosSettings.Builder builder, Properties properties, int selfId) {
+    private JaxosSettings.Builder loadConfigFromFile(Properties properties, int selfId) {
+        JaxosSettings.Builder builder = JaxosSettings.builder();
         ImmutableMap.Builder<Integer, Integer> peerHttpMapBuilder = ImmutableMap.builder();
 
         boolean selfPortSet = false;
         for (String k : properties.stringPropertyNames()) {
-            if (!k.startsWith("peer.")) {
-                continue;
-            }
-            String[] sx = k.split("\\.");
-            int id = Integer.parseInt(sx[1]);
+            String s = properties.getProperty(k);
 
-            String[] ax = properties.getProperty(k).split(":");
-            String address = ax[0];
-            int port = Integer.parseInt(ax[1]);
-            int httpPort = Integer.parseInt(ax[2]);
+            if (k.startsWith("peer.")) {
+                String[] sx = k.split("\\.");
+                int id = Integer.parseInt(sx[1]);
 
-            JaxosSettings.Peer peer = new JaxosSettings.Peer(id, address, port);
-            if (id == selfId) {
-                if (selfPortSet) {
-                    throw new IllegalArgumentException("more than one self");
+                String[] ax = s.split(":");
+                String address = ax[0];
+                int port = Integer.parseInt(ax[1]);
+                int httpPort = Integer.parseInt(ax[2]);
+
+                JaxosSettings.Peer peer = new JaxosSettings.Peer(id, address, port);
+                if (id == selfId) {
+                    if (selfPortSet) {
+                        throw new IllegalArgumentException("more than one self");
+                    }
+                    selfPortSet = true;
                 }
-                selfPortSet = true;
-            }
-            builder.addPeer(peer);
+                builder.addPeer(peer);
 
-            peerHttpMapBuilder.put(id, httpPort);
+                peerHttpMapBuilder.put(id, httpPort);
+            }
+            else if (k.equals("partition.number")) {
+                int n = Integer.parseInt(s);
+                if (n < 0 || n > 32) {
+                    throw new IllegalArgumentException("Partition number should be in [1, 32], actual is " + n);
+                }
+                builder.setPartitionNumber(n);
+            }
         }
 
         if (!selfPortSet) {
@@ -120,5 +133,6 @@ public class ArgumentParser {
         }
 
         this.peerHttpMap = peerHttpMapBuilder.build();
+        return builder;
     }
 }

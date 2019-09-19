@@ -70,11 +70,16 @@ public class Proposer {
 
         this.execEndLatch = new CountDownLatch(1);
 
-        if(context.isOtherLeaderActive()){
+        if (config.ignoreLeader()) {
+            startPrepare(proposalNumHolder.getProposal0());
+        }
+        else if (context.isOtherLeaderActive()) {
             return ProposeResult.otherLeader(context.lastSuccessPrepare().serverId());
-        } else if (context.isLeader()) {
+        }
+        else if (context.isLeader()) {
             startAccept(this.proposeValue, context.lastSuccessPrepare().proposal());
-        } else {
+        }
+        else {
             startPrepare(proposalNumHolder.getProposal0());
         }
 
@@ -181,8 +186,14 @@ public class Proposer {
     }
 
     private void startAccept(ByteString value, int proposal) {
+        Learner.LastChosen chosen = this.learner.lastChosen(this.context.squadId());
+        if (instanceId != chosen.instanceId + 1) {
+            endWith(ProposeResult.conflict(this.proposeValue),
+                    String.format("when accept instance %d while last chosen is %d", instanceId, chosen.instanceId));
+            return;
+        }
         this.stage = Stage.ACCEPTING;
-        this.acceptActor.startAccept(value, proposal);
+        this.acceptActor.startAccept(value, proposal, chosen.proposal);
 
         this.acceptTimeout = timerSupplier.get().createTimeout(this.config.acceptTimeoutMillis(), TimeUnit.MILLISECONDS,
                 new Event.AcceptTimeout(config.serverId(), this.context.squadId(), this.instanceId, this.messageMark));
@@ -222,9 +233,10 @@ public class Proposer {
 
         if (this.acceptActor.isAccepted()) {
             this.acceptActor.notifyChosen();
-            if(this.acceptActor.sentValue() == this.proposeValue) {
+            if (this.acceptActor.sentValue() == this.proposeValue) {
                 endWith(ProposeResult.success(this.instanceId), "Chosen");
-            } else {
+            }
+            else {
                 endWith(ProposeResult.conflict(this.proposeValue), "Accept send other value");
             }
         }
@@ -246,8 +258,7 @@ public class Proposer {
             long t = (long) (Math.random() * 10 * i);
             logger.debug("({}) meet conflict sleep {} ms", when, this.instanceId, t);
             Thread.sleep(t);
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
@@ -309,13 +320,8 @@ public class Proposer {
         }
 
         public void onReply(Event.PrepareResponse response) {
-            if(logger.isTraceEnabled()) {
+            if (logger.isTraceEnabled()) {
                 logger.trace("On PREPARE reply {}", response);
-            }
-
-            if (repliedNodes.get(response.senderId())) {
-                logger.warn("Duplicated PREPARE response {}", response);
-                return;
             }
             repliedNodes.add(response.senderId());
 
@@ -357,7 +363,7 @@ public class Proposer {
             return !this.someOneReject && acceptedCount > config.peerCount() / 2;
         }
 
-        private int myProposal(){
+        private int myProposal() {
             return this.proposal;
         }
 
@@ -409,7 +415,7 @@ public class Proposer {
         private int votedCount = 0;
         private ByteString sentValue;
 
-        public void startAccept(ByteString value, int proposal) {
+        public void startAccept(ByteString value, int proposal, int lastChosenProposal) {
             this.maxProposal = 0;
             this.someoneReject = false;
             this.repliedNodes.clear();
@@ -422,16 +428,12 @@ public class Proposer {
             logger.debug("Start accept instance {} with proposal  {} ", Proposer.this.instanceId, proposal);
 
             Event.AcceptRequest request = new Event.AcceptRequest(
-                    Proposer.this.config.serverId(),  Proposer.this.context.squadId(), Proposer.this.instanceId,  Proposer.this.messageMark,
-                    proposal, value);
+                    Proposer.this.config.serverId(), Proposer.this.context.squadId(), Proposer.this.instanceId, Proposer.this.messageMark,
+                    proposal, value, lastChosenProposal);
             Proposer.this.communicator.get().broadcast(request);
         }
 
         public void onReply(Event.AcceptResponse response) {
-            if (this.repliedNodes.get(response.senderId())) {
-                logger.warn(" Duplicated ACCEPT response {}", response);
-                return;
-            }
             this.repliedNodes.add(response.senderId());
 
             if (response.result() == Event.RESULT_STANDBY) {
@@ -475,12 +477,12 @@ public class Proposer {
             return this.votedCount;
         }
 
-        ByteString sentValue(){
+        ByteString sentValue() {
             return this.sentValue;
         }
 
         void notifyChosen() {
-            logger.debug("Notify instance {} chosen",  Proposer.this.instanceId);
+            logger.debug("Notify instance {} chosen", Proposer.this.instanceId);
 
             //Then notify other peers
             Event notify = new Event.ChosenNotify(Proposer.this.config.serverId(), Proposer.this.context.squadId(),
@@ -508,7 +510,7 @@ public class Proposer {
                 long timesDelta = metrics.proposeTimes() - this.totalTimesLast;
                 double avgNanos = (metrics.proposeTotalNanos() - this.totalNanosLast) / (double) timesDelta;
                 long conflictTimesDelta = metrics.conflictTimes() - this.conflictTimesLast;
-                double conflictRate = conflictTimesDelta /(double)timesDelta;
+                double conflictRate = conflictTimesDelta / (double) timesDelta;
 
                 double total = metrics.proposeTimes();
                 String msg = String.format("Recent %d elapsed %.3f ms conflict %.3f, Total %.0f s and success rate %.3f",

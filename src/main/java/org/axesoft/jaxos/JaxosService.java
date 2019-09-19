@@ -7,7 +7,7 @@ import org.axesoft.jaxos.algo.*;
 import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
 import org.axesoft.jaxos.algo.EventWorkerPool;
 import org.axesoft.jaxos.netty.NettyCommunicatorFactory;
-import org.axesoft.jaxos.netty.NettyJaxosNode;
+import org.axesoft.jaxos.netty.NettyJaxosServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +23,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     private StateMachine stateMachine;
     private AcceptorLogger acceptorLogger;
     private Communicator communicator;
-    private NettyJaxosNode node;
+    private NettyJaxosServer node;
 
     private EventWorkerPool eventWorkerPool;
     private Squad[] squads;
@@ -76,7 +76,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     @Override
     protected void run() throws Exception {
         this.eventWorkerPool = new EventWorkerPool(settings.partitionNumber(), () -> this.platoonEventDispatcher);
-        this.node = new NettyJaxosNode(this.settings, this.eventWorkerPool);
+        this.node = new NettyJaxosServer(this.settings, this.eventWorkerPool);
 
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, this.eventWorkerPool);
         this.communicator = factory.createCommunicator();

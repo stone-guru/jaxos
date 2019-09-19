@@ -30,8 +30,8 @@ import java.util.concurrent.TimeUnit;
  * @author gaoyuan
  * @sine 2019/8/22.
  */
-public class NettyJaxosNode {
-    private static Logger logger = LoggerFactory.getLogger(NettyJaxosNode.class);
+public class NettyJaxosServer {
+    private static Logger logger = LoggerFactory.getLogger(NettyJaxosServer.class);
 
     private JaxosSettings settings;
     private Map<ChannelId, JaxosSettings.Peer> channelPeerMap = new ConcurrentHashMap<>();
@@ -39,7 +39,7 @@ public class NettyJaxosNode {
     private Channel serverChannel;
     private EventWorkerPool workerPool;
 
-    public NettyJaxosNode(JaxosSettings settings, EventWorkerPool workerPool) {
+    public NettyJaxosServer(JaxosSettings settings, EventWorkerPool workerPool) {
         this.settings = settings;
         this.messageCoder = new ProtoMessageCoder(this.settings);
         this.workerPool = workerPool;
@@ -47,7 +47,7 @@ public class NettyJaxosNode {
 
     public void startup() {
         EventLoopGroup boss = new NioEventLoopGroup(1);
-        EventLoopGroup worker = new NioEventLoopGroup(2);
+        EventLoopGroup worker = new NioEventLoopGroup(4);
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap()
                     .group(boss, worker)
@@ -108,7 +108,7 @@ public class NettyJaxosNode {
                     ctx.writeAndFlush(heartBeatResponse);
                 }
                 else {
-                    NettyJaxosNode.this.workerPool.submit(e0, e1 -> {
+                    NettyJaxosServer.this.workerPool.submit(e0, e1 -> {
                         PaxosMessage.DataGram response = messageCoder.encode(e1);
                         ctx.writeAndFlush(response);
                     });

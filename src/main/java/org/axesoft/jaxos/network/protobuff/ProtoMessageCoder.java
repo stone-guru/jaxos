@@ -118,6 +118,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         return PaxosMessage.AcceptReq.newBuilder()
                 .setBallot(req.ballot())
                 .setValue(req.value())
+                .setLastChosenBallot(req.lastChosenBallot())
                 .build()
                 .toByteString();
     }
@@ -189,13 +190,16 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
 
     private Event decodeAcceptReq(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.AcceptReq req = PaxosMessage.AcceptReq.parseFrom(dataGram.getBody());
-        return new Event.AcceptRequest(dataGram.getSender(), dataGram.getSquadId(), dataGram.getInstanceId(), dataGram.getRound(),
-                req.getBallot(), req.getValue());
+        return new Event.AcceptRequest(dataGram.getSender(), dataGram.getSquadId(),
+                dataGram.getInstanceId(), dataGram.getRound(),
+                req.getBallot(), req.getValue(),
+                req.getLastChosenBallot());
     }
 
     private Event decodeAcceptResponse(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.AcceptRes res = PaxosMessage.AcceptRes.parseFrom(dataGram.getBody());
-        return new Event.AcceptResponse(dataGram.getSender(), dataGram.getSquadId(), dataGram.getInstanceId(), dataGram.getRound(),
+        return new Event.AcceptResponse(dataGram.getSender(), dataGram.getSquadId(),
+                dataGram.getInstanceId(), dataGram.getRound(),
                 res.getMaxBallot(), res.getResult(), res.getChosenInstanceId());
     }
 

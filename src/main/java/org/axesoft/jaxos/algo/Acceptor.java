@@ -49,16 +49,9 @@ public class Acceptor {
             logger.trace("On prepare {} ", request);
         }
 
-        long last = this.learner.lastChosenInstanceId(this.context.squadId());
+        long last0 = this.learner.lastChosenInstanceId(this.context.squadId());
 
-        //maybe the chosen notify event lost for me
-        if (request.instanceId() == last + 2) {
-            if (this.acceptedBallot > 0 && request.lastChosenBallot() == this.acceptedBallot) {
-                logger.info("PrepareResponse: success handle notify lost, when handle prepare({}), mine is {}", request.instanceId(), last);
-                last = last + 1;
-                chose(last, request.lastChosenBallot());
-            }
-        }
+        long last = handleAcceptedNotifyLostMaybe(last0, request.instanceId(), request.lastChosenBallot());
 
         if (request.instanceId() <= last) {
             logger.debug("PrepareResponse: historic prepare(instance id = {}), while my instance id is {} ",
@@ -103,7 +96,9 @@ public class Acceptor {
     public Event.AcceptResponse accept(Event.AcceptRequest request) {
         logger.trace("On Accept {}", request);
 
-        long last = this.learner.lastChosenInstanceId(this.context.squadId());
+        long last0 = this.learner.lastChosenInstanceId(this.context.squadId());
+
+        long last = handleAcceptedNotifyLostMaybe(last0, request.instanceId(), request.lastChosenBallot());
 
         if (request.instanceId() <= last) {
             logger.debug("AcceptResponse: historical in accept(instance id = {}), while my instance id is {} ",
@@ -137,6 +132,17 @@ public class Acceptor {
     private Event.AcceptResponse buildAcceptResponse(Event.AcceptRequest request, int proposal, int result) {
         return new Event.AcceptResponse(config.serverId(), this.context.squadId(), request.instanceId(), request.round(),
                 proposal, result, this.learner.lastChosenInstanceId(this.context.squadId()));
+    }
+
+    private long handleAcceptedNotifyLostMaybe(long lastInstanceId, long requestInstanceId, int lastChosenBallot){
+        if (requestInstanceId == lastInstanceId + 2) {
+            if (this.acceptedBallot > 0 && lastChosenBallot == this.acceptedBallot) {
+                logger.info("success handle notify lost, when handle prepare({}), mine is {}", requestInstanceId, lastInstanceId);
+                chose(lastInstanceId, lastChosenBallot);
+                return lastInstanceId + 1;
+            }
+        }
+        return lastInstanceId;
     }
 
     public void onChoseNotify(Event.ChosenNotify notify) {

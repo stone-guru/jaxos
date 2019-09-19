@@ -198,12 +198,14 @@ public abstract class Event {
 
     public static class AcceptRequest extends Event {
         private int ballot;
+        private int lastChosenBallot;
         private ByteString value;
 
-        public AcceptRequest(int sender, int squadId, long instanceId, int round, int ballot, ByteString value) {
+        public AcceptRequest(int sender, int squadId, long instanceId, int round, int ballot, ByteString value, int lastChosenBallot) {
             super(sender, squadId, instanceId, round);
             this.ballot = ballot;
             this.value = checkNotNull(value);
+            this.lastChosenBallot = lastChosenBallot;
         }
 
         @Override
@@ -219,13 +221,19 @@ public abstract class Event {
             return this.value;
         }
 
+        public int lastChosenBallot() {
+            return lastChosenBallot;
+        }
+
         @Override
         public String toString() {
             return "AcceptRequest{" + super.toString() +
                     ", ballot=" + ballot +
                     ", value=B[" + value.size() + "]" +
+                    ", lastChosenBallot=" + lastChosenBallot +
                     '}';
         }
+
     }
 
     public static class AcceptResponse extends Event {

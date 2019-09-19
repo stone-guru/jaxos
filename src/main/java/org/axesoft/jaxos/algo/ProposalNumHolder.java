@@ -13,14 +13,14 @@ public class ProposalNumHolder {
     }
 
     public int getProposal0(){
-        if(Math.random() >= 0.5){
-            return this.serverId + rangeLength;
-        }
+//        if(Math.random() >= 0.5){
+//            return this.serverId + rangeLength;
+//        }
         return this.serverId;
     }
 
     public int nextProposal(int proposal){
-        final int r = this.rangeLength << 1;
+        final int r = this.rangeLength;
         return ((proposal / r) + 1) * r + this.serverId;
     }
 }
