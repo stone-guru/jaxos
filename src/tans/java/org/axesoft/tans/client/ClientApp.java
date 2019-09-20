@@ -3,181 +3,53 @@
  */
 package org.axesoft.tans.client;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import io.netty.bootstrap.Bootstrap;
+import com.google.common.collect.Lists;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class ClientApp {
-    private static final int PAR_FACTOR = 1;
-    private static final int TARGET_URL_NUM = 1;
-    private static final boolean PRINT_ALL_RESPONSE = false;
-    private static final boolean FOLLOW_REDIRECT = true;
 
     public static final List<String> URLS = ImmutableList.of(
-            "http://localhost:8081/acquire?key=monkey.id&n=3",
-            "http://localhost:8083/acquire?key=star.id&n=2",
-            "http://localhost:8082/acquire?key=pig.id&n=1"
+            "http://localhost:8081/acquire?key=monkey.id&n=3"
+            , "http://localhost:8083/acquire?key=star.id&n=2"
+            , "http://localhost:8082/acquire?key=pig.id&n=1"
     );
 
     public static void main(String[] args) throws Exception {
         ClientApp app = new ClientApp();
-        app.run();
+        app.run(URLS);
     }
 
-    private static class RequestDefinition {
-        private String host;
-        private int port;
-        private AtomicReference<HttpRequest> request;
-        private AtomicInteger count;
+    private Map<InetSocketAddress, HttpRequest> requestMap;
 
-        public RequestDefinition(String host, int port, HttpRequest request) {
-            this.host = host;
-            this.port = port;
-            this.request = new AtomicReference<>(request);
-            this.count = new AtomicInteger(0);
-        }
-    }
-
-    private int n = 10;
-    private long start = 0;
-    private AtomicInteger count = new AtomicInteger(0);
-    private List<RequestDefinition> requestDefinitions;
-    private Map<Channel, RequestDefinition> channelTaskMap;
-    private Bootstrap bootstrap;
-    private BlockingQueue<Runnable> redirectTasks = new ArrayBlockingQueue<>(10);
+    public void run(List<String> urls) throws Exception {
+        List<URI> uris = Lists.transform(urls, this::toUri);
+        this.requestMap = uris.stream().collect(Collectors.toMap
+                (uri -> InetSocketAddress.createUnresolved(uri.getHost(), uri.getPort()),
+                        uri -> createRequest(uri)));
 
 
-    private List<RequestDefinition> createTasks(List<String> urls, int maxNum) {
-        ImmutableList.Builder<RequestDefinition> builder = ImmutableList.builder();
-        int i = 0;
+        HttpTaskRunner runner = new HttpTaskRunner(this::handleResponse);
         for (String url : urls) {
-            URI uri;
-            try {
-                uri = new URI(url);
-            }
-            catch (URISyntaxException e) {
-                throw new RuntimeException();
-            }
-
-            builder.add(new RequestDefinition(uri.getHost(), uri.getPort(), createRequest(uri)));
-            i++;
-            if (i >= maxNum) {
-                break;
-            }
+            URI uri = toUri(url);
+            runner.addTask(uri.getHost(), uri.getPort(), this.requestMap.get(InetSocketAddress.createUnresolved(uri.getHost(), uri.getPort())),
+                    5, 2000);
         }
 
-        return builder.build();
+        Thread.sleep(1000);
+        runner.run();
     }
 
-    private Map<Channel, RequestDefinition> connect(List<RequestDefinition> requests, int par) throws InterruptedException {
-        Map<Channel, RequestDefinition> result = new HashMap<>();
-        for (int i = 0; i < par; i++) {
-            for (RequestDefinition def : requests) {
-                Channel ch = this.bootstrap.connect(def.host, def.port).sync().channel();
-                result.put(ch, def);
-            }
-        }
-
-        return result;
-    }
-
-    public void run() throws Exception {
-        this.requestDefinitions = createTasks(URLS, TARGET_URL_NUM);
-
-        // Configure the client.
-        EventLoopGroup group = new NioEventLoopGroup();
-        try {
-            this.bootstrap = new Bootstrap();
-            this.bootstrap.group(group)
-                    .channel(NioSocketChannel.class)
-                    .handler(new HttpSnoopClientInitializer());
-
-            this.channelTaskMap = new ConcurrentHashMap<>(connect(this.requestDefinitions, PAR_FACTOR));
-
-            this.start = System.nanoTime();
-
-            for (Channel ch : this.channelTaskMap.keySet()) {
-                writeRequest(ch);
-            }
-
-            for (Channel ch : this.channelTaskMap.keySet()) {
-                // Wait for the server to close the connection.
-                ch.closeFuture().sync();
-            }
-
-            double millis = (System.nanoTime() - start) / 1e+6;
-            double qps = n / (millis / 1000.0);
-            System.out.println(String.format("POST %d in %.3f millis, QPS is %.0f", n, millis, qps));
-        }
-        finally {
-            // Shut down executor threads to exit.
-            group.shutdownGracefully();
-        }
-    }
-
-    private void writeRequest(Channel ch) {
-        RequestDefinition def = this.channelTaskMap.get(ch);
-        ch.writeAndFlush(def.request.get());
-    }
-
-    private Optional<Channel> handleRedirect(HttpResponse response) {
-        boolean isRedirect = response.status().code() == HttpResponseStatus.TEMPORARY_REDIRECT.code()
-                || response.status().code() == HttpResponseStatus.PERMANENT_REDIRECT.code();
-        if (!isRedirect) {
-            return Optional.empty();
-        }
-        String url = response.headers().get(HttpHeaderNames.LOCATION);
-
-        System.out.println("Got Redirect URL " + url);
-        if (Strings.isNullOrEmpty(url)) {
-            return Optional.empty();
-        }
-
-        URI uri;
-        try {
-            uri = new URI(url);
-        }
-        catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-
-        RequestDefinition def = new RequestDefinition(uri.getHost(), uri.getPort(), createRequest(uri));
-
-        ChannelFuture future = this.bootstrap.connect(uri.getHost(), uri.getPort());
-        future.addListener(f -> {
-            if(f.isSuccess()){
-                System.out.println("redirect connected to: " + url);
-                Channel channel = ((ChannelFuture)f).channel();
-                this.channelTaskMap.put(channel, def);
-            } else {
-                System.out.println("Can not connect to: " + url);
-            }
-        });
-        return Optional.of(future.channel());
-    }
-
-    private HttpRequest createRequest(URI uri) {
+    private static HttpRequest createRequest(URI uri) {
         HttpRequest request = new DefaultFullHttpRequest(
                 HttpVersion.HTTP_1_1, HttpMethod.GET, uri.getPath() + "?" + uri.getQuery(), Unpooled.EMPTY_BUFFER);
         request.headers().set(HttpHeaderNames.HOST, uri.getHost());
@@ -187,103 +59,27 @@ public class ClientApp {
         return request;
     }
 
-    public class HttpSnoopClientInitializer extends ChannelInitializer<SocketChannel> {
+    private void handleResponse(InetSocketAddress from, HttpResponse response, HttpContent content) {
+        //System.out.println("process");
+        boolean isRedirect = HttpTaskRunner.isRedirectCode(response.status().code());
+        String s = isRedirect ?
+                response.headers().get(HttpHeaderNames.LOCATION)
+                : content.content().toString(CharsetUtil.UTF_8).lines().findFirst().orElseGet(() -> "");
 
-        @Override
-        public void initChannel(SocketChannel ch) {
-            ChannelPipeline p = ch.pipeline();
-            p.addLast(new HttpClientCodec());
-            // Remove the following line if you don't want automatic content decompression.
-            p.addLast(new HttpContentDecompressor());
-            // Uncomment the following line if you don't want to handle HttpContents.
-            //p.addLast(new HttpObjectAggregator(1048576));
-            p.addLast(new HttpSnoopClientHandler());
-        }
+        String info = String.format("%s, %s, %s [%s]",
+                response.headers().get(HttpHeaderNames.HOST),
+                response.headers().get(HttpHeaderNames.FROM),
+                response.status().codeAsText(),
+                s);
+        System.err.println(info);
     }
 
-    private static boolean isRedirectCode(int code) {
-        switch (code) {
-            case 300:
-            case 301:
-            case 302:
-            case 303:
-            case 305:
-            case 307:
-                return true;
-            default:
-                return false;
+    private URI toUri(String url) {
+        try {
+            return new URI(url);
+        }
+        catch (URISyntaxException e) {
+            throw new RuntimeException();
         }
     }
-
-    private class HttpSnoopClientHandler extends SimpleChannelInboundHandler<HttpObject> {
-        HttpResponse response;
-
-        @Override
-        public void channelRead0(ChannelHandlerContext ctx, HttpObject msg) {
-            if (msg instanceof HttpResponse) {
-                response = (HttpResponse) msg;
-                //System.err.println("STATUS: " + response.status());
-            }
-            if (msg instanceof HttpContent) {
-                HttpContent content = (HttpContent) msg;
-
-                int i = count.getAndIncrement();
-                boolean isRedirect = isRedirectCode(response.status().code());
-
-                if (PRINT_ALL_RESPONSE || i < 1000 || i % 1000 == 0 || n - i < 100) {
-                    String s = isRedirect ?
-                            response.headers().get(HttpHeaderNames.LOCATION)
-                            : content.content().toString(CharsetUtil.UTF_8).lines().findFirst().orElseGet(() -> "");
-
-                    String info = String.format("%s, %s, %s [%s]",
-                            response.headers().get(HttpHeaderNames.HOST),
-                            response.headers().get(HttpHeaderNames.FROM),
-                            response.status().codeAsText(),
-                            s);
-                    System.err.println(info);
-                }
-
-                if (i == 100) {
-                    System.err.println("...");
-                }
-
-                if (i < n) {
-                    try {
-                        if (i == 0) {
-                            Thread.sleep((long) (Math.random() * 100));
-                        }
-
-                        if (!isRedirect) {
-                            writeRequest(ctx.channel());
-                        }
-                        else {
-                            if (FOLLOW_REDIRECT) {
-                                Optional<Channel> opt = handleRedirect(response);
-//                                opt.ifPresent(c -> writeRequest(c));
-//                                redirectTasks.offer(() -> {
-//                                    Optional<Channel> opt = handleRedirect(response);
-//                                    opt.ifPresent(c -> writeRequest(c));
-//                                });
-                            }
-                            ctx.close();
-                        }
-                    }
-                    catch (InterruptedException e) {
-                        ctx.close();
-                    }
-                }
-                else {
-                    ctx.close();
-                }
-            }
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            cause.printStackTrace();
-            ctx.close();
-        }
-    }
-
-
 }
