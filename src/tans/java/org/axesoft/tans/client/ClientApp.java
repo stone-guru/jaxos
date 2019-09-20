@@ -35,11 +35,10 @@ public class ClientApp {
     private static final boolean FOLLOW_REDIRECT = true;
 
     public static final List<String> URLS = ImmutableList.of(
-            "http://localhost:8082/acquire?key=monkey.id&n=3",
+            "http://localhost:8081/acquire?key=monkey.id&n=3",
             "http://localhost:8083/acquire?key=star.id&n=2",
             "http://localhost:8082/acquire?key=pig.id&n=1"
     );
-
 
     public static void main(String[] args) throws Exception {
         ClientApp app = new ClientApp();
@@ -122,20 +121,6 @@ public class ClientApp {
                 writeRequest(ch);
             }
 
-            new Thread(() -> {
-                while (true) {
-                    Runnable r = null;
-                    try {
-                        r = redirectTasks.take();
-                    }
-                    catch (InterruptedException e) {
-                        break;
-                    }
-                    System.out.println("Found a redirect task execute it");
-                    r.run();
-                }
-            }).run();
-
             for (Channel ch : this.channelTaskMap.keySet()) {
                 // Wait for the server to close the connection.
                 ch.closeFuture().sync();
@@ -179,9 +164,17 @@ public class ClientApp {
 
         RequestDefinition def = new RequestDefinition(uri.getHost(), uri.getPort(), createRequest(uri));
 
-        Channel c = this.bootstrap.connect(uri.getHost(), uri.getPort()).channel();
-        this.channelTaskMap.put(c, def);
-        return Optional.of(c);
+        ChannelFuture future = this.bootstrap.connect(uri.getHost(), uri.getPort());
+        future.addListener(f -> {
+            if(f.isSuccess()){
+                System.out.println("redirect connected to: " + url);
+                Channel channel = ((ChannelFuture)f).channel();
+                this.channelTaskMap.put(channel, def);
+            } else {
+                System.out.println("Can not connect to: " + url);
+            }
+        });
+        return Optional.of(future.channel());
     }
 
     private HttpRequest createRequest(URI uri) {
@@ -208,6 +201,20 @@ public class ClientApp {
         }
     }
 
+    private static boolean isRedirectCode(int code) {
+        switch (code) {
+            case 300:
+            case 301:
+            case 302:
+            case 303:
+            case 305:
+            case 307:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     private class HttpSnoopClientHandler extends SimpleChannelInboundHandler<HttpObject> {
         HttpResponse response;
 
@@ -221,9 +228,13 @@ public class ClientApp {
                 HttpContent content = (HttpContent) msg;
 
                 int i = count.getAndIncrement();
+                boolean isRedirect = isRedirectCode(response.status().code());
 
                 if (PRINT_ALL_RESPONSE || i < 1000 || i % 1000 == 0 || n - i < 100) {
-                    String s = content.content().toString(CharsetUtil.UTF_8).lines().findFirst().orElseGet(() -> "");
+                    String s = isRedirect ?
+                            response.headers().get(HttpHeaderNames.LOCATION)
+                            : content.content().toString(CharsetUtil.UTF_8).lines().findFirst().orElseGet(() -> "");
+
                     String info = String.format("%s, %s, %s [%s]",
                             response.headers().get(HttpHeaderNames.HOST),
                             response.headers().get(HttpHeaderNames.FROM),
@@ -242,18 +253,17 @@ public class ClientApp {
                             Thread.sleep((long) (Math.random() * 100));
                         }
 
-                        boolean isRedirect = response.status().code() == HttpResponseStatus.TEMPORARY_REDIRECT.code()
-                                || response.status().code() == HttpResponseStatus.PERMANENT_REDIRECT.code();
-
                         if (!isRedirect) {
                             writeRequest(ctx.channel());
                         }
                         else {
                             if (FOLLOW_REDIRECT) {
-                                redirectTasks.offer(() -> {
-                                    Optional<Channel> opt = handleRedirect(response);
-                                    opt.ifPresent(c -> writeRequest(c));
-                                });
+                                Optional<Channel> opt = handleRedirect(response);
+//                                opt.ifPresent(c -> writeRequest(c));
+//                                redirectTasks.offer(() -> {
+//                                    Optional<Channel> opt = handleRedirect(response);
+//                                    opt.ifPresent(c -> writeRequest(c));
+//                                });
                             }
                             ctx.close();
                         }
