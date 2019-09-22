@@ -1,10 +1,10 @@
 package org.axesoft.tans.server;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang3.tuple.Pair;
-import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.algo.Proponent;
 import org.axesoft.jaxos.algo.ProposeResult;
 import org.axesoft.jaxos.algo.StateMachine;
@@ -13,9 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -36,7 +35,7 @@ public class TansService implements StateMachine {
 
         this.numberMaps = new TansNumberMap[config.jaxConfig().partitionNumber()];
         this.machineLocks = new Object[config.jaxConfig().partitionNumber()];
-        for(int i = 0; i < numberMaps.length; i++){
+        for (int i = 0; i < numberMaps.length; i++) {
             this.numberMaps[i] = new TansNumberMap();
             this.machineLocks[i] = new Object();
         }
@@ -54,7 +53,7 @@ public class TansService implements StateMachine {
 
     @Override
     public void consume(int squadId, long instanceId, ByteString message) {
-        TansNumber n1 = fromMessage(message);
+        TansNumber n1 = fromMessage(message).get(0);
         if (logger.isTraceEnabled()) {
             logger.trace("TANS state machine consumer event {}", n1);
         }
@@ -79,7 +78,7 @@ public class TansService implements StateMachine {
         checkArgument(v > 0, "required number {} is negative");
         logger.trace("TanService acquire {} for {}", k, v);
 
-        int squadId = selectSquadId(k);
+        int squadId = squadIdOf(k);
 
         int i = 0;
         ProposeResult result;
@@ -90,7 +89,7 @@ public class TansService implements StateMachine {
                 TansNumberProposal p = createProposal(squadId, k, v);
                 n = p.number;
                 logger.trace("TansService prepare proposal {}", p);
-                ByteString bx = toMessage(p.number);
+                ByteString bx = toMessage(ImmutableList.of(p.number));
                 try {
                     result = proponent.get().propose(p.squadId, p.instanceId, bx);
                 }
@@ -127,35 +126,53 @@ public class TansService implements StateMachine {
         return new TansNumberProposal(squadId, p.getLeft(), p.getRight());
     }
 
-    private int selectSquadId(String key){
+    public int squadIdOf(String key) {
         int code = key.hashCode();
-        if(code == Integer.MIN_VALUE){
+        if (code == Integer.MIN_VALUE) {
             return 0;
         }
         return Math.abs(code) % this.numberMaps.length;
     }
 
-    private static ByteString toMessage(TansNumber n) {
-        return TansMessage.ProtoTansNumber.newBuilder()
-                .setName(n.name())
-                .setValue(n.value())
-                .setVersion(n.version())
-                .setTimestamp(n.timestamp())
-                .setVersion0(n.version0())
-                .setValue0(n.value0())
-                .build()
-                .toByteString();
+
+    private static ByteString toMessage(List<TansNumber> nx) {
+        TansMessage.TansProposal.Builder builder = TansMessage.TansProposal.newBuilder();
+        for (TansNumber n : nx) {
+            TansMessage.ProtoTansNumber.Builder nb = TansMessage.ProtoTansNumber.newBuilder()
+                    .setName(n.name())
+                    .setValue(n.value())
+                    .setVersion(n.version())
+                    .setTimestamp(n.timestamp())
+                    .setVersion0(n.version0())
+                    .setValue0(n.value0());
+
+            builder.addNumber(nb);
+        }
+
+        return builder.build().toByteString();
     }
 
-    private static TansNumber fromMessage(ByteString message) {
+    private static List<TansNumber> fromMessage(ByteString message) {
+        TansMessage.TansProposal p;
         try {
-            TansMessage.ProtoTansNumber number = TansMessage.ProtoTansNumber.parseFrom(message);
-            return new TansNumber(number.getName(), number.getVersion(), number.getTimestamp(), number.getValue(), number.getVersion0(), number.getValue0());
-        } catch (InvalidProtocolBufferException e) {
+            p = TansMessage.TansProposal.parseFrom(message);
+        }
+        catch (InvalidProtocolBufferException e) {
             throw new RuntimeException(e);
         }
-    }
 
+        if (p.getNumberCount() == 0) {
+            throw new RuntimeException("Empty tans number list");
+        }
+
+        ImmutableList.Builder<TansNumber> builder = ImmutableList.builder();
+        for (TansMessage.ProtoTansNumber number : p.getNumberList()) {
+            builder.add(new TansNumber(number.getName(), number.getVersion(), number.getTimestamp(), number.getValue(),
+                    number.getVersion0(), number.getValue0()));
+        }
+
+        return builder.build();
+    }
 
     private static class TansNumberMap {
         private final Map<String, TansNumber> numbers = new HashMap<>();

@@ -4,7 +4,7 @@
 * DONE client close network gracefully				    :network:
 * DONE use ProtoBuff.ByteString to store the general value	       :base:
 * DONE Proposal judge the majority				  :algorithm:
-* NEXT implement basic multi-paxos.instance 			  :algorithm:
+* DONE implement basic multi-paxos.instance			  :algorithm:
 ** DONE acceptor and adaptor use same instance context		  :algorithm:
 * DONE save proposal to localdb 					:log:
 * DONE add accepted message					    :network:
@@ -26,9 +26,11 @@ are by netty
 * DONE [#C] the proposer blocked at "executingSignal"		       :base:
 * DONE Implement a HTTP id service for each server 		       :base:
 * DONE implement a HTTP client on netty				    :network:
-* TODO Provide proposal BATCH strategy to improve the throughput  :algorithm:
+* NEXT Provide proposal BATCH strategy to improve the throughput  :algorithm:
 * TODO Ignore Exceptions from channel broken when shudown the server :network:
 * TODO A case of Chosen notify message lost making that server hang :network:
+* TODO Add full unit test case for algo package			  :algorithm:
+* DONE TANS service handle HTTP request in async way		    :network:
 * related infors
 ** Quorum algo(NWR)
 * token 8c8caa4dce5df2901c628ca6ec9ba4354c4b3889

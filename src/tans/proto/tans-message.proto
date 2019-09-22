@@ -12,5 +12,7 @@ message ProtoTansNumber {
   int64 value0 = 6;
 }
 
-
+message TansProposal {
+  repeated ProtoTansNumber number = 1;
+}
 

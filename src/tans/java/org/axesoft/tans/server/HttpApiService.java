@@ -1,24 +1,7 @@
-/*
- * Copyright 2012 The Netty Project
- *
- * The Netty Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
- */
 package org.axesoft.tans.server;
 
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.base.Strings;
+import com.google.common.util.concurrent.*;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -32,6 +15,7 @@ import io.netty.util.CharsetUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.base.Derivator;
+import org.axesoft.jaxos.base.Either;
 import org.axesoft.jaxos.base.SlideCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -144,7 +128,19 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
             if (msg instanceof LastHttpContent) {
                 if (getRawUri(request.uri()).equals("/acquire")) {
-                    ListenableFuture<FullHttpResponse> future = threadPool.submit(0, () -> handleAcquire(request));
+                    Either<String, Pair<String, Long>> either = parseRequest(request);
+                    if (!either.isRight()) {
+                        writeResponse(ctx,
+                                new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST,
+                                        Unpooled.copiedBuffer(either.getLeft(), CharsetUtil.UTF_8)));
+                        return;
+                    }
+
+                    final String key = either.getRight().getKey();
+                    final long v = either.getRight().getValue();
+                    int i = tansService.squadIdOf(key);
+
+                    ListenableFuture<FullHttpResponse> future = threadPool.submit(i, () -> handleAcquire(key, v));
                     future.addListener(() -> {
                                 FullHttpResponse response;
                                 try {
@@ -153,8 +149,10 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                                 }
                                 catch (ExecutionException e) {
                                     logger.error("Exception", e);
+                                    writeResponse(ctx, createResponse(INTERNAL_SERVER_ERROR, e.getMessage()));
                                 }
                                 catch (InterruptedException e) {
+                                    //No response needed
                                     logger.info("Execute interrupted");
                                 }
                             },
@@ -178,22 +176,37 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             }
         }
 
-        private FullHttpResponse handleAcquire(HttpRequest request) {
+        private Either<String, Pair<String, Long>> parseRequest(HttpRequest request) {
             QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.uri());
             Map<String, List<String>> params = queryStringDecoder.parameters();
 
             List<String> vx = params.get("key");
             if (vx == null || vx.size() == 0) {
-                return new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST, Unpooled.copiedBuffer("Argument 'key' required", CharsetUtil.UTF_8));
+                return Either.left("Argument 'key' required");
             }
             String key = vx.get(0);
+            if (Strings.isNullOrEmpty(key)) {
+                return Either.left("Value of 'key' required");
+            }
 
             long n = 1;
             List<String> nx = params.get("n");
             if (nx != null && nx.size() > 0) {
-                n = Long.parseLong(nx.get(0));
+                try {
+                    n = Long.parseLong(nx.get(0));
+                    if (n <= 0) {
+                        return Either.left("Zero or negative n " + n);
+                    }
+                }
+                catch (NumberFormatException e) {
+                    return Either.left(e.getMessage());
+                }
             }
 
+            return Either.right(Pair.of(key, n));
+        }
+
+        private FullHttpResponse handleAcquire(String key, long n) {
             try {
                 Pair<Long, Long> p = tansService.acquire(key, n);
                 String content = p.getLeft() + "," + p.getRight();
@@ -209,11 +222,8 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             catch (ConflictException e) {
                 return createResponse(HttpResponseStatus.CONFLICT, "CONFLICT");
             }
-            catch (IllegalStateException e) {
-                return createResponse(INTERNAL_SERVER_ERROR, e.getMessage());
-            }
             catch (Exception e) {
-                logger.error("Exception ", e);
+                logger.error("Process " + key + ", " + n, e);
                 return createResponse(INTERNAL_SERVER_ERROR, "INTERNAL ERROR");
             }
         }
