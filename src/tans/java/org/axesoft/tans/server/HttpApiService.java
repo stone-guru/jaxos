@@ -16,10 +16,10 @@
 package org.axesoft.tans.server;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.protobuf.ByteString;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -31,15 +31,14 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.CharsetUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
-import org.axesoft.jaxos.algo.Proponent;
-import org.axesoft.jaxos.algo.ProposeResult;
+import org.axesoft.jaxos.base.Derivator;
+import org.axesoft.jaxos.base.SlideCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
@@ -53,28 +52,38 @@ public final class HttpApiService extends AbstractExecutionThreadService {
     private static final Logger logger = LoggerFactory.getLogger(HttpApiService.class);
 
     private static final String SERVICE_NAME = "Take-A-Number System";
-
     private TansService tansService;
     private TansConfig config;
+
+
     private Channel serverChannel;
+    private PartedThreadPool threadPool;
+    private EventLoopGroup bossGroup;
+    private EventLoopGroup workerGroup;
+    private Derivator taskCountDerivator;
+
 
     public HttpApiService(TansConfig config, TansService tansService) {
         this.tansService = tansService;
         this.config = config;
+
         addListener(new ServiceListener(), MoreExecutors.directExecutor());
     }
 
     @Override
     protected void run() throws Exception {
-        // Configure the server.
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        this.taskCountDerivator = new Derivator();
+        this.threadPool = new PartedThreadPool(this.config.jaxConfig().partitionNumber());
+
+
+        this.bossGroup = new NioEventLoopGroup(1);
+        this.workerGroup = new NioEventLoopGroup();
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.option(ChannelOption.SO_BACKLOG, 1024);
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
-                    .handler(new LoggingHandler(LogLevel.INFO))
+                    .handler(new LoggingHandler(LogLevel.ERROR))
                     .childHandler(new HttpHelloWorldServerInitializer());
 
             this.serverChannel = b.bind(config.httpPort()).sync().channel();
@@ -94,6 +103,15 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
     }
 
+    public void printMetrics() {
+        long t = this.threadPool.totalExecTimes();
+        Pair<Double, Double> p = this.taskCountDerivator.accept(t, System.currentTimeMillis());
+        long w = this.threadPool.lastMinuteWaitingSize();
+
+        logger.info("{} get more {} tasks , speed {}/sec, max waiting tasks of last minute is {}",
+                SERVICE_NAME, p.getLeft().intValue(), String.format("%.1f", p.getRight()), w);
+    }
+
     public class HttpHelloWorldServerInitializer extends ChannelInitializer<SocketChannel> {
         @Override
         public void initChannel(SocketChannel ch) {
@@ -106,7 +124,6 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
     public class HttpChannelHandler extends SimpleChannelInboundHandler<Object> {
         private HttpRequest request;
-        private FullHttpResponse response;
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) {
@@ -123,19 +140,30 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                 if (HttpUtil.is100ContinueExpected(request)) {
                     send100Continue(ctx);
                 }
-
-                if (getRawUri(request.uri()).equals("/acquire")) {
-                    response = handleAcquire(request);
-                }
-                else {
-                    response = new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND, Unpooled.copiedBuffer("Not Found", CharsetUtil.UTF_8));
-                }
             }
 
             if (msg instanceof LastHttpContent) {
-                if (!writeResponse(ctx)) {
-                    // If keep-alive is off, close the connection once the content is fully written.
-                    ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+                if (getRawUri(request.uri()).equals("/acquire")) {
+                    ListenableFuture<FullHttpResponse> future = threadPool.submit(0, () -> handleAcquire(request));
+                    future.addListener(() -> {
+                                FullHttpResponse response;
+                                try {
+                                    response = future.get();
+                                    writeResponse(ctx, response);
+                                }
+                                catch (ExecutionException e) {
+                                    logger.error("Exception", e);
+                                }
+                                catch (InterruptedException e) {
+                                    logger.info("Execute interrupted");
+                                }
+                            },
+                            MoreExecutors.directExecutor());
+                }
+                else {
+                    FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND,
+                            Unpooled.copiedBuffer("Not Found", CharsetUtil.UTF_8));
+                    writeResponse(ctx, response);
                 }
             }
         }
@@ -205,21 +233,22 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             return response;
         }
 
-        private boolean writeResponse(ChannelHandlerContext ctx) {
+        private void writeResponse(ChannelHandlerContext ctx, FullHttpResponse response) {
             boolean keepAlive = HttpUtil.isKeepAlive(request);
 
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
             response.headers().set(HttpHeaderNames.HOST, config.address());
             response.headers().set(HttpHeaderNames.FROM, Integer.toString(config.httpPort()));
+            response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+
             if (keepAlive) {
-                response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
                 response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
             }
 
-            // Write the response.
-            ctx.write(response);
-
-            return keepAlive;
+            ChannelFuture future = ctx.writeAndFlush(response);
+            if (!keepAlive) {
+                future.addListener(ChannelFutureListener.CLOSE);
+            }
         }
 
         private void send100Continue(ChannelHandlerContext ctx) {
@@ -248,6 +277,74 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         @Override
         public void terminated(State from) {
             logger.info("{} terminated from state {}", SERVICE_NAME, from);
+        }
+    }
+
+    private static class PartedThreadPool {
+        private TansExecutor[] executors;
+
+        public PartedThreadPool(int threadNum) {
+            this.executors = new TansExecutor[threadNum];
+            for (int i = 0; i < threadNum; i++) {
+                this.executors[i] = new TansExecutor(i);
+            }
+        }
+
+        public <T> ListenableFuture<T> submit(int i, Callable<T> task) {
+            return this.executors[i].submit(task);
+        }
+
+        public int totalExecTimes() {
+            int t = 0;
+            for (TansExecutor executor : this.executors) {
+                t += executor.totalExecTimes();
+            }
+            return t;
+        }
+
+        public int lastMinuteWaitingSize() {
+            int t = 0;
+            for (TansExecutor executor : this.executors) {
+                t = Math.max(executor.lastMinuteWaitingSize(), t);
+            }
+            return t;
+        }
+    }
+
+    private static class TansExecutor {
+        private ThreadPoolExecutor threadPool;
+        private ListeningExecutorService executor;
+        private SlideCounter waitingTaskCounter;
+        private AtomicInteger execTimes;
+
+        public TansExecutor(int i) {
+            this.threadPool = new ThreadPoolExecutor(1, 1,
+                    0L, TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<>(),
+                    (r) -> {
+                        String name = "API Service Thread-" + i;
+                        Thread thread = new Thread(r, name);
+                        thread.setDaemon(true);
+                        return thread;
+                    });
+            this.executor = MoreExecutors.listeningDecorator(this.threadPool);
+            this.waitingTaskCounter = new SlideCounter(1, SlideCounter.StatMethod.STAT_MAX, 1);
+            this.execTimes = new AtomicInteger(0);
+        }
+
+        public <T> ListenableFuture<T> submit(Callable<T> task) {
+            ListenableFuture<T> f = this.executor.submit(task);
+            this.execTimes.incrementAndGet();
+            this.waitingTaskCounter.recordAtNow(this.threadPool.getQueue().size());
+            return f;
+        }
+
+        public int totalExecTimes() {
+            return this.execTimes.get();
+        }
+
+        public int lastMinuteWaitingSize() {
+            return this.waitingTaskCounter.getMaximal(0);
         }
     }
 }

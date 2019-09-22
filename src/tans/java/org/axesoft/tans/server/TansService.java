@@ -66,7 +66,6 @@ public class TansService implements StateMachine {
         logger.info("TANS state machine closed");
     }
 
-
     /**
      * @param k
      * @param v

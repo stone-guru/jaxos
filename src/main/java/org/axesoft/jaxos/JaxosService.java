@@ -65,12 +65,20 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         return this.squads[squadId].propose(instanceId, v);
     }
 
+    public void printMetrics(){
+        long current = System.currentTimeMillis();
+        for(Squad squad : this.squads){
+            squad.computeAndPrintMetrics(current);
+        }
+    }
+
     @Override
     protected void triggerShutdown() {
         this.communicator.close();
         this.node.shutdown();
         this.stateMachine.close();
         this.acceptorLogger.close();
+        this.eventWorkerPool.shutdown();
     }
 
     @Override

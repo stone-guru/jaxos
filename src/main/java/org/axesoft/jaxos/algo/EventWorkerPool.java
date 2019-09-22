@@ -3,6 +3,7 @@ package org.axesoft.jaxos.algo;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -56,5 +57,11 @@ public class EventWorkerPool implements EventTimer{
     @Override
     public Timeout createTimeout(long delay, TimeUnit timeUnit, Event timeoutEvent) {
         return timer.newTimeout((t) -> this.submitToSelf(timeoutEvent), delay, timeUnit);
+    }
+
+    public void shutdown() {
+        for(ExecutorService executor : this.executors){
+            executor.shutdownNow();
+        }
     }
 }

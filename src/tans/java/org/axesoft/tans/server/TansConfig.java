@@ -10,10 +10,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TansConfig {
     private JaxosSettings jaxosSettings;
     private Map<Integer, Integer> peerHttpPorts;
+    private int printMetricsIntervalSeconds;
 
-    public TansConfig(JaxosSettings jaxosSettings, Map<Integer, Integer> peerHttpPorts) {
+    public TansConfig(JaxosSettings jaxosSettings, Map<Integer, Integer> peerHttpPorts,
+                      int printMetricsIntervalSeconds) {
         this.jaxosSettings = checkNotNull(jaxosSettings);
         this.peerHttpPorts = checkNotNull(ImmutableMap.copyOf(peerHttpPorts));
+        this.printMetricsIntervalSeconds = printMetricsIntervalSeconds;
     }
 
     public int serverId(){
@@ -34,5 +37,9 @@ public class TansConfig {
 
     public int getPeerHttpPort(int peerId){
         return peerHttpPorts.getOrDefault(peerId, 0);
+    }
+
+    public int printMetricsIntervalSeconds(){
+        return this.printMetricsIntervalSeconds;
     }
 }

@@ -26,7 +26,7 @@ public class ClientApp {
 
     public static void main(String[] args) throws Exception {
         ClientApp app = new ClientApp();
-        app.run(URLS);
+        app.run(URLS.subList(0, 1));
     }
 
     private Map<InetSocketAddress, HttpRequest> requestMap;
@@ -42,7 +42,7 @@ public class ClientApp {
         for (String url : urls) {
             URI uri = toUri(url);
             runner.addTask(uri.getHost(), uri.getPort(), this.requestMap.get(InetSocketAddress.createUnresolved(uri.getHost(), uri.getPort())),
-                    5, 2000);
+                    5, 10);
         }
 
         Thread.sleep(1000);

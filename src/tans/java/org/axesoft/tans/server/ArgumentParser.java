@@ -33,6 +33,9 @@ public class ArgumentParser {
 
         @Parameter(names = {"-p"}, description = "Partition number")
         private Integer partitionNumber = 0;
+
+        @Parameter(names = {"-m"}, description = "Interval in seconds of print metrics")
+        private Integer printMetricsInterval = 10;
     }
 
     private Properties properties;
@@ -49,12 +52,6 @@ public class ArgumentParser {
     }
 
     public TansConfig parse(String[] sx) {
-        JaxosSettings config = parseJaxosConfig(sx);
-
-        return new TansConfig(config, this.peerHttpMap);
-    }
-
-    public JaxosSettings parseJaxosConfig(String[] sx) {
         Args args = new Args();
 
         JCommander.newBuilder()
@@ -62,6 +59,23 @@ public class ArgumentParser {
                 .build()
                 .parse(sx);
 
+        JaxosSettings config = buildJaxosConfig(args);
+
+        return new TansConfig(config, this.peerHttpMap, args.printMetricsInterval);
+    }
+
+    public JaxosSettings parseJaxosSettings(String[] sx){
+        Args args = new Args();
+
+        JCommander.newBuilder()
+                .addObject(args)
+                .build()
+                .parse(sx);
+
+        return buildJaxosConfig(args);
+    }
+
+    private JaxosSettings buildJaxosConfig(Args args) {
         if (Strings.isNullOrEmpty(args.dbDirectory)) {
             throw new IllegalArgumentException("parameter \"-d\" dbDirectory not set");
         }

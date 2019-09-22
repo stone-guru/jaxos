@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 /**
@@ -28,7 +27,6 @@ public class Proposer {
     private final Supplier<Communicator> communicator;
     private final Learner learner;
     private final Supplier<EventTimer> timerSupplier;
-    private final MetricsRecorder metricsRecorder;
     private final ProposalNumHolder proposalNumHolder;
 
     private PrepareActor prepareActor;
@@ -49,7 +47,6 @@ public class Proposer {
         this.context = context;
         this.communicator = communicator;
         this.learner = learner;
-        this.metricsRecorder = new MetricsRecorder(context.jaxosMetrics());
         this.proposalNumHolder = new ProposalNumHolder(config.serverId(), JaxosSettings.SERVER_ID_RANGE);
         this.timerSupplier = timerSupplier;
         this.stage = Stage.NONE;
@@ -62,7 +59,6 @@ public class Proposer {
             return ProposeResult.NO_QUORUM;
         }
 
-        final long startNano = System.nanoTime();
         this.instanceId = instanceId;
         this.proposeValue = value;
         this.round = 0;
@@ -90,8 +86,6 @@ public class Proposer {
             }
             this.result = ProposeResult.TIME_OUT;
         }
-
-        metricsRecorder.recordRoundExecMetrics(this.instanceId, startNano, this.result);
 
         return this.result;
     }
@@ -258,7 +252,8 @@ public class Proposer {
             long t = (long) (Math.random() * 10 * i);
             logger.debug("({}) meet conflict sleep {} ms", when, this.instanceId, t);
             Thread.sleep(t);
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
@@ -488,40 +483,6 @@ public class Proposer {
             Event notify = new Event.ChosenNotify(Proposer.this.config.serverId(), Proposer.this.context.squadId(),
                     Proposer.this.instanceId, this.proposal);
             communicator.get().selfFirstBroadcast(notify);
-        }
-    }
-
-    private static class MetricsRecorder {
-        private long totalTimesLast = 0;
-        private long totalNanosLast = 0;
-        private long conflictTimesLast = 0;
-
-        private JaxosMetrics metrics;
-        private AtomicInteger times = new AtomicInteger(0);
-
-        public MetricsRecorder(JaxosMetrics metrics) {
-            this.metrics = metrics;
-        }
-
-        private void recordRoundExecMetrics(long instanceId, long startNano, ProposeResult result) {
-            metrics.recordPropose(System.nanoTime() - startNano, result);
-
-            if (times.incrementAndGet() % 1000 == 0) {
-                long timesDelta = metrics.proposeTimes() - this.totalTimesLast;
-                double avgNanos = (metrics.proposeTotalNanos() - this.totalNanosLast) / (double) timesDelta;
-                long conflictTimesDelta = metrics.conflictTimes() - this.conflictTimesLast;
-                double conflictRate = conflictTimesDelta / (double) timesDelta;
-
-                double total = metrics.proposeTimes();
-                String msg = String.format("Recent %d elapsed %.3f ms conflict %.3f, Total %.0f s and success rate %.3f",
-                        timesDelta, avgNanos / 1e+6, conflictRate,
-                        total, metrics.successTimes() / total);
-                logger.info(msg);
-
-                this.totalTimesLast = metrics.proposeTimes();
-                this.totalNanosLast = metrics.proposeTotalNanos();
-                this.conflictTimesLast = metrics.conflictTimes();
-            }
         }
     }
 }

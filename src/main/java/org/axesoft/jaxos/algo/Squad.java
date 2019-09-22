@@ -17,14 +17,18 @@ public class Squad implements EventDispatcher{
     private Acceptor acceptor;
     private Proposer proposer;
     private SquadContext context;
+    private SquadMetrics metrics;
     private JaxosSettings config;
+
 
     public Squad(int squadId, JaxosSettings config, Supplier<Communicator> communicator, AcceptorLogger acceptorLogger, StateMachine machine, Supplier<EventTimer> timerSupplier) {
         this.config = config;
         this.context = new SquadContext(squadId, this.config);
+        this.metrics = new SquadMetrics();
         Learner learner = new StateMachineRunner(machine);
         this.proposer = new Proposer(this.config, this.context, learner, communicator, timerSupplier);
         this.acceptor = new Acceptor(this.config, this.context, learner, acceptorLogger);
+
     }
 
     /**
@@ -32,15 +36,22 @@ public class Squad implements EventDispatcher{
      * @throws InterruptedException
      */
     public ProposeResult propose(long instanceId, ByteString v) throws InterruptedException {
+        final long startNano = System.nanoTime();
+
         SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessPrepare();
         //logger.info("last request is {}, current is {}", lastRequestInfo, new Date());
 
+        ProposeResult result ;
         if (this.context.isOtherLeaderActive() && !this.config.ignoreLeader()) {
-            return ProposeResult.otherLeader(lastSuccessRequestRecord.serverId());
+            result = ProposeResult.otherLeader(lastSuccessRequestRecord.serverId());
         }
         else {
-            return proposer.propose(instanceId, v);
+            result = proposer.propose(instanceId, v);
         }
+
+        this.metrics.recordPropose(System.nanoTime() - startNano, result);
+
+        return result;
     }
 
     @Override
@@ -76,5 +87,21 @@ public class Squad implements EventDispatcher{
                 throw new UnsupportedOperationException(event.code().toString());
             }
         }
+    }
+
+
+    public void computeAndPrintMetrics(long current) {
+        double seconds = (current - this.metrics.lastTime()) / 1000.0;
+        double successRate = this.metrics.successRate();
+        double conflictRate = this.metrics.conflictRate();
+        double otherRate = metrics.otherRate();
+        long delta = this.metrics.delta();
+        double elapsed = this.metrics.compute(current);
+
+        String msg = String.format("ID=%d, T=%d, E=%.3f, S=%.2f, C=%.2f, O=%.2f in %.0f sec, Total %d s and success rate %.3f",
+                this.context.squadId(), delta, elapsed,
+                successRate, conflictRate, otherRate, seconds,
+                this.metrics.times(), this.metrics.totalSuccessRate());
+        logger.info(msg);
     }
 }

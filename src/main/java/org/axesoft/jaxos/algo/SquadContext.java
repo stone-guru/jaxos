@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author gaoyuan
@@ -46,7 +45,7 @@ public class SquadContext {
         }
     }
 
-    private JaxosMetrics jaxosMetrics = new JaxosMetrics();
+    private SquadMetrics jaxosMetrics = new SquadMetrics();
     private JaxosSettings config;
     private int squadId;
     private volatile SuccessRequestRecord lastSuccessRequestRecord = new SuccessRequestRecord(-1, 0, 0);
@@ -56,7 +55,7 @@ public class SquadContext {
         this.squadId = squadId;
     }
 
-    public JaxosMetrics jaxosMetrics() {
+    public SquadMetrics metrics() {
         return this.jaxosMetrics;
     }
 
