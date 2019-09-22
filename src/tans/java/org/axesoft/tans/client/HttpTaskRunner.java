@@ -113,7 +113,7 @@ public class HttpTaskRunner {
         }
 
 
-        boolean ok = connectedMonitor.enterWhen(allConnectedGuard, 2, TimeUnit.SECONDS);
+        boolean ok = connectedMonitor.enterWhen(allConnectedGuard, 30, TimeUnit.SECONDS);
         if (!ok) {
             logger.error("Can not create all connections in time, abort");
             this.worker.shutdownGracefully();
@@ -132,8 +132,8 @@ public class HttpTaskRunner {
         }
 
         for (int t = this.activeConnectionCount(), j = 0; t > 0; t = this.activeConnectionCount(), j++) {
-            if (j % 100 == 0) {
-                logger.info("Working connection count {}", t);
+            if (j % 50 == 0) {
+                logger.info("Working connection count {}, finished request {}", t, this.finishedRequestCount());
             }
             Thread.sleep(100);
         }

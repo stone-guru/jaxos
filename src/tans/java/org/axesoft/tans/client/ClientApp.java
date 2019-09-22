@@ -19,9 +19,9 @@ import java.util.stream.Collectors;
 public class ClientApp {
 
     public static final List<String> URLS = ImmutableList.of(
-            "http://localhost:8081/acquire?key=monkey.id&n=3"
-            , "http://localhost:8083/acquire?key=star.id&n=2"
-            , "http://localhost:8082/acquire?key=pig.id&n=1"
+            "http://192.168.1.100:8081/acquire?key=monkey.id&n=3"
+            , "http://192.168.1.100:8083/acquire?key=star.id&n=2"
+            , "http://192.168.1.100:8082/acquire?key=pig.id&n=1"
     );
 
     public static void main(String[] args) throws Exception {
@@ -44,8 +44,6 @@ public class ClientApp {
             runner.addTask(uri.getHost(), uri.getPort(), this.requestMap.get(InetSocketAddress.createUnresolved(uri.getHost(), uri.getPort())),
                     5, 10);
         }
-
-        Thread.sleep(1000);
         runner.run();
     }
 
@@ -71,7 +69,7 @@ public class ClientApp {
                 response.headers().get(HttpHeaderNames.FROM),
                 response.status().codeAsText(),
                 s);
-        System.err.println(info);
+        //System.err.println(info);
     }
 
     private URI toUri(String url) {
