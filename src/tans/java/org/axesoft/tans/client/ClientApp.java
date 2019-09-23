@@ -19,30 +19,30 @@ import java.util.stream.Collectors;
 public class ClientApp {
 
     public static final List<String> URLS = ImmutableList.of(
-            "http://192.168.1.100:8081/acquire?key=monkey.id&n=3"
-            , "http://192.168.1.100:8083/acquire?key=star.id&n=2"
-            , "http://192.168.1.100:8082/acquire?key=pig.id&n=1"
+            "http://localhost:8081/acquire?key=monkey.id&n=3"
+            , "http://localhost:8081/acquire?key=star.id&n=2"
+            , "http://localhost:8081/acquire?key=pig.id&n=1"
     );
 
     public static void main(String[] args) throws Exception {
         ClientApp app = new ClientApp();
-        app.run(URLS.subList(0, 1));
+        app.run(URLS.subList(0, 3));
     }
 
-    private Map<InetSocketAddress, HttpRequest> requestMap;
+    //private Map<InetSocketAddress, HttpRequest> requestMap;
 
     public void run(List<String> urls) throws Exception {
         List<URI> uris = Lists.transform(urls, this::toUri);
-        this.requestMap = uris.stream().collect(Collectors.toMap
-                (uri -> InetSocketAddress.createUnresolved(uri.getHost(), uri.getPort()),
-                        uri -> createRequest(uri)));
+//        this.requestMap = uris.stream().collect(Collectors.toMap
+//                (uri -> InetSocketAddress.createUnresolved(uri.getHost(), uri.getPort()),
+//                        uri -> createRequest(uri)));
 
 
         HttpTaskRunner runner = new HttpTaskRunner(this::handleResponse);
         for (String url : urls) {
             URI uri = toUri(url);
-            runner.addTask(uri.getHost(), uri.getPort(), this.requestMap.get(InetSocketAddress.createUnresolved(uri.getHost(), uri.getPort())),
-                    5, 10);
+            runner.addTask(uri.getHost(), uri.getPort(), createRequest(uri),
+                    11, 30000);
         }
         runner.run();
     }

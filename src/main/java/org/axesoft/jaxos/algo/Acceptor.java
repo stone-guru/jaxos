@@ -179,4 +179,8 @@ public class Acceptor {
         }
         return "bx[" + value.size() + "]";
     }
+
+    public long lastChosenInstanceId() {
+        return learner.lastChosenInstanceId(context.squadId());
+    }
 }

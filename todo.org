@@ -33,6 +33,7 @@ are by netty
 * TODO Add reject strategy for HTTP API server			    :network:
 * DONE TANS service handle HTTP request in async way		    :network:
 * TODO Add metrics for acceptor					  :algorithm:
+* TODO process rate of TANS service should in each seconds	    :network:
 * related infors
 ** Quorum algo(NWR)
 * token
