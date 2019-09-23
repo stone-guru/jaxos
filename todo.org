@@ -30,8 +30,10 @@ are by netty
 * TODO Ignore Exceptions from channel broken when shudown the server :network:
 * TODO A case of Chosen notify message lost making that server hang :network:
 * TODO Add full unit test case for algo package			  :algorithm:
+* TODO Add reject strategy for HTTP API server			    :network:
 * DONE TANS service handle HTTP request in async way		    :network:
+* TODO Add metrics for acceptor					  :algorithm:
 * related infors
 ** Quorum algo(NWR)
-* token 8c8caa4dce5df2901c628ca6ec9ba4354c4b3889
+* token
 

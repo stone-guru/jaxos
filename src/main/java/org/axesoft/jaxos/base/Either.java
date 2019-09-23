@@ -1,6 +1,8 @@
 package org.axesoft.jaxos.base;
 
 
+import java.util.Optional;
+
 public abstract class Either<A, B> {
 
     public static <L, R> Either<L, R> right(R value) {
@@ -33,6 +35,8 @@ public abstract class Either<A, B> {
 
     public abstract B getRight();
 
+    public abstract Optional<B> asOptional();
+
     static class Left<L, R> extends Either<L, R> {
         private L value;
 
@@ -53,6 +57,11 @@ public abstract class Either<A, B> {
         @Override
         public R getRight() {
             throw new IllegalStateException("This is Left, no right value");
+        }
+
+        @Override
+        public Optional<R> asOptional() {
+            return Optional.empty();
         }
     }
 
@@ -76,6 +85,11 @@ public abstract class Either<A, B> {
         @Override
         public R getRight() {
             return value;
+        }
+
+        @Override
+        public Optional<R> asOptional() {
+            return Optional.of(value);
         }
     }
 

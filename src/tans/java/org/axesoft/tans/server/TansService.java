@@ -2,19 +2,19 @@ package org.axesoft.tans.server;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.algo.Proponent;
 import org.axesoft.jaxos.algo.ProposeResult;
 import org.axesoft.jaxos.algo.StateMachine;
+import org.axesoft.jaxos.base.Either;
 import org.axesoft.tans.protobuff.TansMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -53,16 +53,20 @@ public class TansService implements StateMachine {
 
     @Override
     public void consume(int squadId, long instanceId, ByteString message) {
-        TansNumber n1 = fromMessage(message).get(0);
+        List<TansNumber> nx = fromMessage(message);
         if (logger.isTraceEnabled()) {
-            logger.trace("TANS state machine consumer event {}", n1);
+            logger.trace("TANS state machine consumer {} event from instance {}", nx.size(), instanceId);
         }
-        this.numberMaps[squadId].consume(instanceId, n1);
+        this.numberMaps[squadId].consume(instanceId, nx);
     }
 
     @Override
     public void close() {
         logger.info("TANS state machine closed");
+    }
+
+    public List<Pair<Long, Long>> acquire(int squadId, List<Pair<String, Long>> requests){
+        return Collections.emptyList();
     }
 
     /**
@@ -86,10 +90,10 @@ public class TansService implements StateMachine {
 
         synchronized (machineLocks[squadId]) {
             do {
-                TansNumberProposal p = createProposal(squadId, k, v);
-                n = p.number;
+                TansNumberProposal p = createProposal(squadId, ImmutableList.of(Pair.of(k, v)));
+                n = p.numbers.get(0); //FIXME
                 logger.trace("TansService prepare proposal {}", p);
-                ByteString bx = toMessage(ImmutableList.of(p.number));
+                ByteString bx = toMessage(p.numbers);
                 try {
                     result = proponent.get().propose(p.squadId, p.instanceId, bx);
                 }
@@ -121,8 +125,8 @@ public class TansService implements StateMachine {
     }
 
 
-    private TansNumberProposal createProposal(int squadId, String name, long v) {
-        Pair<Long, TansNumber> p = this.numberMaps[squadId].createProposal(name, v);
+    private TansNumberProposal createProposal(int squadId, List<Pair<String, Long>> requests) {
+        Pair<Long, List<TansNumber>> p = this.numberMaps[squadId].createProposal(requests);
         return new TansNumberProposal(squadId, p.getLeft(), p.getRight());
     }
 
@@ -186,44 +190,61 @@ public class TansService implements StateMachine {
             this.lastInstanceId = instanceId;
         }
 
-        synchronized void consume(long instanceId, TansNumber n1) {
+        synchronized void consume(long instanceId, List<TansNumber> nx) {
             if (instanceId != this.lastInstanceId + 1) {
                 throw new IllegalStateException(String.format("dolog %d when current is %d", instanceId, this.lastInstanceId));
             }
-            numbers.compute(n1.name(), (k, n0) -> {
-                if (n0 == null) {
-                    return n1;
-                }
-                else if (n1.version() == n0.version() + 1) {
-                    return n1;
-                }
-                else {
-                    throw new RuntimeException(String.format("Unmatched version n0 = %s, n1 = %s", n0, n1));
-                }
-            });
+            for(TansNumber n1 : nx) {
+                numbers.compute(n1.name(), (k, n0) -> {
+                    if (n0 == null) {
+                        return n1;
+                    }
+                    else if (n1.version() == n0.version() + 1) {
+                        return n1;
+                    }
+                    else {
+                        throw new RuntimeException(String.format("Unmatched version n0 = %s, n1 = %s", n0, n1));
+                    }
+                });
+            }
             this.lastInstanceId = instanceId;
         }
 
         synchronized Pair<Long, TansNumber> createProposal(String name, long v) {
-            TansNumber n0 = numbers.get(name);
-            if (n0 == null) {
-                return Pair.of(this.lastInstanceId + 1, new TansNumber(name, v + 1));
+            Pair<Long, List<TansNumber>> result = createProposal(Collections.singletonList(Pair.of(name, v)));
+            return Pair.of(result.getLeft(), result.getRight().get(0));
+        }
+
+        synchronized Pair<Long, List<TansNumber>> createProposal(List<Pair<String, Long>> requests){
+            ImmutableList.Builder<TansNumber> builder = ImmutableList.builder();
+            Map<String, TansNumber>  newNumberMap = new HashMap<>();
+            for(Pair<String, Long> p : requests){
+                TansNumber n1, n0 = newNumberMap.get(p.getKey());
+                if(n0 == null){
+                    n0 = this.numbers.get(p.getKey());
+                }
+                if(n0 == null){
+                    n1 = new TansNumber(p.getKey(), p.getValue() + 1);
+                } else {
+                    n1 = n0.update(p.getValue());
+                }
+
+                builder.add(n1);
+                newNumberMap.put(p.getKey(), n1);
             }
-            else {
-                return Pair.of(this.lastInstanceId + 1, n0.update(v));
-            }
+            return Pair.of(this.lastInstanceId + 1, builder.build());
         }
     }
 
     private static class TansNumberProposal {
         final int squadId;
         final long instanceId;
-        final TansNumber number;
+        final List<TansNumber> numbers;
 
-        public TansNumberProposal(int squadId, long instanceId, TansNumber number) {
+        public TansNumberProposal(int squadId, long instanceId, List<TansNumber> numbers) {
             this.squadId = squadId;
             this.instanceId = instanceId;
-            this.number = number;
+            this.numbers = numbers;
         }
 
         @Override
@@ -231,7 +252,7 @@ public class TansService implements StateMachine {
             return "TansNumberProposal{" +
                     "squadId=" + squadId +
                     ", instanceId=" + instanceId +
-                    ", number=" + number +
+                    ", numbers=" + numbers +
                     '}';
         }
     }
