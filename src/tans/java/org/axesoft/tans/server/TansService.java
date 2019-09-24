@@ -1,20 +1,18 @@
 package org.axesoft.tans.server;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.algo.Proponent;
 import org.axesoft.jaxos.algo.ProposeResult;
 import org.axesoft.jaxos.algo.StateMachine;
-import org.axesoft.jaxos.base.LongRange;
-import org.axesoft.jaxos.base.KeyLong;
 import org.axesoft.tans.protobuff.TansMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -33,8 +31,8 @@ public class TansService implements StateMachine {
         this.proponent = checkNotNull(proponent);
         this.config = config;
 
-        this.numberMaps = new TansNumberMap[config.jaxConfig().partitionNumber()];
-        this.machineLocks = new Object[config.jaxConfig().partitionNumber()];
+        this.numberMaps = new TansNumberMap[this.config.jaxConfig().partitionNumber()];
+        this.machineLocks = new Object[this.config.jaxConfig().partitionNumber()];
         for (int i = 0; i < numberMaps.length; i++) {
             this.numberMaps[i] = new TansNumberMap();
             this.machineLocks[i] = new Object();

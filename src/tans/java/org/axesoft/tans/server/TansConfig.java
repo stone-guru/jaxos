@@ -11,12 +11,16 @@ public class TansConfig {
     private JaxosSettings jaxosSettings;
     private Map<Integer, Integer> peerHttpPorts;
     private int printMetricsIntervalSeconds;
+    private int requestBatchSize;
 
-    public TansConfig(JaxosSettings jaxosSettings, Map<Integer, Integer> peerHttpPorts,
-                      int printMetricsIntervalSeconds) {
+    public TansConfig(JaxosSettings jaxosSettings,
+                      Map<Integer, Integer> peerHttpPorts,
+                      int printMetricsIntervalSeconds,
+                      int requestBatchSize) {
         this.jaxosSettings = checkNotNull(jaxosSettings);
         this.peerHttpPorts = checkNotNull(ImmutableMap.copyOf(peerHttpPorts));
         this.printMetricsIntervalSeconds = printMetricsIntervalSeconds;
+        this.requestBatchSize = requestBatchSize;
     }
 
     public int serverId(){
@@ -41,5 +45,9 @@ public class TansConfig {
 
     public int printMetricsIntervalSeconds(){
         return this.printMetricsIntervalSeconds;
+    }
+
+    public int requestBatchSize() {
+        return requestBatchSize;
     }
 }

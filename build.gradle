@@ -57,6 +57,7 @@ dependencies {
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
     implementation group: 'org.iq80.leveldb', name: 'leveldb', version: '0.12'
     implementation group: 'org.iq80.leveldb', name: 'leveldb-api', version: '0.12'
+    implementation group: 'org.pcollections', name: 'pcollections', version: '2.1.2'
     // Use JUnit test framework
     testImplementation 'junit:junit:4.10'
 

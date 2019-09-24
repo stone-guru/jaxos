@@ -36,6 +36,9 @@ public class ArgumentParser {
 
         @Parameter(names = {"-m"}, description = "Interval in seconds of print metrics")
         private Integer printMetricsInterval = 10;
+
+        @Parameter(names = {"-b"}, description = "batch size for HTTP request")
+        private Integer requestBatchSize = 8;
     }
 
     private Properties properties;
@@ -61,7 +64,7 @@ public class ArgumentParser {
 
         JaxosSettings config = buildJaxosConfig(args);
 
-        return new TansConfig(config, this.peerHttpMap, args.printMetricsInterval);
+        return new TansConfig(config, this.peerHttpMap, args.printMetricsInterval, args.requestBatchSize);
     }
 
     public JaxosSettings parseJaxosSettings(String[] sx){

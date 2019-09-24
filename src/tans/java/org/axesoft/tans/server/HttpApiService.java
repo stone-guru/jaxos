@@ -53,33 +53,58 @@ public final class HttpApiService extends AbstractExecutionThreadService {
     private PartedThreadPool threadPool;
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
-    private Derivator taskCountDerivator;
 
     private RequestQueue[] requestQueues;
-    private Timer queueFlushTimer;
+    private Timer queueTimer;
+
+    private Derivator taskCounter;
+    private Derivator requestCounter;
+    private SlideCounter requestSlideCounter;
 
     public HttpApiService(TansConfig config, TansService tansService) {
         this.tansService = tansService;
         this.config = config;
+        this.taskCounter = new Derivator();
+        this.requestCounter = new Derivator();
+        this.requestSlideCounter = new SlideCounter(1, SlideCounter.StatMethod.STAT_SUM, 1);
 
-        addListener(new ServiceListener(), MoreExecutors.directExecutor());
+        super.addListener(new Listener() {
+            @Override
+            public void running() {
+                logger.info("{} started at http://{}:{}/", SERVICE_NAME, config.address(), config.httpPort());
+            }
+
+            @Override
+            public void stopping(State from) {
+                logger.info("{} stopping HTTP API server", SERVICE_NAME);
+            }
+
+            @Override
+            public void terminated(State from) {
+                logger.info("{} terminated from state {}", SERVICE_NAME, from);
+            }
+
+            @Override
+            public void failed(State from, Throwable failure) {
+                logger.error(String.format("%s failed %s due to exception", SERVICE_NAME, from), failure);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     @Override
     protected void run() throws Exception {
-        this.taskCountDerivator = new Derivator();
         this.threadPool = new PartedThreadPool(this.config.jaxConfig().partitionNumber());
 
         this.requestQueues = new RequestQueue[config.jaxConfig().partitionNumber()];
-        for(int i = 0; i < requestQueues.length; i++){
-            this.requestQueues[i] = new RequestQueue(i, 16);
+        for (int i = 0; i < requestQueues.length; i++) {
+            this.requestQueues[i] = new RequestQueue(i, config.requestBatchSize());
         }
-        this.queueFlushTimer = new Timer("Queue Flush", true);
-        this.queueFlushTimer.scheduleAtFixedRate(new TimerTask() {
+        this.queueTimer = new Timer("Queue Flush", true);
+        this.queueTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 long current = System.currentTimeMillis();
-                for(RequestQueue q : requestQueues){
+                for (RequestQueue q : requestQueues) {
                     q.click(current);
                 }
             }
@@ -93,7 +118,15 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.ERROR))
-                    .childHandler(new HttpChannelInitializer());
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ChannelPipeline p = ch.pipeline();
+                            p.addLast(new HttpRequestDecoder());
+                            p.addLast(new HttpResponseEncoder());
+                            p.addLast(new HttpChannelHandler());
+                        }
+                    });
 
             this.serverChannel = b.bind(config.httpPort()).sync().channel();
 
@@ -113,12 +146,15 @@ public final class HttpApiService extends AbstractExecutionThreadService {
     }
 
     public void printMetrics() {
-        long t = this.threadPool.totalExecTimes();
-        Pair<Double, Double> p = this.taskCountDerivator.accept(t, System.currentTimeMillis());
+        long current = System.currentTimeMillis();
+        Pair<Double, Double> requestDelta = this.requestCounter.compute(current);
+        Pair<Double, Double> taskDelta = this.taskCounter.compute(this.threadPool.totalExecTimes(), current);
         long w = this.threadPool.lastMinuteWaitingSize();
 
-        logger.info("{} get more {} tasks , speed {}/sec, max waiting tasks of last minute is {}",
-                SERVICE_NAME, p.getLeft().intValue(), String.format("%.1f", p.getRight()), w);
+        logger.info("More {} req, run {} times, req max {}/sec, avg {}/sec, proposal {}/sec, max waiting {}",
+                requestDelta.getLeft().intValue(), taskDelta.getLeft().intValue(),
+                requestSlideCounter.getMaximal(0), String.format("%.1f", requestDelta.getRight()),
+                String.format("%.1f", taskDelta.getRight()), w);
     }
 
 
@@ -157,16 +193,6 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
     }
 
-    public class HttpChannelInitializer extends ChannelInitializer<SocketChannel> {
-        @Override
-        public void initChannel(SocketChannel ch) {
-            ChannelPipeline p = ch.pipeline();
-            p.addLast(new HttpRequestDecoder());
-            p.addLast(new HttpResponseEncoder());
-            p.addLast(new HttpChannelHandler());
-        }
-    }
-
     public class HttpChannelHandler extends SimpleChannelInboundHandler<Object> {
         private HttpRequest request;
         private boolean keepAlive;
@@ -176,17 +202,11 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             ctx.flush();
         }
 
-
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
             if (msg instanceof HttpRequest) {
                 HttpRequest request = this.request = (HttpRequest) msg;
                 this.keepAlive = HttpUtil.isKeepAlive(request);
-
-//                if (logger.isTraceEnabled()) {
-//                    logger.trace("Got http request {}", request);
-//                }
-
                 if (HttpUtil.is100ContinueExpected(request)) {
                     send100Continue(ctx);
                 }
@@ -207,23 +227,6 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                     int i = tansService.squadIdOf(key);
 
                     requestQueues[i].addRequest(key, v, this.keepAlive, ctx);
-//                    ListenableFuture<FullHttpResponse> future = threadPool.submit(i, () -> handleAcquire(key, v));
-//                    future.addListener(() -> {
-//                                FullHttpResponse response;
-//                                try {
-//                                    response = future.get();
-//                                    writeResponse(ctx, keepAlive, response);
-//                                }
-//                                catch (ExecutionException e) {
-//                                    logger.error("Exception", e);
-//                                    writeResponse(ctx, keepAlive, createResponse(INTERNAL_SERVER_ERROR, "INTERNAL ERROR"));
-//                                }
-//                                catch (InterruptedException e) {
-//                                    //No response needed
-//                                    logger.info("handle acquire interrupted");
-//                                }
-//                            },
-//                            MoreExecutors.directExecutor());
                 }
                 else {
                     FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND,
@@ -273,30 +276,6 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             return Either.right(Pair.of(key, n));
         }
 
-        private FullHttpResponse handleAcquire(String key, long n) {
-            try {
-                int squadId = tansService.squadIdOf(key);
-                List<LongRange> rx = tansService.acquire(squadId, ImmutableList.of(new KeyLong(key, n)));
-                LongRange r = rx.get(0);
-                String content = r.low() + "," + r.high();
-
-                return createResponse(OK, content);
-            }
-            catch (IllegalArgumentException e) {
-                return createResponse(BAD_REQUEST, e.getMessage());
-            }
-            catch (RedirectException e) {
-                return createRedirectResponse(e.getServerId(), key, n);
-            }
-            catch (ConflictException e) {
-                return createResponse(HttpResponseStatus.CONFLICT, "CONFLICT");
-            }
-            catch (Exception e) {
-                logger.error("Process " + key + ", " + n, e);
-                return createResponse(INTERNAL_SERVER_ERROR, "INTERNAL ERROR");
-            }
-        }
-
         private void send100Continue(ChannelHandlerContext ctx) {
             FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, CONTINUE, Unpooled.EMPTY_BUFFER);
             ctx.write(response);
@@ -304,28 +283,11 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            cause.printStackTrace();
+            //TODO some exception like reset by peer can be ignored
+            logger.warn("Server channel got exception", cause);
             ctx.close();
         }
     }
-
-    private class ServiceListener extends Listener {
-        @Override
-        public void running() {
-            logger.info("{} started at http://{}:{}/", SERVICE_NAME, config.address(), config.httpPort());
-        }
-
-        @Override
-        public void stopping(State from) {
-            logger.info("{} stopping HTTP API server", SERVICE_NAME);
-        }
-
-        @Override
-        public void terminated(State from) {
-            logger.info("{} terminated from state {}", SERVICE_NAME, from);
-        }
-    }
-
 
     private static class TansRequest {
         KeyLong keyLong;
@@ -358,9 +320,11 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
 
         private synchronized void addRequest(String key, long v, boolean keepAlive, ChannelHandlerContext ctx) {
-            if(logger.isTraceEnabled()){
+            if (logger.isTraceEnabled()) {
                 logger.trace("RequestQueue accept request {} {} {}", key, v, keepAlive);
             }
+            HttpApiService.this.requestCounter.inc();
+            HttpApiService.this.requestSlideCounter.recordAtNow(1);
 
             this.tasks.add(new TansRequest(key, v, keepAlive, ctx));
             if (this.tasks.size() == 1) {
@@ -368,88 +332,94 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             }
 
             if (tasks.size() >= waitingSize) {
-                processTasks();
+                processRequests();
             }
         }
 
         private synchronized void click(long current) {
             if (t0 > 0 && current - t0 >= 2) { //2 ms
                 logger.trace("Queue process waiting tasks when timeout");
-                processTasks();
+                processRequests();
             }
         }
 
-        private void processTasks() {
+        private void processRequests() {
             final List<TansRequest> todo = ImmutableList.copyOf(this.tasks);
-
             this.tasks.clear();
             this.t0 = 0;
 
-            threadPool.submit(this.squadId, () -> {
-                List<KeyLong> requests = Lists.transform(todo, TansRequest::keyLong);
-                List<LongRange> rx = null;
-                FullHttpResponse errorResponse = null;
-                int otherLeaderId = -1;
-                try {
-                    rx = tansService.acquire(squadId, requests);
+            threadPool.submit(this.squadId, () -> process(todo));
+        }
 
-                    if(logger.isTraceEnabled()){
-                        for(LongRange r : rx){
-                            logger.trace("Acquire result [{},{}]", r.low(), r.high());
-                        }
+        private void process(List<TansRequest> tasks) {
+            List<KeyLong> requests = Lists.transform(tasks, TansRequest::keyLong);
+            List<LongRange> rx = null;
+            FullHttpResponse errorResponse = null;
+            int otherLeaderId = -1;
+            try {
+                rx = tansService.acquire(squadId, requests);
+
+                if (logger.isTraceEnabled()) {
+                    for (LongRange r : rx) {
+                        logger.trace("Acquire result [{},{}]", r.low(), r.high());
                     }
                 }
-                catch (RedirectException e) {
-                    otherLeaderId = e.getServerId();
-                }
-                catch (ConflictException e) {
-                    errorResponse = createResponse(HttpResponseStatus.CONFLICT, "CONFLICT");
-                }
-                catch (Exception e) {
-                    logger.error("Process ", e);
-                    errorResponse = createResponse(INTERNAL_SERVER_ERROR, "INTERNAL ERROR");
-                }
+            }
+            catch (RedirectException e) {
+                otherLeaderId = e.getServerId();
+            }
+            catch (ConflictException e) {
+                errorResponse = createResponse(HttpResponseStatus.CONFLICT, "CONFLICT");
+            }
+            catch (Exception e) {
+                logger.error("Process ", e);
+                errorResponse = createResponse(INTERNAL_SERVER_ERROR, "INTERNAL ERROR");
+            }
 
-                for (int i = 0; i < requests.size(); i++) {
-                    TansRequest task = todo.get(i);
+            for (int i = 0; i < requests.size(); i++) {
+                TansRequest task = tasks.get(i);
 
-                    FullHttpResponse response = null;
-                    if (errorResponse != null) {
-                        response = errorResponse;
-                    }
-                    else if (otherLeaderId >= 0) {
-                        response = createRedirectResponse(otherLeaderId, task.keyLong.key(), task.keyLong.value());
-                    }
-                    else {
-                        LongRange r = rx.get(i);
-                        String content = r.low() + "," + r.high();
-                        response = createResponse(OK, content);
-                    }
-
-                    logger.trace("write response ");
-                    writeResponse(task.ctx, task.keepAlive, response);
+                FullHttpResponse response;
+                if (errorResponse != null) {
+                    response = errorResponse;
+                }
+                else if (otherLeaderId >= 0) {
+                    response = createRedirectResponse(otherLeaderId, task.keyLong.key(), task.keyLong.value());
+                }
+                else {
+                    LongRange r = rx.get(i);
+                    String content = r.low() + "," + r.high();
+                    response = createResponse(OK, content);
                 }
 
-                return null;
-            });
+                logger.trace("write response ");
+                writeResponse(task.ctx, task.keepAlive, response);
+            }
         }
     }
 
     private static class PartedThreadPool {
         private TansExecutor[] executors;
 
-        public PartedThreadPool(int threadNum) {
+        private PartedThreadPool(int threadNum) {
             this.executors = new TansExecutor[threadNum];
             for (int i = 0; i < threadNum; i++) {
                 this.executors[i] = new TansExecutor(i);
             }
         }
 
-        public <T> ListenableFuture<T> submit(int i, Callable<T> task) {
+        private ListenableFuture<Void> submit(int i, Runnable r) {
+            return this.executors[i].submit(() -> {
+                r.run();
+                return null;
+            });
+        }
+
+        private <T> ListenableFuture<T> submit(int i, Callable<T> task) {
             return this.executors[i].submit(task);
         }
 
-        public int totalExecTimes() {
+        private int totalExecTimes() {
             int t = 0;
             for (TansExecutor executor : this.executors) {
                 t += executor.totalExecTimes();
@@ -457,7 +427,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             return t;
         }
 
-        public int lastMinuteWaitingSize() {
+        private int lastMinuteWaitingSize() {
             int t = 0;
             for (TansExecutor executor : this.executors) {
                 t = Math.max(executor.lastMinuteWaitingSize(), t);
@@ -472,7 +442,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         private SlideCounter waitingTaskCounter;
         private AtomicInteger execTimes;
 
-        public TansExecutor(int i) {
+        private TansExecutor(int i) {
             this.threadPool = new ThreadPoolExecutor(1, 1,
                     0L, TimeUnit.MILLISECONDS,
                     new LinkedBlockingQueue<>(),
@@ -487,18 +457,18 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             this.execTimes = new AtomicInteger(0);
         }
 
-        public <T> ListenableFuture<T> submit(Callable<T> task) {
+        private <T> ListenableFuture<T> submit(Callable<T> task) {
             ListenableFuture<T> f = this.executor.submit(task);
             this.execTimes.incrementAndGet();
             this.waitingTaskCounter.recordAtNow(this.threadPool.getQueue().size());
             return f;
         }
 
-        public int totalExecTimes() {
+        private int totalExecTimes() {
             return this.execTimes.get();
         }
 
-        public int lastMinuteWaitingSize() {
+        private int lastMinuteWaitingSize() {
             return this.waitingTaskCounter.getMaximal(0);
         }
     }

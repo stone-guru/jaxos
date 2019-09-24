@@ -1,4 +1,4 @@
-package org.axesoft.jaxos.base;
+package org.axesoft.tans.server;
 
 public class LongRange {
     private long low;
