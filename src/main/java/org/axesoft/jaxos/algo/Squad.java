@@ -19,16 +19,17 @@ public class Squad implements EventDispatcher{
     private SquadContext context;
     private SquadMetrics metrics;
     private JaxosSettings config;
-
+    private StateMachineRunner stateMachineRunner;
+    private AcceptorLogger acceptorLogger;
 
     public Squad(int squadId, JaxosSettings config, Supplier<Communicator> communicator, AcceptorLogger acceptorLogger, StateMachine machine, Supplier<EventTimer> timerSupplier) {
         this.config = config;
         this.context = new SquadContext(squadId, this.config);
         this.metrics = new SquadMetrics();
-        Learner learner = new StateMachineRunner(machine);
-        this.proposer = new Proposer(this.config, this.context, learner, communicator, timerSupplier);
-        this.acceptor = new Acceptor(this.config, this.context, learner, acceptorLogger);
-
+        this.stateMachineRunner = new StateMachineRunner(machine);
+        this.proposer = new Proposer(this.config, this.context, (Learner)stateMachineRunner, communicator, timerSupplier);
+        this.acceptor = new Acceptor(this.config, this.context, (Learner)stateMachineRunner, acceptorLogger);
+        this.acceptorLogger = acceptorLogger;
     }
 
     /**
@@ -103,5 +104,12 @@ public class Squad implements EventDispatcher{
                 successRate, conflictRate, otherRate, seconds,
                 this.metrics.times(), this.metrics.totalSuccessRate(), this.acceptor.lastChosenInstanceId());
         logger.info(msg);
+    }
+
+    public void saveCheckPoint(){
+        CheckPoint checkPoint = this.stateMachineRunner.machine().makeCheckPoint(context.squadId());
+        this.acceptorLogger.saveCheckPoint(checkPoint);
+
+        logger.info("{} saved", checkPoint);
     }
 }

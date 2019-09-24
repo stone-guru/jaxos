@@ -4,6 +4,7 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import org.axesoft.jaxos.algo.AcceptorLogger;
+import org.axesoft.jaxos.algo.CheckPoint;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
@@ -93,6 +94,16 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         if(bx != null){
             return toEntity(bx);
         }
+        return null;
+    }
+
+    @Override
+    public void saveCheckPoint(CheckPoint checkPoint) {
+        
+    }
+
+    @Override
+    public CheckPoint loadLastCheckPoint(int squadId) {
         return null;
     }
 

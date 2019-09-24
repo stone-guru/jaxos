@@ -5,14 +5,6 @@ import com.google.protobuf.ByteString;
 import java.io.Serializable;
 
 public interface AcceptorLogger {
-    void savePromise(int squadId, long instanceId, int proposal, ByteString value);
-
-    Promise loadLastPromise(int squadId);
-
-    Promise loadPromise(int squadId, long instanceId);
-
-    void close();
-
     class Promise implements Serializable {
         public int squadId;
         public long instanceId;
@@ -39,4 +31,16 @@ public interface AcceptorLogger {
                     '}';
         }
     }
+
+    void savePromise(int squadId, long instanceId, int proposal, ByteString value);
+
+    Promise loadLastPromise(int squadId);
+
+    Promise loadPromise(int squadId, long instanceId);
+
+    void saveCheckPoint(CheckPoint checkPoint);
+
+    CheckPoint loadLastCheckPoint(int squadId);
+
+    void close();
 }

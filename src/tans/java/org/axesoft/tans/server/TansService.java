@@ -3,6 +3,8 @@ package org.axesoft.tans.server;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.commons.lang3.tuple.Pair;
+import org.axesoft.jaxos.algo.CheckPoint;
 import org.axesoft.jaxos.algo.Proponent;
 import org.axesoft.jaxos.algo.ProposeResult;
 import org.axesoft.jaxos.algo.StateMachine;
@@ -56,6 +58,16 @@ public class TansService implements StateMachine {
             logger.trace("TANS state machine consumer {} event from instance {}", nx.size(), instanceId);
         }
         this.numberMaps[squadId].consume(instanceId, nx);
+    }
+
+    @Override
+    public CheckPoint makeCheckPoint(int squadId) {
+        return null;
+    }
+
+    @Override
+    public void restoreFromCheckPoint(CheckPoint checkPoint) {
+
     }
 
     @Override
@@ -170,6 +182,10 @@ public class TansService implements StateMachine {
                 numbers1 = numbers1.plus(k.key(), n1);
             }
             return new TansNumberProposal(this.lastInstanceId + 1, builder.build());
+        }
+
+        synchronized Pair<PMap<String, TansNumber>, Long> getSnapshot(){
+            return Pair.of(this.numbers, lastInstanceId);
         }
     }
 

@@ -16,3 +16,13 @@ message TansProposal {
   repeated ProtoTansNumber number = 1;
 }
 
+message PersTansNumber {
+  string name = 1;
+  int64 value = 2;
+  int64 version = 3;
+  int64 timestamp = 4;
+}
+
+message TansCheckPoint {
+  repeated PersTansNumber number = 4;
+}

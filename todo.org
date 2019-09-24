@@ -11,6 +11,7 @@
 * TODO add single learn request&response			    :learner:
 * TODO add range learn request&response				    :learner:
 * DONE add general state machine			       :statemachine:
+* NEXT save checkpoint					       :statemachine:
 * TODO add log reload							:log:
 * DONE optimize the thread model				       :base:
 * DONE NEXT support timeout by TimeWheel			    :network:
@@ -26,7 +27,7 @@ are by netty
 * DONE [#C] the proposer blocked at "executingSignal"		       :base:
 * DONE Implement a HTTP id service for each server 		       :base:
 * DONE implement a HTTP client on netty				    :network:
-* NEXT Provide proposal BATCH strategy to improve the throughput  :algorithm:
+* DONE Provide proposal BATCH strategy to improve the throughput  :algorithm:
 * TODO Ignore Exceptions from channel broken when shudown the server :network:
 * TODO A case of Chosen notify message lost making that server hang :network:
 * TODO Add full unit test case for algo package			  :algorithm:

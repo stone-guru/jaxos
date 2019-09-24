@@ -1672,6 +1672,1538 @@ public final class TansMessage {
 
   }
 
+  public interface PersTansNumberOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:org.axesoft.tans.protobuff.PersTansNumber)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string name = 1;</code>
+     */
+    java.lang.String getName();
+    /**
+     * <code>string name = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getNameBytes();
+
+    /**
+     * <code>int64 value = 2;</code>
+     */
+    long getValue();
+
+    /**
+     * <code>int64 version = 3;</code>
+     */
+    long getVersion();
+
+    /**
+     * <code>int64 timestamp = 4;</code>
+     */
+    long getTimestamp();
+  }
+  /**
+   * Protobuf type {@code org.axesoft.tans.protobuff.PersTansNumber}
+   */
+  public  static final class PersTansNumber extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:org.axesoft.tans.protobuff.PersTansNumber)
+      PersTansNumberOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use PersTansNumber.newBuilder() to construct.
+    private PersTansNumber(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private PersTansNumber() {
+      name_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new PersTansNumber();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private PersTansNumber(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              name_ = s;
+              break;
+            }
+            case 16: {
+
+              value_ = input.readInt64();
+              break;
+            }
+            case 24: {
+
+              version_ = input.readInt64();
+              break;
+            }
+            case 32: {
+
+              timestamp_ = input.readInt64();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.axesoft.tans.protobuff.TansMessage.internal_static_org_axesoft_tans_protobuff_PersTansNumber_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.axesoft.tans.protobuff.TansMessage.internal_static_org_axesoft_tans_protobuff_PersTansNumber_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.axesoft.tans.protobuff.TansMessage.PersTansNumber.class, org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder.class);
+    }
+
+    public static final int NAME_FIELD_NUMBER = 1;
+    private volatile java.lang.Object name_;
+    /**
+     * <code>string name = 1;</code>
+     */
+    public java.lang.String getName() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        name_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string name = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getNameBytes() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        name_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int VALUE_FIELD_NUMBER = 2;
+    private long value_;
+    /**
+     * <code>int64 value = 2;</code>
+     */
+    public long getValue() {
+      return value_;
+    }
+
+    public static final int VERSION_FIELD_NUMBER = 3;
+    private long version_;
+    /**
+     * <code>int64 version = 3;</code>
+     */
+    public long getVersion() {
+      return version_;
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 4;
+    private long timestamp_;
+    /**
+     * <code>int64 timestamp = 4;</code>
+     */
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getNameBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
+      }
+      if (value_ != 0L) {
+        output.writeInt64(2, value_);
+      }
+      if (version_ != 0L) {
+        output.writeInt64(3, version_);
+      }
+      if (timestamp_ != 0L) {
+        output.writeInt64(4, timestamp_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getNameBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
+      }
+      if (value_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(2, value_);
+      }
+      if (version_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(3, version_);
+      }
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(4, timestamp_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.axesoft.tans.protobuff.TansMessage.PersTansNumber)) {
+        return super.equals(obj);
+      }
+      org.axesoft.tans.protobuff.TansMessage.PersTansNumber other = (org.axesoft.tans.protobuff.TansMessage.PersTansNumber) obj;
+
+      if (!getName()
+          .equals(other.getName())) return false;
+      if (getValue()
+          != other.getValue()) return false;
+      if (getVersion()
+          != other.getVersion()) return false;
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getName().hashCode();
+      hash = (37 * hash) + VALUE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getValue());
+      hash = (37 * hash) + VERSION_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getVersion());
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(org.axesoft.tans.protobuff.TansMessage.PersTansNumber prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code org.axesoft.tans.protobuff.PersTansNumber}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:org.axesoft.tans.protobuff.PersTansNumber)
+        org.axesoft.tans.protobuff.TansMessage.PersTansNumberOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.axesoft.tans.protobuff.TansMessage.internal_static_org_axesoft_tans_protobuff_PersTansNumber_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.axesoft.tans.protobuff.TansMessage.internal_static_org_axesoft_tans_protobuff_PersTansNumber_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.axesoft.tans.protobuff.TansMessage.PersTansNumber.class, org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder.class);
+      }
+
+      // Construct using org.axesoft.tans.protobuff.TansMessage.PersTansNumber.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        name_ = "";
+
+        value_ = 0L;
+
+        version_ = 0L;
+
+        timestamp_ = 0L;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.axesoft.tans.protobuff.TansMessage.internal_static_org_axesoft_tans_protobuff_PersTansNumber_descriptor;
+      }
+
+      @java.lang.Override
+      public org.axesoft.tans.protobuff.TansMessage.PersTansNumber getDefaultInstanceForType() {
+        return org.axesoft.tans.protobuff.TansMessage.PersTansNumber.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public org.axesoft.tans.protobuff.TansMessage.PersTansNumber build() {
+        org.axesoft.tans.protobuff.TansMessage.PersTansNumber result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public org.axesoft.tans.protobuff.TansMessage.PersTansNumber buildPartial() {
+        org.axesoft.tans.protobuff.TansMessage.PersTansNumber result = new org.axesoft.tans.protobuff.TansMessage.PersTansNumber(this);
+        result.name_ = name_;
+        result.value_ = value_;
+        result.version_ = version_;
+        result.timestamp_ = timestamp_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.axesoft.tans.protobuff.TansMessage.PersTansNumber) {
+          return mergeFrom((org.axesoft.tans.protobuff.TansMessage.PersTansNumber)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.axesoft.tans.protobuff.TansMessage.PersTansNumber other) {
+        if (other == org.axesoft.tans.protobuff.TansMessage.PersTansNumber.getDefaultInstance()) return this;
+        if (!other.getName().isEmpty()) {
+          name_ = other.name_;
+          onChanged();
+        }
+        if (other.getValue() != 0L) {
+          setValue(other.getValue());
+        }
+        if (other.getVersion() != 0L) {
+          setVersion(other.getVersion());
+        }
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.axesoft.tans.protobuff.TansMessage.PersTansNumber parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.axesoft.tans.protobuff.TansMessage.PersTansNumber) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object name_ = "";
+      /**
+       * <code>string name = 1;</code>
+       */
+      public java.lang.String getName() {
+        java.lang.Object ref = name_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          name_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string name = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getNameBytes() {
+        java.lang.Object ref = name_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          name_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string name = 1;</code>
+       */
+      public Builder setName(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        name_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string name = 1;</code>
+       */
+      public Builder clearName() {
+        
+        name_ = getDefaultInstance().getName();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string name = 1;</code>
+       */
+      public Builder setNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        name_ = value;
+        onChanged();
+        return this;
+      }
+
+      private long value_ ;
+      /**
+       * <code>int64 value = 2;</code>
+       */
+      public long getValue() {
+        return value_;
+      }
+      /**
+       * <code>int64 value = 2;</code>
+       */
+      public Builder setValue(long value) {
+        
+        value_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 value = 2;</code>
+       */
+      public Builder clearValue() {
+        
+        value_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long version_ ;
+      /**
+       * <code>int64 version = 3;</code>
+       */
+      public long getVersion() {
+        return version_;
+      }
+      /**
+       * <code>int64 version = 3;</code>
+       */
+      public Builder setVersion(long value) {
+        
+        version_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 version = 3;</code>
+       */
+      public Builder clearVersion() {
+        
+        version_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 4;</code>
+       */
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 4;</code>
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 4;</code>
+       */
+      public Builder clearTimestamp() {
+        
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:org.axesoft.tans.protobuff.PersTansNumber)
+    }
+
+    // @@protoc_insertion_point(class_scope:org.axesoft.tans.protobuff.PersTansNumber)
+    private static final org.axesoft.tans.protobuff.TansMessage.PersTansNumber DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new org.axesoft.tans.protobuff.TansMessage.PersTansNumber();
+    }
+
+    public static org.axesoft.tans.protobuff.TansMessage.PersTansNumber getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<PersTansNumber>
+        PARSER = new com.google.protobuf.AbstractParser<PersTansNumber>() {
+      @java.lang.Override
+      public PersTansNumber parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new PersTansNumber(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<PersTansNumber> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<PersTansNumber> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public org.axesoft.tans.protobuff.TansMessage.PersTansNumber getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface TansCheckPointOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:org.axesoft.tans.protobuff.TansCheckPoint)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+     */
+    java.util.List<org.axesoft.tans.protobuff.TansMessage.PersTansNumber> 
+        getNumberList();
+    /**
+     * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+     */
+    org.axesoft.tans.protobuff.TansMessage.PersTansNumber getNumber(int index);
+    /**
+     * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+     */
+    int getNumberCount();
+    /**
+     * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+     */
+    java.util.List<? extends org.axesoft.tans.protobuff.TansMessage.PersTansNumberOrBuilder> 
+        getNumberOrBuilderList();
+    /**
+     * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+     */
+    org.axesoft.tans.protobuff.TansMessage.PersTansNumberOrBuilder getNumberOrBuilder(
+        int index);
+  }
+  /**
+   * Protobuf type {@code org.axesoft.tans.protobuff.TansCheckPoint}
+   */
+  public  static final class TansCheckPoint extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:org.axesoft.tans.protobuff.TansCheckPoint)
+      TansCheckPointOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use TansCheckPoint.newBuilder() to construct.
+    private TansCheckPoint(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private TansCheckPoint() {
+      number_ = java.util.Collections.emptyList();
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new TansCheckPoint();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private TansCheckPoint(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 34: {
+              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+                number_ = new java.util.ArrayList<org.axesoft.tans.protobuff.TansMessage.PersTansNumber>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              number_.add(
+                  input.readMessage(org.axesoft.tans.protobuff.TansMessage.PersTansNumber.parser(), extensionRegistry));
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) != 0)) {
+          number_ = java.util.Collections.unmodifiableList(number_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.axesoft.tans.protobuff.TansMessage.internal_static_org_axesoft_tans_protobuff_TansCheckPoint_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.axesoft.tans.protobuff.TansMessage.internal_static_org_axesoft_tans_protobuff_TansCheckPoint_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.axesoft.tans.protobuff.TansMessage.TansCheckPoint.class, org.axesoft.tans.protobuff.TansMessage.TansCheckPoint.Builder.class);
+    }
+
+    public static final int NUMBER_FIELD_NUMBER = 4;
+    private java.util.List<org.axesoft.tans.protobuff.TansMessage.PersTansNumber> number_;
+    /**
+     * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+     */
+    public java.util.List<org.axesoft.tans.protobuff.TansMessage.PersTansNumber> getNumberList() {
+      return number_;
+    }
+    /**
+     * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+     */
+    public java.util.List<? extends org.axesoft.tans.protobuff.TansMessage.PersTansNumberOrBuilder> 
+        getNumberOrBuilderList() {
+      return number_;
+    }
+    /**
+     * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+     */
+    public int getNumberCount() {
+      return number_.size();
+    }
+    /**
+     * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+     */
+    public org.axesoft.tans.protobuff.TansMessage.PersTansNumber getNumber(int index) {
+      return number_.get(index);
+    }
+    /**
+     * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+     */
+    public org.axesoft.tans.protobuff.TansMessage.PersTansNumberOrBuilder getNumberOrBuilder(
+        int index) {
+      return number_.get(index);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      for (int i = 0; i < number_.size(); i++) {
+        output.writeMessage(4, number_.get(i));
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      for (int i = 0; i < number_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(4, number_.get(i));
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.axesoft.tans.protobuff.TansMessage.TansCheckPoint)) {
+        return super.equals(obj);
+      }
+      org.axesoft.tans.protobuff.TansMessage.TansCheckPoint other = (org.axesoft.tans.protobuff.TansMessage.TansCheckPoint) obj;
+
+      if (!getNumberList()
+          .equals(other.getNumberList())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (getNumberCount() > 0) {
+        hash = (37 * hash) + NUMBER_FIELD_NUMBER;
+        hash = (53 * hash) + getNumberList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(org.axesoft.tans.protobuff.TansMessage.TansCheckPoint prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code org.axesoft.tans.protobuff.TansCheckPoint}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:org.axesoft.tans.protobuff.TansCheckPoint)
+        org.axesoft.tans.protobuff.TansMessage.TansCheckPointOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.axesoft.tans.protobuff.TansMessage.internal_static_org_axesoft_tans_protobuff_TansCheckPoint_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.axesoft.tans.protobuff.TansMessage.internal_static_org_axesoft_tans_protobuff_TansCheckPoint_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.axesoft.tans.protobuff.TansMessage.TansCheckPoint.class, org.axesoft.tans.protobuff.TansMessage.TansCheckPoint.Builder.class);
+      }
+
+      // Construct using org.axesoft.tans.protobuff.TansMessage.TansCheckPoint.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+          getNumberFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        if (numberBuilder_ == null) {
+          number_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+        } else {
+          numberBuilder_.clear();
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.axesoft.tans.protobuff.TansMessage.internal_static_org_axesoft_tans_protobuff_TansCheckPoint_descriptor;
+      }
+
+      @java.lang.Override
+      public org.axesoft.tans.protobuff.TansMessage.TansCheckPoint getDefaultInstanceForType() {
+        return org.axesoft.tans.protobuff.TansMessage.TansCheckPoint.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public org.axesoft.tans.protobuff.TansMessage.TansCheckPoint build() {
+        org.axesoft.tans.protobuff.TansMessage.TansCheckPoint result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public org.axesoft.tans.protobuff.TansMessage.TansCheckPoint buildPartial() {
+        org.axesoft.tans.protobuff.TansMessage.TansCheckPoint result = new org.axesoft.tans.protobuff.TansMessage.TansCheckPoint(this);
+        int from_bitField0_ = bitField0_;
+        if (numberBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) != 0)) {
+            number_ = java.util.Collections.unmodifiableList(number_);
+            bitField0_ = (bitField0_ & ~0x00000001);
+          }
+          result.number_ = number_;
+        } else {
+          result.number_ = numberBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.axesoft.tans.protobuff.TansMessage.TansCheckPoint) {
+          return mergeFrom((org.axesoft.tans.protobuff.TansMessage.TansCheckPoint)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.axesoft.tans.protobuff.TansMessage.TansCheckPoint other) {
+        if (other == org.axesoft.tans.protobuff.TansMessage.TansCheckPoint.getDefaultInstance()) return this;
+        if (numberBuilder_ == null) {
+          if (!other.number_.isEmpty()) {
+            if (number_.isEmpty()) {
+              number_ = other.number_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+            } else {
+              ensureNumberIsMutable();
+              number_.addAll(other.number_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.number_.isEmpty()) {
+            if (numberBuilder_.isEmpty()) {
+              numberBuilder_.dispose();
+              numberBuilder_ = null;
+              number_ = other.number_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+              numberBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getNumberFieldBuilder() : null;
+            } else {
+              numberBuilder_.addAllMessages(other.number_);
+            }
+          }
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.axesoft.tans.protobuff.TansMessage.TansCheckPoint parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.axesoft.tans.protobuff.TansMessage.TansCheckPoint) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<org.axesoft.tans.protobuff.TansMessage.PersTansNumber> number_ =
+        java.util.Collections.emptyList();
+      private void ensureNumberIsMutable() {
+        if (!((bitField0_ & 0x00000001) != 0)) {
+          number_ = new java.util.ArrayList<org.axesoft.tans.protobuff.TansMessage.PersTansNumber>(number_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          org.axesoft.tans.protobuff.TansMessage.PersTansNumber, org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder, org.axesoft.tans.protobuff.TansMessage.PersTansNumberOrBuilder> numberBuilder_;
+
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public java.util.List<org.axesoft.tans.protobuff.TansMessage.PersTansNumber> getNumberList() {
+        if (numberBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(number_);
+        } else {
+          return numberBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public int getNumberCount() {
+        if (numberBuilder_ == null) {
+          return number_.size();
+        } else {
+          return numberBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public org.axesoft.tans.protobuff.TansMessage.PersTansNumber getNumber(int index) {
+        if (numberBuilder_ == null) {
+          return number_.get(index);
+        } else {
+          return numberBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public Builder setNumber(
+          int index, org.axesoft.tans.protobuff.TansMessage.PersTansNumber value) {
+        if (numberBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureNumberIsMutable();
+          number_.set(index, value);
+          onChanged();
+        } else {
+          numberBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public Builder setNumber(
+          int index, org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder builderForValue) {
+        if (numberBuilder_ == null) {
+          ensureNumberIsMutable();
+          number_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          numberBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public Builder addNumber(org.axesoft.tans.protobuff.TansMessage.PersTansNumber value) {
+        if (numberBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureNumberIsMutable();
+          number_.add(value);
+          onChanged();
+        } else {
+          numberBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public Builder addNumber(
+          int index, org.axesoft.tans.protobuff.TansMessage.PersTansNumber value) {
+        if (numberBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureNumberIsMutable();
+          number_.add(index, value);
+          onChanged();
+        } else {
+          numberBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public Builder addNumber(
+          org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder builderForValue) {
+        if (numberBuilder_ == null) {
+          ensureNumberIsMutable();
+          number_.add(builderForValue.build());
+          onChanged();
+        } else {
+          numberBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public Builder addNumber(
+          int index, org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder builderForValue) {
+        if (numberBuilder_ == null) {
+          ensureNumberIsMutable();
+          number_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          numberBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public Builder addAllNumber(
+          java.lang.Iterable<? extends org.axesoft.tans.protobuff.TansMessage.PersTansNumber> values) {
+        if (numberBuilder_ == null) {
+          ensureNumberIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, number_);
+          onChanged();
+        } else {
+          numberBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public Builder clearNumber() {
+        if (numberBuilder_ == null) {
+          number_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+        } else {
+          numberBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public Builder removeNumber(int index) {
+        if (numberBuilder_ == null) {
+          ensureNumberIsMutable();
+          number_.remove(index);
+          onChanged();
+        } else {
+          numberBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder getNumberBuilder(
+          int index) {
+        return getNumberFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public org.axesoft.tans.protobuff.TansMessage.PersTansNumberOrBuilder getNumberOrBuilder(
+          int index) {
+        if (numberBuilder_ == null) {
+          return number_.get(index);  } else {
+          return numberBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public java.util.List<? extends org.axesoft.tans.protobuff.TansMessage.PersTansNumberOrBuilder> 
+           getNumberOrBuilderList() {
+        if (numberBuilder_ != null) {
+          return numberBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(number_);
+        }
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder addNumberBuilder() {
+        return getNumberFieldBuilder().addBuilder(
+            org.axesoft.tans.protobuff.TansMessage.PersTansNumber.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder addNumberBuilder(
+          int index) {
+        return getNumberFieldBuilder().addBuilder(
+            index, org.axesoft.tans.protobuff.TansMessage.PersTansNumber.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .org.axesoft.tans.protobuff.PersTansNumber number = 4;</code>
+       */
+      public java.util.List<org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder> 
+           getNumberBuilderList() {
+        return getNumberFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          org.axesoft.tans.protobuff.TansMessage.PersTansNumber, org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder, org.axesoft.tans.protobuff.TansMessage.PersTansNumberOrBuilder> 
+          getNumberFieldBuilder() {
+        if (numberBuilder_ == null) {
+          numberBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              org.axesoft.tans.protobuff.TansMessage.PersTansNumber, org.axesoft.tans.protobuff.TansMessage.PersTansNumber.Builder, org.axesoft.tans.protobuff.TansMessage.PersTansNumberOrBuilder>(
+                  number_,
+                  ((bitField0_ & 0x00000001) != 0),
+                  getParentForChildren(),
+                  isClean());
+          number_ = null;
+        }
+        return numberBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:org.axesoft.tans.protobuff.TansCheckPoint)
+    }
+
+    // @@protoc_insertion_point(class_scope:org.axesoft.tans.protobuff.TansCheckPoint)
+    private static final org.axesoft.tans.protobuff.TansMessage.TansCheckPoint DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new org.axesoft.tans.protobuff.TansMessage.TansCheckPoint();
+    }
+
+    public static org.axesoft.tans.protobuff.TansMessage.TansCheckPoint getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<TansCheckPoint>
+        PARSER = new com.google.protobuf.AbstractParser<TansCheckPoint>() {
+      @java.lang.Override
+      public TansCheckPoint parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new TansCheckPoint(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<TansCheckPoint> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<TansCheckPoint> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public org.axesoft.tans.protobuff.TansMessage.TansCheckPoint getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_org_axesoft_tans_protobuff_ProtoTansNumber_descriptor;
   private static final 
@@ -1682,6 +3214,16 @@ public final class TansMessage {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_org_axesoft_tans_protobuff_TansProposal_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_org_axesoft_tans_protobuff_PersTansNumber_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_org_axesoft_tans_protobuff_PersTansNumber_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_org_axesoft_tans_protobuff_TansCheckPoint_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_org_axesoft_tans_protobuff_TansCheckPoint_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -1697,8 +3239,12 @@ public final class TansMessage {
       "on\030\003 \001(\003\022\021\n\ttimestamp\030\004 \001(\003\022\020\n\010version0\030" +
       "\005 \001(\003\022\016\n\006value0\030\006 \001(\003\"K\n\014TansProposal\022;\n" +
       "\006number\030\001 \003(\0132+.org.axesoft.tans.protobu" +
-      "ff.ProtoTansNumberB\rB\013TansMessageb\006proto" +
-      "3"
+      "ff.ProtoTansNumber\"Q\n\016PersTansNumber\022\014\n\004" +
+      "name\030\001 \001(\t\022\r\n\005value\030\002 \001(\003\022\017\n\007version\030\003 \001" +
+      "(\003\022\021\n\ttimestamp\030\004 \001(\003\"L\n\016TansCheckPoint\022" +
+      ":\n\006number\030\004 \003(\0132*.org.axesoft.tans.proto" +
+      "buff.PersTansNumberB\rB\013TansMessageb\006prot" +
+      "o3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -1715,6 +3261,18 @@ public final class TansMessage {
     internal_static_org_axesoft_tans_protobuff_TansProposal_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_tans_protobuff_TansProposal_descriptor,
+        new java.lang.String[] { "Number", });
+    internal_static_org_axesoft_tans_protobuff_PersTansNumber_descriptor =
+      getDescriptor().getMessageTypes().get(2);
+    internal_static_org_axesoft_tans_protobuff_PersTansNumber_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_org_axesoft_tans_protobuff_PersTansNumber_descriptor,
+        new java.lang.String[] { "Name", "Value", "Version", "Timestamp", });
+    internal_static_org_axesoft_tans_protobuff_TansCheckPoint_descriptor =
+      getDescriptor().getMessageTypes().get(3);
+    internal_static_org_axesoft_tans_protobuff_TansCheckPoint_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_org_axesoft_tans_protobuff_TansCheckPoint_descriptor,
         new java.lang.String[] { "Number", });
   }
 

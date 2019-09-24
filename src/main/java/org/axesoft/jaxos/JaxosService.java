@@ -11,6 +11,11 @@ import org.axesoft.jaxos.netty.NettyJaxosServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class JaxosService extends AbstractExecutionThreadService implements Proponent {
@@ -28,6 +33,8 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     private EventWorkerPool eventWorkerPool;
     private Squad[] squads;
     private EventDispatcher platoonEventDispatcher;
+
+    private ScheduledExecutorService timerService;
 
     public JaxosService(JaxosSettings settings, StateMachine stateMachine) {
         this.settings = settings;
@@ -50,6 +57,14 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             }
         };
 
+
+        this.timerService = Executors.newScheduledThreadPool(1, (r) -> {
+            String name = "scheduledTaskThread";
+            Thread thread = new Thread(r, name);
+            thread.setDaemon(true);
+            return thread;
+        });
+
         super.addListener(new JaxosServiceListener(), MoreExecutors.directExecutor());
     }
 
@@ -65,9 +80,9 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         return this.squads[squadId].propose(instanceId, v);
     }
 
-    public void printMetrics(){
+    public void printMetrics() {
         long current = System.currentTimeMillis();
-        for(Squad squad : this.squads){
+        for (Squad squad : this.squads) {
             squad.computeAndPrintMetrics(current);
         }
     }
@@ -89,7 +104,14 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, this.eventWorkerPool);
         this.communicator = factory.createCommunicator();
 
+        this.timerService.scheduleWithFixedDelay(this::saveCheckPoint, 10, 10, TimeUnit.SECONDS);
         this.node.startup();
+    }
+
+    private void saveCheckPoint() {
+        for(Squad squad : this.squads){
+            squad.saveCheckPoint();
+        }
     }
 
     private class JaxosServiceListener extends Listener {

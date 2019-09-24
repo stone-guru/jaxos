@@ -17,6 +17,10 @@ public class StateMachineRunner implements Learner {
         this.machine = checkNotNull(machine);
     }
 
+    public StateMachine machine(){
+        return this.machine;
+    }
+
     @Override
     public void learnLastChosen(int squadId, long instanceId, int proposal) {
         this.lastChosen = new LastChosen(squadId, instanceId, proposal);
