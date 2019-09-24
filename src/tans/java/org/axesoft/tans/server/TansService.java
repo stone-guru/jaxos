@@ -7,12 +7,12 @@ import org.axesoft.jaxos.algo.Proponent;
 import org.axesoft.jaxos.algo.ProposeResult;
 import org.axesoft.jaxos.algo.StateMachine;
 import org.axesoft.tans.protobuff.TansMessage;
+import org.pcollections.HashTreePMap;
+import org.pcollections.PMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -114,7 +114,7 @@ public class TansService implements StateMachine {
     }
 
     private static class TansNumberMap {
-        private final Map<String, TansNumber> numbers = new HashMap<>();
+        private PMap<String, TansNumber> numbers = HashTreePMap.empty();
         private long lastInstanceId;
 
         synchronized long currentVersion() {
@@ -129,30 +129,36 @@ public class TansService implements StateMachine {
             if (instanceId != this.lastInstanceId + 1) {
                 throw new IllegalStateException(String.format("dolog %d when current is %d", instanceId, this.lastInstanceId));
             }
+
+            this.numbers = applyChange(nx, this.numbers);
+            this.lastInstanceId = instanceId;
+        }
+
+        private PMap<String, TansNumber> applyChange(List<TansNumber> nx, PMap<String, TansNumber> numbers0) {
+            PMap<String, TansNumber> numbers1 = numbers0;
             for (TansNumber n1 : nx) {
-                numbers.compute(n1.name(), (k, n0) -> {
-                    if (n0 == null) {
-                        return n1;
-                    }
-                    else if (n1.version() == n0.version() + 1) {
-                        return n1;
+                TansNumber n0 = numbers1.get(n1.name());
+                if (n0 == null) {
+                    numbers1 = numbers1.plus(n1.name(), n1);
+                }
+                else {
+                    if (n1.version() == n0.version() + 1) {
+                        numbers1 = numbers1.plus(n1.name(), n1);
                     }
                     else {
                         throw new RuntimeException(String.format("Unmatched version n0 = %s, n1 = %s", n0, n1));
                     }
-                });
+                }
             }
-            this.lastInstanceId = instanceId;
+            return numbers1;
         }
 
         synchronized TansNumberProposal createProposal(List<KeyLong> requests) {
             ImmutableList.Builder<TansNumber> builder = ImmutableList.builder();
-            Map<String, TansNumber> newNumberMap = new HashMap<>();
+            PMap<String, TansNumber> numbers1 = this.numbers;
             for (KeyLong k : requests) {
-                TansNumber n1, n0 = newNumberMap.get(k.key());
-                if (n0 == null) {
-                    n0 = this.numbers.get(k.key());
-                }
+                TansNumber n1, n0;
+                n0 = numbers1.get(k.key());
                 if (n0 == null) {
                     n1 = new TansNumber(k.key(), k.value() + 1);
                 }
@@ -161,7 +167,7 @@ public class TansService implements StateMachine {
                 }
 
                 builder.add(n1);
-                newNumberMap.put(k.key(), n1);
+                numbers1 = numbers1.plus(k.key(), n1);
             }
             return new TansNumberProposal(this.lastInstanceId + 1, builder.build());
         }
