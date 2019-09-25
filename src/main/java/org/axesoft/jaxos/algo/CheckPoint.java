@@ -3,6 +3,7 @@ package org.axesoft.jaxos.algo;
 import com.google.protobuf.ByteString;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @author gaoyuan
@@ -42,7 +43,7 @@ public class CheckPoint implements Serializable {
         return "CheckPoint{" +
                 "squadId=" + squadId +
                 ", instanceId=" + instanceId +
-                ", timestamp=" + timestamp +
+                ", timestamp=" + new Date(timestamp)+
                 ", content=BX[" + content.size() + "]" +
                 '}';
     }

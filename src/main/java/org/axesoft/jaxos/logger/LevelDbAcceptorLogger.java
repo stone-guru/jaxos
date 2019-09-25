@@ -5,10 +5,7 @@ import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import org.axesoft.jaxos.algo.AcceptorLogger;
 import org.axesoft.jaxos.algo.CheckPoint;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.Options;
-import org.iq80.leveldb.WriteBatch;
-import org.iq80.leveldb.WriteOptions;
+import org.iq80.leveldb.*;
 import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,6 +109,9 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         byte[] key = keyOfCheckPoint(squadId);
         byte[] data = db.get(key);
 
+        if(data == null) {
+            return null;
+        }
         return toCheckPoint(data);
     }
 

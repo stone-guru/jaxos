@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * @author gaoyuan
  * @sine 2019/8/25.
  */
-public class Squad implements EventDispatcher{
+public class Squad implements EventDispatcher {
     private static final Logger logger = LoggerFactory.getLogger(Squad.class);
 
     private Acceptor acceptor;
@@ -27,8 +27,8 @@ public class Squad implements EventDispatcher{
         this.context = new SquadContext(squadId, this.config);
         this.metrics = new SquadMetrics();
         this.stateMachineRunner = new StateMachineRunner(machine);
-        this.proposer = new Proposer(this.config, this.context, (Learner)stateMachineRunner, communicator, timerSupplier);
-        this.acceptor = new Acceptor(this.config, this.context, (Learner)stateMachineRunner, acceptorLogger);
+        this.proposer = new Proposer(this.config, this.context, (Learner) stateMachineRunner, communicator, timerSupplier);
+        this.acceptor = new Acceptor(this.config, this.context, (Learner) stateMachineRunner, acceptorLogger);
         this.acceptorLogger = acceptorLogger;
     }
 
@@ -42,7 +42,7 @@ public class Squad implements EventDispatcher{
         SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessPrepare();
         //logger.info("last request is {}, current is {}", lastRequestInfo, new Date());
 
-        ProposeResult result ;
+        ProposeResult result;
         if (this.context.isOtherLeaderActive() && !this.config.ignoreLeader()) {
             result = ProposeResult.otherLeader(lastSuccessRequestRecord.serverId());
         }
@@ -66,7 +66,7 @@ public class Squad implements EventDispatcher{
                 return null;
             }
             case PREPARE_TIMEOUT: {
-                proposer.onPrepareTimeout((Event.PrepareTimeout)event);
+                proposer.onPrepareTimeout((Event.PrepareTimeout) event);
                 return null;
             }
             case ACCEPT: {
@@ -76,8 +76,8 @@ public class Squad implements EventDispatcher{
                 proposer.onAcceptReply((Event.AcceptResponse) event);
                 return null;
             }
-            case ACCEPT_TIMEOUT:{
-                proposer.onAcceptTimeout((Event.AcceptTimeout)event);
+            case ACCEPT_TIMEOUT: {
+                proposer.onAcceptTimeout((Event.AcceptTimeout) event);
                 return null;
             }
             case ACCEPTED_NOTIFY: {
@@ -106,10 +106,40 @@ public class Squad implements EventDispatcher{
         logger.info(msg);
     }
 
-    public void saveCheckPoint(){
+    public void saveCheckPoint() {
         CheckPoint checkPoint = this.stateMachineRunner.machine().makeCheckPoint(context.squadId());
         this.acceptorLogger.saveCheckPoint(checkPoint);
 
         logger.info("{} saved", checkPoint);
+    }
+
+    public void restoreFromDB() {
+        CheckPoint checkPoint = this.acceptorLogger.loadLastCheckPoint(context.squadId());
+        long checkPointInstanceId = 0;
+        if (checkPoint != null) {
+            checkPointInstanceId = checkPoint.instanceId();
+            this.stateMachineRunner.machine().restoreFromCheckPoint(checkPoint);
+            logger.info("Accept to last {}", checkPoint);
+        }
+
+        AcceptorLogger.Promise p1 = this.acceptorLogger.loadLastPromise(context.squadId());
+        if (p1 == null) {
+            this.stateMachineRunner.learnLastChosen(context.squadId(), 0L, 0);
+            return;
+        }
+
+        if (p1.instanceId == checkPoint.instanceId()) {
+            this.stateMachineRunner.learnLastChosen(p1.squadId, p1.instanceId, p1.proposal);
+        }
+        else {
+            for (long i = checkPointInstanceId + 1; i <= p1.instanceId; i++) {
+                AcceptorLogger.Promise p = this.acceptorLogger.loadPromise(context.squadId(), i);
+                if (p == null) {
+                    throw new RuntimeException("Promise(" + i + ") not found in DB");
+                }
+                this.stateMachineRunner.learnValue(p.squadId, i, p.proposal, p.value);
+            }
+        }
+        logger.info("Squad {} restored to instance {}", context.squadId(), p1.instanceId);
     }
 }

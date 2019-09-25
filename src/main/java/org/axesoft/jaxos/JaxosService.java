@@ -44,6 +44,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         for (int i = 0; i < settings.partitionNumber(); i++) {
             final int n = i;
             this.squads[i] = new Squad(n, settings, () -> communicator, acceptorLogger, stateMachine, () -> this.eventWorkerPool);
+            this.squads[i].restoreFromDB();
         }
 
         this.platoonEventDispatcher = (event) -> {
@@ -104,7 +105,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, this.eventWorkerPool);
         this.communicator = factory.createCommunicator();
 
-        this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, 10, 10, TimeUnit.SECONDS);
+        this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, 10, 20, TimeUnit.SECONDS);
         this.node.startup();
     }
 
@@ -117,6 +118,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             squad.saveCheckPoint();
         }
     }
+
 
     private class JaxosServiceListener extends Listener {
         @Override
