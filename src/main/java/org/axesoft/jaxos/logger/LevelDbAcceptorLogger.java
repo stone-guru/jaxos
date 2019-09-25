@@ -18,8 +18,9 @@ import java.io.*;
 public class LevelDbAcceptorLogger implements AcceptorLogger {
     private static final Logger logger = LoggerFactory.getLogger(LevelDbAcceptorLogger.class);
 
-    private static final byte CATEGORY_PROMISE = 2;
     private static final byte CATEGORY_SQUAD_LAST = 1;
+    private static final byte CATEGORY_PROMISE = 2;
+    private static final byte CATEGORY_SQUAD_CHECKPOINT = 3;
 
     private DB db;
     private String path;
@@ -99,12 +100,19 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
 
     @Override
     public void saveCheckPoint(CheckPoint checkPoint) {
-        
+        byte[] key = keyOfCheckPoint(checkPoint.squadId());
+        byte[] data = toByteArray(checkPoint);
+
+        WriteOptions writeOptions = new WriteOptions().sync(true);
+        db.put(key, data, writeOptions);
     }
 
     @Override
     public CheckPoint loadLastCheckPoint(int squadId) {
-        return null;
+        byte[] key = keyOfCheckPoint(squadId);
+        byte[] data = db.get(key);
+
+        return toCheckPoint(data);
     }
 
     @Override
@@ -113,6 +121,38 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
             this.db.close();
         } catch (IOException e) {
             logger.error("Error when close db in " + this.path);
+        }
+    }
+
+    public byte[] toByteArray(CheckPoint checkPoint){
+        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        DataOutputStream os = new DataOutputStream(bs);
+        try {
+            os.writeInt(checkPoint.squadId());
+            os.writeLong(checkPoint.instanceId());
+            os.writeLong(checkPoint.timestamp());
+            os.writeInt(checkPoint.content().size());
+            os.write(checkPoint.content().toByteArray());
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return bs.toByteArray();
+    }
+
+    public CheckPoint toCheckPoint(byte[] bytes){
+        DataInputStream is = new DataInputStream(new ByteArrayInputStream(bytes));
+        try {
+            int squadId = is.readInt();
+            long instanceId = is.readLong();
+            long timestamp = is.readLong();
+            int sz = is.readInt();
+            byte[] content = is.readNBytes(sz);
+            return new CheckPoint(squadId, instanceId, timestamp, ByteString.copyFrom(content));
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -163,6 +203,13 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     private byte[] keyOfSquadLast(int squadId){
         byte[] key = new byte[5];
         key[0] = CATEGORY_SQUAD_LAST;
+        System.arraycopy(Ints.toByteArray(squadId), 0, key, 1, 4);
+        return key;
+    }
+
+    private byte[] keyOfCheckPoint(int squadId){
+        byte[] key = new byte[5];
+        key[0] = CATEGORY_SQUAD_CHECKPOINT;
         System.arraycopy(Ints.toByteArray(squadId), 0, key, 1, 4);
         return key;
     }

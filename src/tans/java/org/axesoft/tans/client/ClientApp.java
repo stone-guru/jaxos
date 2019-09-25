@@ -12,6 +12,7 @@ import io.netty.util.CharsetUtil;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,24 +26,23 @@ public class ClientApp {
     );
 
     public static void main(String[] args) throws Exception {
+        String pattern = "http://localhost:8081/acquire?key=%s&n=%d";
+
+        List<String> urls = new ArrayList<>();
+        for(int i = 0; i < 100; i++){
+            urls.add(String.format(pattern, "id" + i, i % 5 + 1));
+        }
+
         ClientApp app = new ClientApp();
-        app.run(URLS.subList(0, 3));
+        app.run(urls, 1, 300);//URLS.subList(0, 3));
     }
 
-    //private Map<InetSocketAddress, HttpRequest> requestMap;
-
-    public void run(List<String> urls) throws Exception {
-        List<URI> uris = Lists.transform(urls, this::toUri);
-//        this.requestMap = uris.stream().collect(Collectors.toMap
-//                (uri -> InetSocketAddress.createUnresolved(uri.getHost(), uri.getPort()),
-//                        uri -> createRequest(uri)));
-
-
+    public void run(List<String> urls, int connections, int total) throws Exception {
         HttpTaskRunner runner = new HttpTaskRunner(this::handleResponse);
         for (String url : urls) {
             URI uri = toUri(url);
             runner.addTask(uri.getHost(), uri.getPort(), createRequest(uri),
-                    11, 30000);
+                    connections, total);
         }
         runner.run();
     }

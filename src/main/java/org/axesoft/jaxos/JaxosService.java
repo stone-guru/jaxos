@@ -11,7 +11,6 @@ import org.axesoft.jaxos.netty.NettyJaxosServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +33,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     private Squad[] squads;
     private EventDispatcher platoonEventDispatcher;
 
-    private ScheduledExecutorService timerService;
+    private ScheduledExecutorService timerExecutor;
 
     public JaxosService(JaxosSettings settings, StateMachine stateMachine) {
         this.settings = settings;
@@ -58,7 +57,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         };
 
 
-        this.timerService = Executors.newScheduledThreadPool(1, (r) -> {
+        this.timerExecutor = Executors.newScheduledThreadPool(1, (r) -> {
             String name = "scheduledTaskThread";
             Thread thread = new Thread(r, name);
             thread.setDaemon(true);
@@ -89,6 +88,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
     @Override
     protected void triggerShutdown() {
+        this.timerExecutor.shutdownNow();
         this.communicator.close();
         this.node.shutdown();
         this.stateMachine.close();
@@ -104,8 +104,12 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, this.eventWorkerPool);
         this.communicator = factory.createCommunicator();
 
-        this.timerService.scheduleWithFixedDelay(this::saveCheckPoint, 10, 10, TimeUnit.SECONDS);
+        this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, 10, 10, TimeUnit.SECONDS);
         this.node.startup();
+    }
+
+    public ScheduledExecutorService timerExecutor(){
+        return this.timerExecutor;
     }
 
     private void saveCheckPoint() {

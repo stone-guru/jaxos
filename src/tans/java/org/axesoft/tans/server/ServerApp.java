@@ -20,7 +20,6 @@ public class ServerApp {
     private HttpApiService httpApiService;
     private TansService tansService;
     private ServiceManager manager;
-    private Timer printMetricsTimer;
 
     private ServerApp(TansConfig config) {
         this.config = config;
@@ -30,21 +29,16 @@ public class ServerApp {
         this.manager = new ServiceManager(ImmutableList.of(this.jaxosService, this.httpApiService));
     }
 
-    private void start(){
-        this.printMetricsTimer = new Timer("Metrics Thread", true);
-        this.printMetricsTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                httpApiService.printMetrics();
-                jaxosService.printMetrics();
-            }
-        }, 3000, config.printMetricsIntervalSeconds() * 1000);
+    private void start() {
+        jaxosService.timerExecutor().scheduleAtFixedRate(() -> {
+            httpApiService.printMetrics();
+            jaxosService.printMetrics();
+        }, 3, config.printMetricsIntervalSeconds(), TimeUnit.SECONDS);
 
         manager.startAsync();
     }
 
-    public void shutdown(){
-        printMetricsTimer.cancel();
+    public void shutdown() {
         manager.stopAsync();
         try {
             manager.awaitStopped(10, TimeUnit.SECONDS);
@@ -56,7 +50,7 @@ public class ServerApp {
 
     public static void main(String[] args) throws Exception {
         TansConfig config = new ArgumentParser().parse(args);
-        //prepare it for logback
+        //set for logback
         System.setProperty("node-id", Integer.toString(config.serverId()));
 
         ServerApp app = new ServerApp(config);

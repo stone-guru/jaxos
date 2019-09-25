@@ -8,21 +8,18 @@ message ProtoTansNumber {
   int64 value = 2;
   int64 version = 3;
   int64 timestamp = 4;
+}
+
+message NumberProposal {
+  ProtoTansNumber number = 1;
   int64 version0 = 5;
   int64 value0 = 6;
 }
 
 message TansProposal {
-  repeated ProtoTansNumber number = 1;
-}
-
-message PersTansNumber {
-  string name = 1;
-  int64 value = 2;
-  int64 version = 3;
-  int64 timestamp = 4;
+  repeated NumberProposal proposal = 1;
 }
 
 message TansCheckPoint {
-  repeated PersTansNumber number = 4;
+  repeated ProtoTansNumber number = 4;
 }
