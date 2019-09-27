@@ -260,7 +260,7 @@ public class Proposer {
     }
 
 
-    private boolean eventMatchRequest(Event event, Stage expectedStage) {
+    private boolean eventMatchRequest(Event.BallotEvent event, Stage expectedStage) {
         if (this.stage != expectedStage) {
             logger.debug("Not at stage of PREPARING on ", event);
             return false;

@@ -15,7 +15,7 @@ import java.util.function.Supplier;
  * @author gaoyuan
  * @sine 2019/9/17.
  */
-public class EventWorkerPool implements EventTimer{
+public class EventWorkerPool implements EventTimer {
 
     private ExecutorService[] executors;
     private Supplier<EventDispatcher> eventDispatcherSupplier;
@@ -35,22 +35,31 @@ public class EventWorkerPool implements EventTimer{
         }
     }
 
+    public void queueTask(int squadId, Runnable r) {
+        int n = squadId % executors.length;
+        this.executors[n].submit(r);
+    }
+
     public void submitToSelf(Event event) {
         this.submit(event, this::submitToSelf);
     }
 
     public void submit(Event event, Consumer<Event> resultConsumer) {
-        int n = event.squadId() % executors.length;
-
-        this.executors[n].submit(() -> {
-            Event result = this.eventDispatcherSupplier.get().process(event);
-            if (result != null) {
-                resultConsumer.accept(result);
-            }
-        });
+        if(event instanceof Event.BallotEvent) {
+            Event.BallotEvent be = (Event.BallotEvent)event;
+            queueTask(be.squadId(),
+                    () -> {
+                        Event result = this.eventDispatcherSupplier.get().process(be);
+                        if (result != null) {
+                            resultConsumer.accept(result);
+                        }
+                    });
+        } else {
+            throw new UnsupportedOperationException(event.getClass().getName());
+        }
     }
 
-    public void directCallSelf(Event event){
+    public void directCallSelf(Event event) {
         this.eventDispatcherSupplier.get().process(event);
     }
 
@@ -60,7 +69,7 @@ public class EventWorkerPool implements EventTimer{
     }
 
     public void shutdown() {
-        for(ExecutorService executor : this.executors){
+        for (ExecutorService executor : this.executors) {
             executor.shutdownNow();
         }
     }

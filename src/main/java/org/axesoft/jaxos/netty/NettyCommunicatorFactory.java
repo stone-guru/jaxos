@@ -166,6 +166,18 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             channels.writeAndFlush(dataGram, c -> !c.id().equals(id));
         }
 
+        @Override
+        public void send(Event event, int serverId) {
+            if (serverId == config.serverId()) {
+                eventWorkerPool.submitToSelf(event);
+            }
+            else {
+                PaxosMessage.DataGram dataGram = coder.encode(event);
+                ChannelId id = channelIdMap.get(serverId);
+                channels.writeAndFlush(dataGram, c -> c.id().equals(id));
+            }
+        }
+
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             Channel c = ctx.channel();
 

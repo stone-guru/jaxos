@@ -1,4 +1,4 @@
-package org.axesoft.tans.server;
+package org.axesoft.jaxos.base;
 
 public class LongRange {
     private long low;
@@ -15,5 +15,13 @@ public class LongRange {
 
     public long high(){
         return this.high;
+    }
+
+    @Override
+    public String toString() {
+        return "LongRange{" +
+                "low=" + low +
+                ", high=" + high +
+                '}';
     }
 }

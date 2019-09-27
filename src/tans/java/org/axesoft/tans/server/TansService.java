@@ -9,6 +9,7 @@ import org.axesoft.jaxos.algo.CheckPoint;
 import org.axesoft.jaxos.algo.Proponent;
 import org.axesoft.jaxos.algo.ProposeResult;
 import org.axesoft.jaxos.algo.StateMachine;
+import org.axesoft.jaxos.base.LongRange;
 import org.axesoft.tans.protobuff.TansMessage;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;

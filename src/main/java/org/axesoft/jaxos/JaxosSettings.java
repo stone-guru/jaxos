@@ -58,6 +58,7 @@ public class JaxosSettings {
         private long prepareTimeoutMillis = 150;
         private long acceptTimeoutMillis =  150;
         private int partitionNumber = 1;
+        private int checkPointMinutes = 1;
         private Function<ByteString, String> valueVerboser;
 
         private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
@@ -107,6 +108,11 @@ public class JaxosSettings {
             return this;
         }
 
+        public Builder setCheckPointMinutes(int checkPointMinutes) {
+            this.checkPointMinutes = checkPointMinutes;
+            return this;
+        }
+
         public JaxosSettings build(){
             JaxosSettings config = new JaxosSettings();
             config.serverId = this.serverId;
@@ -119,6 +125,7 @@ public class JaxosSettings {
             config.prepareTimeoutMillis = this.prepareTimeoutMillis;
             config.acceptTimeoutMillis = this.acceptTimeoutMillis;
             config.partitionNumber = this.partitionNumber;
+            config.checkPointMinutes = this.checkPointMinutes;
             return config;
         }
     }
@@ -132,6 +139,7 @@ public class JaxosSettings {
     private long prepareTimeoutMillis;
     private long acceptTimeoutMillis;
     private int partitionNumber;
+    private int checkPointMinutes;
 
     private Function<ByteString, String> valueVerboser;
 
@@ -188,6 +196,10 @@ public class JaxosSettings {
 
     public int partitionNumber(){
         return this.partitionNumber;
+    }
+
+    public int checkPointMinutes(){
+        return this.checkPointMinutes;
     }
 
     public Function<ByteString, String> valueVerboser(){

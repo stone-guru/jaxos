@@ -28,13 +28,16 @@ public class ClientApp {
     public static void main(String[] args) throws Exception {
         String pattern = "http://localhost:8081/acquire?key=%s&n=%d";
 
-        List<String> urls = new ArrayList<>();
-        for(int i = 0; i < 100; i++){
-            urls.add(String.format(pattern, "id" + i, i % 5 + 1));
-        }
+        for(int i = 0; i < 10; i++) {
+            List<String> urls = new ArrayList<>();
+            for (int j = 0; j < 100; j++) {
+                int k = (i + 1) * 10000 + j;
+                urls.add(String.format(pattern, "object" + k + ".id", i % 5 + 1));
+            }
 
-        ClientApp app = new ClientApp();
-        app.run(urls, 1, 300);//URLS.subList(0, 3));
+            ClientApp app = new ClientApp();
+            app.run(urls, 1, 300);//URLS.subList(0, 3));
+        }
     }
 
     public void run(List<String> urls, int connections, int total) throws Exception {
@@ -69,7 +72,7 @@ public class ClientApp {
                 response.headers().get(HttpHeaderNames.FROM),
                 response.status().codeAsText(),
                 s);
-        //System.err.println(info);
+        System.err.println(info);
     }
 
     private URI toUri(String url) {

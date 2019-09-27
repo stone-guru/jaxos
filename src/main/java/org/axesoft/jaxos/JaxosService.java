@@ -48,8 +48,9 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         }
 
         this.platoonEventDispatcher = (event) -> {
-            if (event.squadId() >= 0 && event.squadId() < squads.length) {
-                Squad squad = squads[event.squadId()];
+            final int squadId =  event.squadId();
+            if (squadId >= 0 && squadId < squads.length) {
+                Squad squad = squads[squadId];
                 return squad.process(event);
             }
             else {
@@ -105,16 +106,16 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, this.eventWorkerPool);
         this.communicator = factory.createCommunicator();
 
-        this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, 10, 20, TimeUnit.SECONDS);
+        this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, 10, 60 * settings.checkPointMinutes(), TimeUnit.SECONDS);
         this.node.startup();
     }
 
-    public ScheduledExecutorService timerExecutor(){
+    public ScheduledExecutorService timerExecutor() {
         return this.timerExecutor;
     }
 
     private void saveCheckPoint() {
-        for(Squad squad : this.squads){
+        for (Squad squad : this.squads) {
             squad.saveCheckPoint();
         }
     }

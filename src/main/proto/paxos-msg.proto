@@ -21,50 +21,79 @@ enum Code {
 
   LEARN_REQ = 11;
   LEARN_RES = 12;
+
+  CHOSEN_QUERY_REQ = 13;
+  CHOSEN_QUERY_RES = 14;
 }
 
 message DataGram {
   Code code = 1;
   int32 sender = 2;
-  int32 squadId = 3;
-  int64 instanceId = 4;
-  int32 round = 5;
-  bytes body = 6;
+  int64 timestamp = 3;
+  bytes body = 4;
 }
 
 message PrepareReq {
-  int32 ballot = 1;
-  int32 lastChosenBallot = 2;
+  int32 squadId = 1;
+  int64 instanceId = 2;
+  int32 round = 3;
+  int32 proposal = 4;
+  int32 lastChosenProposal = 5;
 }
 
-
 message PrepareRes {
-  int32 result = 1;
-  int32 maxBallot = 2;
-  int32 acceptedBallot = 3;
-  bytes acceptedValue = 4;
-  int64 chosenInstanceId = 5;
+  int32 squadId = 1;
+  int64 instanceId = 2;
+  int32 round = 3;
+  int32 result = 4;
+  int32 maxProposal = 5;
+  int32 acceptedProposal = 6;
+  bytes acceptedValue = 7;
+  int64 chosenInstanceId = 8;
 }
 
 message AcceptReq {
-  int32 ballot = 1;
-  bytes value = 2;
-  int32 lastChosenBallot = 3;
+  int32 squadId = 1;
+  int64 instanceId = 2;
+  int32 round = 3;
+  int32 proposal = 4;
+  bytes value = 5;
+  int32 lastChosenProposal = 6;
 }
 
 message AcceptRes {
-  int64 chosenInstanceId = 1;
-  int32 result = 2;
-  int32 maxBallot = 3;
+  int32 squadId = 1;
+  int64 instanceId = 2;
+  int32 round = 3;
+  int32 result = 4;
+  int32 maxProposal = 5;
+  int64 chosenInstanceId = 6;
 }
 
+message AcceptedNotify {
+  int32 squadId = 1;
+  int64 instanceId = 2;
+  int32 proposal = 3;
+}
+
+message ChosenInstanceIdRes {
+  repeated ChosenInstanceId chosenInstance = 1;
+}
+
+message ChosenInstanceId {
+  int32 squadId = 1;
+  int64 chosenInstanceId = 2;
+}
 
 message LearnReq {
-  int64 highInstanceId = 1;
+  int32 squadId = 1;
+  int64 lowInstanceId = 2;
+  int64 highInstanceId = 3;
 }
 
 message LearnRes {
-  repeated InstanceValue records = 1;
+  int32 squadId = 1;
+  repeated InstanceValue instance = 2;
 }
 
 message InstanceValue {

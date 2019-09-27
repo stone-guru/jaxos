@@ -30,19 +30,7 @@ public class Acceptor {
         this.maxBallot = 0;
         this.acceptedBallot = 0;
         this.acceptedValue = ByteString.EMPTY;
-
-        //restoreLastProposal(learner);
     }
-
-//    private void restoreLastProposal(Learner learner) {
-//        AcceptorLogger.Promise promise = this.acceptorLogger.loadLastPromise(this.context.squadId());
-//        if (promise == null) {
-//            promise = new AcceptorLogger.Promise(this.context.squadId(), 0, 0, ByteString.EMPTY);
-//        }
-//
-//        logger.info("Acceptor restore squad {}, instance {}, proposal {}", promise.squadId, promise.instanceId, promise.proposal);
-//        learner.learnLastChosen(promise.squadId, promise.instanceId, promise.proposal);
-//    }
 
     public Event.PrepareResponse prepare(Event.PrepareRequest request) {
         if(logger.isTraceEnabled()) {
@@ -183,4 +171,5 @@ public class Acceptor {
     public long lastChosenInstanceId() {
         return learner.lastChosenInstanceId(context.squadId());
     }
+
 }

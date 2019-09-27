@@ -1,6 +1,9 @@
 package org.axesoft.jaxos.algo;
 
 import com.google.protobuf.ByteString;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -11,7 +14,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class Event {
     public enum Code {
         NOOP, HEART_BEAT, HEART_BEAT_RESPONSE, PREPARE, PREPARE_RESPONSE, ACCEPT, ACCEPT_RESPONSE,
-        ACCEPTED_NOTIFY, ACCEPTED_NOTIFY_RESPONSE, PREPARE_TIMEOUT, ACCEPT_TIMEOUT
+        ACCEPTED_NOTIFY, ACCEPTED_NOTIFY_RESPONSE, PREPARE_TIMEOUT, ACCEPT_TIMEOUT,
+        LEARN, LEARN_RESPONSE, CHOSEN_QUERY_CLICK, CHOSEN_QUERY, CHOSEN_QUERY_RESPONSE
     }
 
     //FIXME refact to enum
@@ -20,15 +24,15 @@ public abstract class Event {
     public static final int RESULT_STANDBY = 3;
 
     private int senderId;
-    private int squadId;
-    private long instanceId;
-    private int round;
+    private long timestamp;
 
-    public Event(int senderId, int squadId, long instanceId, int round) {
+    public Event(int sender){
+        this(sender, System.currentTimeMillis());
+    }
+
+    public Event(int senderId, long timestamp) {
         this.senderId = senderId;
-        this.squadId = squadId;
-        this.instanceId = instanceId;
-        this.round = round;
+        this.timestamp = timestamp;
     }
 
     abstract public Code code();
@@ -37,30 +41,21 @@ public abstract class Event {
         return this.senderId;
     }
 
-    public int squadId() {
-        return this.squadId;
+    public long timestamp(){
+        return this.timestamp;
     }
 
-    public long instanceId() {
-        return this.instanceId;
-    }
-
-    public int round() {
-        return this.round;
-    }
-
-
-    @Override
-    public String toString() {
-        return "senderId=" + senderId +
-                ", squadId=" + squadId +
-                ", instanceId=" + instanceId +
-                ", round=" + round;
+    public int squadId(){
+        return -1;
     }
 
     public static class HeartBeatRequest extends Event {
         public HeartBeatRequest(int senderId) {
-            super(senderId, 0, 0, 0);
+            super(senderId);
+        }
+
+        public HeartBeatRequest(int senderId, long timestamp) {
+            super(senderId, timestamp);
         }
 
         @Override
@@ -70,9 +65,12 @@ public abstract class Event {
     }
 
     public static class HeartBeatResponse extends Event {
+        public HeartBeatResponse(int senderId, long timestamp) {
+            super(senderId, timestamp);
+        }
+
         public HeartBeatResponse(int senderId) {
-            super(senderId, 0, 0, 0);
-            super.senderId = senderId;
+            super(senderId);
         }
 
         @Override
@@ -81,7 +79,41 @@ public abstract class Event {
         }
     }
 
-    public static class PrepareRequest extends Event {
+    public static abstract class BallotEvent extends Event {
+        private int squadId;
+        private long instanceId;
+        private int round;
+
+        public BallotEvent(int senderId, int squadId, long instanceId, int round) {
+            super(senderId);
+            this.squadId = squadId;
+            this.instanceId = instanceId;
+            this.round = round;
+        }
+
+        @Override
+        public int squadId() {
+            return this.squadId;
+        }
+
+        public long instanceId() {
+            return this.instanceId;
+        }
+
+        public int round() {
+            return this.round;
+        }
+
+        @Override
+        public String toString() {
+            return "senderId=" + super.senderId +
+                    ", squadId=" + squadId +
+                    ", instanceId=" + instanceId +
+                    ", round=" + round;
+        }
+    }
+
+    public static class PrepareRequest extends BallotEvent {
         private int ballot;
         private int lastChosenBallot;
 
@@ -101,7 +133,7 @@ public abstract class Event {
             return ballot;
         }
 
-        public int lastChosenBallot(){
+        public int lastChosenBallot() {
             return this.lastChosenBallot;
         }
 
@@ -115,7 +147,7 @@ public abstract class Event {
     }
 
 
-    public static class PrepareResponse extends Event {
+    public static class PrepareResponse extends BallotEvent {
         private int result;
         private int maxBallot;
         private int acceptedBallot;
@@ -196,7 +228,7 @@ public abstract class Event {
         }
     }
 
-    public static class AcceptRequest extends Event {
+    public static class AcceptRequest extends BallotEvent {
         private int ballot;
         private int lastChosenBallot;
         private ByteString value;
@@ -236,7 +268,7 @@ public abstract class Event {
 
     }
 
-    public static class AcceptResponse extends Event {
+    public static class AcceptResponse extends BallotEvent {
         private int maxBallot;
         private int result;
         private long chosenInstanceId;
@@ -275,7 +307,7 @@ public abstract class Event {
         }
     }
 
-    public static class ChosenNotify extends Event {
+    public static class ChosenNotify extends BallotEvent {
         private int ballot;
 
         public ChosenNotify(int sender, int squadId, long instanceId, int ballot) {
@@ -300,10 +332,11 @@ public abstract class Event {
         }
     }
 
-    public static class PrepareTimeout extends Event {
+    public static class PrepareTimeout extends BallotEvent {
         public PrepareTimeout(int senderId, int squadId, long instanceId, int round) {
             super(senderId, squadId, instanceId, round);
         }
+
         @Override
         public Code code() {
             return Code.PREPARE_TIMEOUT;
@@ -316,7 +349,7 @@ public abstract class Event {
         }
     }
 
-    public static class AcceptTimeout extends Event {
+    public static class AcceptTimeout extends BallotEvent {
         public AcceptTimeout(int senderId, int squadId, long instanceId, int round) {
             super(senderId, squadId, instanceId, round);
         }
@@ -329,6 +362,96 @@ public abstract class Event {
         @Override
         public String toString() {
             return "AcceptTimeout{" + super.toString() + "}";
+        }
+    }
+
+
+    public static abstract class InstanceEvent extends Event {
+        private int squadId;
+
+        public InstanceEvent(int senderId, int squadId) {
+            super(senderId);
+            this.squadId = squadId;
+        }
+
+        public int squadId() {
+            return this.squadId;
+        }
+    }
+
+    public static class Learn extends InstanceEvent {
+        private long highInstanceId;
+        private long lowInstanceId;
+
+        public Learn(int senderId, int squadId, long lowInstanceId, long highInstanceId) {
+            super(senderId, squadId);
+            this.highInstanceId = highInstanceId;
+            this.lowInstanceId = lowInstanceId;
+        }
+
+        @Override
+        public Code code() {
+            return Code.LEARN;
+        }
+
+        public long lowInstanceId() {
+            return this.lowInstanceId;
+        }
+
+        public long highInstanceId() {
+            return this.highInstanceId;
+        }
+
+        @Override
+        public String toString() {
+            return "Learn{" +
+                    "senderId=" + super.senderId() +
+                    ", squadId=" + super.squadId() +
+                    ", lowInstanceId=" + this.lowInstanceId +
+                    ", highInstanceId=" + this.highInstanceId +
+                    '}';
+        }
+    }
+
+    public static class LearnResponse extends InstanceEvent {
+        private List<Pair<Long, ByteString>> instances;
+
+        public LearnResponse(int senderId, int squadId, List<Pair<Long, ByteString>> instances) {
+            super(senderId, squadId);
+            this.instances = checkNotNull(instances);
+        }
+
+        @Override
+        public Code code() {
+            return Code.LEARN_RESPONSE;
+        }
+
+        public List<Pair<Long, ByteString>> instances() {
+            return this.instances;
+        }
+
+        @Override
+        public String toString() {
+            return "LearnResponse{" +
+                    "senderId=" + super.senderId() +
+                    ", squadId=" + super.squadId() +
+                    ", instances=I[" + instances.size() + "]" +
+                    '}';
+        }
+
+        public long lowInstanceId(){
+            return instanceIdOf(0);
+        }
+
+        public long highInstanceId(){
+            return instanceIdOf(instances.size() - 1);
+        }
+
+        private long instanceIdOf(int i){
+            if(i >= 0 && i < instances.size()){
+                return instances.get(i).getLeft();
+            }
+            return 0;
         }
     }
 }

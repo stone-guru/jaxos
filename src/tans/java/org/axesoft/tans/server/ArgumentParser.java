@@ -39,6 +39,9 @@ public class ArgumentParser {
 
         @Parameter(names = {"-b"}, description = "batch size for HTTP request")
         private Integer requestBatchSize = 8;
+
+        @Parameter(names = {"-c"}, description = "Minutes interval of making checkpoint ")
+        private Integer checkPointMinutes = 1;
     }
 
     private Properties properties;
@@ -99,6 +102,7 @@ public class ArgumentParser {
         JaxosSettings.Builder builder = loadConfigFromFile(this.properties, args.id)
                 .setServerId(args.id)
                 .setDbDirectory(args.dbDirectory)
+                .setCheckPointMinutes(args.checkPointMinutes)
                 .setIgnoreLeader(args.ignoreLeader);
 
         if (args.partitionNumber > 0) {
@@ -142,6 +146,9 @@ public class ArgumentParser {
                     throw new IllegalArgumentException("Partition number should be in [1, 32], actual is " + n);
                 }
                 builder.setPartitionNumber(n);
+            }
+            else if (k.equals("checkPoint.minutes")){
+                builder.setCheckPointMinutes(Integer.parseInt(s));
             }
         }
 
