@@ -108,7 +108,7 @@ public class NettyJaxosServer {
                     ctx.writeAndFlush(heartBeatResponse);
                 }
                 else {
-                    NettyJaxosServer.this.workerPool.submit(e0, e1 -> {
+                    NettyJaxosServer.this.workerPool.submitEvent(e0, e1 -> {
                         PaxosMessage.DataGram response = messageCoder.encode(e1);
                         ctx.writeAndFlush(response);
                     });

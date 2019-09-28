@@ -4,6 +4,7 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import org.axesoft.jaxos.algo.AcceptorLogger;
+import org.axesoft.jaxos.algo.InstanceValue;
 import org.axesoft.jaxos.algo.CheckPoint;
 import org.iq80.leveldb.*;
 import org.iq80.leveldb.impl.Iq80DBFactory;
@@ -52,13 +53,13 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
 
     @Override
     public void savePromise(int squadId, long instanceId, int proposal, ByteString value) {
-        Promise promise = new Promise();
-        promise.squadId = squadId;
-        promise.instanceId = instanceId;
-        promise.proposal = proposal;
-        promise.value = value;
+        InstanceValue instanceValue = new InstanceValue();
+        instanceValue.squadId = squadId;
+        instanceValue.instanceId = instanceId;
+        instanceValue.proposal = proposal;
+        instanceValue.value = value;
 
-        byte[] data = toByteArray(promise);
+        byte[] data = toByteArray(instanceValue);
         WriteOptions writeOptions = new WriteOptions().sync(true);
 
         WriteBatch writeBatch = db.createWriteBatch();
@@ -69,7 +70,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     }
 
     @Override
-    public Promise loadLastPromise(int squadId) {
+    public InstanceValue loadLastPromise(int squadId) {
         byte[] last = keyOfSquadLast(squadId);
         byte[] idx = db.get(last);
         if(idx == null){
@@ -85,7 +86,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     }
 
     @Override
-    public Promise loadPromise(int squadId, long instanceId) {
+    public InstanceValue loadPromise(int squadId, long instanceId) {
         byte[] key = keyOfInstanceId(squadId, instanceId);
         byte[] bx = db.get(key);
 
@@ -156,9 +157,9 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         }
     }
 
-    public Promise toEntity(byte[] bytes) {
+    public InstanceValue toEntity(byte[] bytes) {
         DataInputStream is = new DataInputStream(new ByteArrayInputStream(bytes));
-        Promise p = new Promise();
+        InstanceValue p = new InstanceValue();
         try {
             p.squadId = is.readInt();
             p.instanceId = is.readLong();
@@ -176,7 +177,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     }
 
 
-    public byte[] toByteArray(Promise p) {
+    public byte[] toByteArray(InstanceValue p) {
         ByteArrayOutputStream bs = new ByteArrayOutputStream();
         DataOutputStream os = new DataOutputStream(bs);
         try {

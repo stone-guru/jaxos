@@ -15,13 +15,15 @@ public class StateMachineRunner implements Learner {
 
     private StateMachine machine;
     private Map<Integer, LastChosen> lastChosenMap;
+    private Map<Long, InstanceValue> cachedBallots;
 
     public StateMachineRunner(StateMachine machine) {
         this.machine = checkNotNull(machine);
         this.lastChosenMap = new HashMap<>();
+        this.cachedBallots = new HashMap<>();
     }
 
-    public StateMachine machine(){
+    public StateMachine machine() {
         return this.machine;
     }
 
@@ -34,7 +36,7 @@ public class StateMachineRunner implements Learner {
     @Override
     public synchronized LastChosen lastChosen(int squadId) {
         LastChosen c = this.lastChosenMap.get(squadId);
-        if(c == null){
+        if (c == null) {
             return new LastChosen(squadId, 0, 0);
         }
         return c;
@@ -46,13 +48,37 @@ public class StateMachineRunner implements Learner {
     }
 
     @Override
-    public synchronized void learnValue(int squadId, long instanceId, int proposal, ByteString value) {
+    public synchronized boolean learnValue(int squadId, long instanceId, int proposal, ByteString value) {
+        if(instanceId != this.lastChosen(squadId).instanceId + 1){
+            logger.warn("Learned value new instance {}, mine is {}", instanceId, this.lastChosen(squadId).instanceId);
+            return false;
+        }
+        innerLearn(squadId, instanceId, proposal, value);
+        long i = instanceId + 1;
+        InstanceValue b = null;
+        do {
+            b = this.cachedBallots.remove(i);
+            if (b != null) {
+                innerLearn(b.squadId, b.instanceId, b.proposal, b.value);
+                i++;
+            }
+        } while (b != null);
+        return true;
+    }
+
+    private void innerLearn(int squadId, long instanceId, int proposal, ByteString value) {
         try {
-            this.lastChosenMap.put(squadId,new LastChosen(squadId, instanceId, proposal));
+            this.lastChosenMap.put(squadId, new LastChosen(squadId, instanceId, proposal));
             this.machine.consume(squadId, instanceId, value);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             //FIXME let outer class know and hold the whole jaxos system
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public synchronized void cacheChosenValue(int squadId, long instanceId, int proposal, ByteString value) {
+        this.cachedBallots.put(instanceId, new InstanceValue(squadId, instanceId, proposal, value));
     }
 }

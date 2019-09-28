@@ -151,10 +151,24 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         @Override
         public void broadcast(Event event) {
-            logger.trace("Broadcast {} " + event);
+            if(logger.isTraceEnabled()) {
+                logger.trace("Broadcast {} ", event);
+            }
+            sendByChannels(event);
+            eventWorkerPool.submitEventToSelf(event);
+        }
+
+        @Override
+        public void broadcastOthers(Event event) {
+            if(logger.isTraceEnabled()) {
+                logger.trace("Broadcast to others {} ", event);
+            }
+            sendByChannels(event);
+        }
+
+        private void sendByChannels(Event event){
             PaxosMessage.DataGram dataGram = coder.encode(event);
             channels.writeAndFlush(dataGram);
-            eventWorkerPool.submitToSelf(event);
         }
 
         @Override
@@ -169,7 +183,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         @Override
         public void send(Event event, int serverId) {
             if (serverId == config.serverId()) {
-                eventWorkerPool.submitToSelf(event);
+                eventWorkerPool.submitEventToSelf(event);
             }
             else {
                 PaxosMessage.DataGram dataGram = coder.encode(event);
@@ -229,7 +243,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                         //logger.info("Got heart beat response from server {}", event.senderId());
                     }
                     else {
-                        eventWorkerPool.submitToSelf(event);
+                        eventWorkerPool.submitEventToSelf(event);
                     }
                 }
             }

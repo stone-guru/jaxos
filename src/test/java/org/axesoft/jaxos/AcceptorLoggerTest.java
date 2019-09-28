@@ -3,6 +3,7 @@ package org.axesoft.jaxos;
 import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.time.StopWatch;
 import org.axesoft.jaxos.algo.AcceptorLogger;
+import org.axesoft.jaxos.algo.InstanceValue;
 import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -45,7 +46,7 @@ public class AcceptorLoggerTest {
         double seconds = w.getTime(TimeUnit.MILLISECONDS)/1000.0;
         System.out.println(String.format("Insert %d records in %.2f s, OPS = %.2f", n, seconds, ((double)n)/seconds));
 
-        AcceptorLogger.Promise p = logger.loadLastPromise(1);
+        InstanceValue p = logger.loadLastPromise(1);
         assertNotNull(p);
 
         assertEquals(1, p.squadId);

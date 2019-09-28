@@ -15,7 +15,7 @@ public abstract class Event {
     public enum Code {
         NOOP, HEART_BEAT, HEART_BEAT_RESPONSE, PREPARE, PREPARE_RESPONSE, ACCEPT, ACCEPT_RESPONSE,
         ACCEPTED_NOTIFY, ACCEPTED_NOTIFY_RESPONSE, PREPARE_TIMEOUT, ACCEPT_TIMEOUT,
-        LEARN, LEARN_RESPONSE, CHOSEN_QUERY_CLICK, CHOSEN_QUERY, CHOSEN_QUERY_RESPONSE
+        START_LEARN, LEARN_REQUEST, LEARN_RESPONSE, CHOSEN_QUERY, CHOSEN_QUERY_RESPONSE, CHOSEN_QUERY_TIMEOUT
     }
 
     //FIXME refact to enum
@@ -104,6 +104,8 @@ public abstract class Event {
             return this.round;
         }
 
+        abstract public long chosenInstanceId();
+
         @Override
         public String toString() {
             return "senderId=" + super.senderId +
@@ -135,6 +137,11 @@ public abstract class Event {
 
         public int lastChosenBallot() {
             return this.lastChosenBallot;
+        }
+
+        @Override
+        public long chosenInstanceId() {
+            return this.instanceId() - 1;
         }
 
         @Override
@@ -212,6 +219,7 @@ public abstract class Event {
             return this.acceptedValue;
         }
 
+        @Override
         public long chosenInstanceId() {
             return this.chosenInstanceId;
         }
@@ -258,6 +266,11 @@ public abstract class Event {
         }
 
         @Override
+        public long chosenInstanceId() {
+            return this.instanceId() - 1;
+        }
+
+        @Override
         public String toString() {
             return "AcceptRequest{" + super.toString() +
                     ", ballot=" + ballot +
@@ -265,7 +278,6 @@ public abstract class Event {
                     ", lastChosenBallot=" + lastChosenBallot +
                     '}';
         }
-
     }
 
     public static class AcceptResponse extends BallotEvent {
@@ -293,6 +305,7 @@ public abstract class Event {
             return this.result;
         }
 
+        @Override
         public long chosenInstanceId() {
             return this.chosenInstanceId;
         }
@@ -313,6 +326,11 @@ public abstract class Event {
         public ChosenNotify(int sender, int squadId, long instanceId, int ballot) {
             super(sender, squadId, instanceId, 0);
             this.ballot = ballot;
+        }
+
+        @Override
+        public long chosenInstanceId() {
+            return this.instanceId();
         }
 
         @Override
@@ -338,6 +356,11 @@ public abstract class Event {
         }
 
         @Override
+        public long chosenInstanceId() {
+            return 0;
+        }
+
+        @Override
         public Code code() {
             return Code.PREPARE_TIMEOUT;
         }
@@ -355,6 +378,11 @@ public abstract class Event {
         }
 
         @Override
+        public long chosenInstanceId() {
+            return 0;
+        }
+
+        @Override
         public Code code() {
             return Code.ACCEPT_TIMEOUT;
         }
@@ -367,31 +395,34 @@ public abstract class Event {
 
 
     public static abstract class InstanceEvent extends Event {
-        private int squadId;
 
-        public InstanceEvent(int senderId, int squadId) {
+
+        public InstanceEvent(int senderId) {
             super(senderId);
-            this.squadId = squadId;
+
         }
 
-        public int squadId() {
-            return this.squadId;
-        }
     }
 
     public static class Learn extends InstanceEvent {
+        private int squadId;
         private long highInstanceId;
         private long lowInstanceId;
 
         public Learn(int senderId, int squadId, long lowInstanceId, long highInstanceId) {
-            super(senderId, squadId);
+            super(senderId);
+            this.squadId = squadId;
             this.highInstanceId = highInstanceId;
             this.lowInstanceId = lowInstanceId;
         }
 
         @Override
         public Code code() {
-            return Code.LEARN;
+            return Code.LEARN_REQUEST;
+        }
+
+        public int squadId() {
+            return this.squadId;
         }
 
         public long lowInstanceId() {
@@ -414,10 +445,12 @@ public abstract class Event {
     }
 
     public static class LearnResponse extends InstanceEvent {
-        private List<Pair<Long, ByteString>> instances;
+        private int squadId;
+        private List<InstanceValue> instances;
 
-        public LearnResponse(int senderId, int squadId, List<Pair<Long, ByteString>> instances) {
-            super(senderId, squadId);
+        public LearnResponse(int senderId, int squadId, List<InstanceValue> instances) {
+            super(senderId);
+            this.squadId = squadId;
             this.instances = checkNotNull(instances);
         }
 
@@ -426,7 +459,11 @@ public abstract class Event {
             return Code.LEARN_RESPONSE;
         }
 
-        public List<Pair<Long, ByteString>> instances() {
+        public int squadId(){
+            return squadId;
+        }
+
+        public List<InstanceValue> instances() {
             return this.instances;
         }
 
@@ -449,9 +486,59 @@ public abstract class Event {
 
         private long instanceIdOf(int i){
             if(i >= 0 && i < instances.size()){
-                return instances.get(i).getLeft();
+                return instances.get(i).instanceId;
             }
             return 0;
+        }
+    }
+
+    public static class ChosenQuery extends InstanceEvent {
+        public ChosenQuery(int senderId) {
+            super(senderId);
+        }
+
+        @Override
+        public Code code() {
+            return Code.CHOSEN_QUERY;
+        }
+    }
+
+    public static class ChosenQueryResponse extends InstanceEvent {
+        List<Pair<Integer, Long>> squadChosen;
+
+        public ChosenQueryResponse(int senderId, List<Pair<Integer, Long>> squadChosen) {
+            super(senderId);
+            this.squadChosen = squadChosen;
+        }
+
+        public List<Pair<Integer, Long>> squadChosen(){
+            return squadChosen;
+        }
+
+        public long chosenInstanceIdOf(int squadId){
+            for(Pair<Integer, Long> p : squadChosen){
+                if(p.getLeft() == squadId){
+                    return p.getRight();
+                }
+            }
+            return 0;
+        }
+
+        @Override
+        public Code code() {
+            return Code.CHOSEN_QUERY_RESPONSE;
+        }
+    }
+
+    public static class ChosenQueryTimeout extends InstanceEvent {
+
+        public ChosenQueryTimeout(int senderId) {
+            super(senderId);
+        }
+
+        @Override
+        public Code code() {
+            return Code.CHOSEN_QUERY_TIMEOUT;
         }
     }
 }

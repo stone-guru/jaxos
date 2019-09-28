@@ -35,7 +35,7 @@ public class ArgumentParser {
         private Integer partitionNumber = 0;
 
         @Parameter(names = {"-m"}, description = "Interval in seconds of print metrics")
-        private Integer printMetricsInterval = 10;
+        private Integer printMetricsInterval = 30;
 
         @Parameter(names = {"-b"}, description = "batch size for HTTP request")
         private Integer requestBatchSize = 8;

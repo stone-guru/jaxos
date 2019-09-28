@@ -2,12 +2,12 @@ package org.axesoft.jaxos.network.protobuff;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.primitives.Ints;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.algo.Event;
+import org.axesoft.jaxos.algo.InstanceValue;
 import org.axesoft.jaxos.network.CodingException;
 import org.axesoft.jaxos.network.MessageCoder;
 import org.slf4j.Logger;
@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -43,8 +44,10 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .put(PaxosMessage.Code.PREPARE_RES, Event.Code.PREPARE_RESPONSE)
                 .put(PaxosMessage.Code.ACCEPTED_NOTIFY, Event.Code.ACCEPTED_NOTIFY)
                 .put(PaxosMessage.Code.ACCEPTED_ACK, Event.Code.ACCEPTED_NOTIFY_RESPONSE)
-                .put(PaxosMessage.Code.LEARN_REQ, Event.Code.LEARN)
+                .put(PaxosMessage.Code.LEARN_REQ, Event.Code.LEARN_REQUEST)
                 .put(PaxosMessage.Code.LEARN_RES, Event.Code.LEARN_RESPONSE)
+                .put(PaxosMessage.Code.CHOSEN_QUERY_REQ, Event.Code.CHOSEN_QUERY)
+                .put(PaxosMessage.Code.CHOSEN_QUERY_RES, Event.Code.CHOSEN_QUERY_RESPONSE)
                 .build();
         encodeMap = decodeMap.inverse();
         this.config = config;
@@ -79,12 +82,20 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 body = encodeBody((Event.ChosenNotify) event);
                 break;
             }
-            case LEARN: {
+            case LEARN_REQUEST: {
                 body = encodeBody((Event.Learn) event);
                 break;
             }
             case LEARN_RESPONSE: {
                 body = encodeBody((Event.LearnResponse) event);
+                break;
+            }
+            case CHOSEN_QUERY: {
+                body = ByteString.EMPTY;
+                break;
+            }
+            case CHOSEN_QUERY_RESPONSE: {
+                body = encodeBody((Event.ChosenQueryResponse) event);
                 break;
             }
             default: {
@@ -102,6 +113,18 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setCode(toProtoCode(event.code()))
                 .setBody(body)
                 .build();
+    }
+
+    private ByteString encodeBody(Event.ChosenQueryResponse event) {
+        return PaxosMessage.ChosenQueryRes.newBuilder()
+                .addAllChosen(event.squadChosen().stream()
+                        .map(p -> PaxosMessage.SquadChosen.newBuilder()
+                                .setSquadId(p.getKey())
+                                .setInstanceId(p.getValue())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build()
+                .toByteString();
     }
 
     private ByteString encodeBody(Event.PrepareRequest req) {
@@ -174,12 +197,15 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
 
 
     private ByteString encodeBody(Event.LearnResponse response) {
-        PaxosMessage.LearnRes.Builder builder = PaxosMessage.LearnRes.newBuilder();
+        PaxosMessage.LearnRes.Builder builder = PaxosMessage.LearnRes.newBuilder()
+                .setSquadId(response.squadId());
 
-        for (Pair<Long, ByteString> i : response.instances()) {
-            builder.addInstance(PaxosMessage.InstanceValue.newBuilder()
-                    .setInstanceId(i.getKey())
-                    .setValue(i.getValue()));
+        for (InstanceValue i : response.instances()) {
+            builder.addInstanceValue(PaxosMessage.InstanceValue.newBuilder()
+                    .setSquadId(i.squadId())
+                    .setInstanceId(i.instanceId())
+                    .setProposal(i.proposal())
+                    .setValue(i.value()));
         }
 
         return builder.build().toByteString();
@@ -220,6 +246,12 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 case LEARN_RES: {
                     return decodeLearnResponse(dataGram);
                 }
+                case CHOSEN_QUERY_REQ: {
+                    return new Event.ChosenQuery(dataGram.getSender());
+                }
+                case CHOSEN_QUERY_RES: {
+                    return decodeChosenQueryResponse(dataGram);
+                }
                 default: {
                     logger.error("Unknown dataGram {}", dataGram);
                     return null;
@@ -229,6 +261,14 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         catch (InvalidProtocolBufferException e) {
             throw new CodingException(e);
         }
+    }
+
+    private Event decodeChosenQueryResponse(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
+        PaxosMessage.ChosenQueryRes res = PaxosMessage.ChosenQueryRes.parseFrom(dataGram.getBody());
+        return new Event.ChosenQueryResponse(dataGram.getSender(),
+                res.getChosenList().stream()
+                        .map(c -> Pair.of(c.getSquadId(), c.getInstanceId()))
+                        .collect(Collectors.toList()));
     }
 
     private Event decodePrepareReq(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
@@ -262,7 +302,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 res.getMaxProposal(), res.getResult(), res.getChosenInstanceId());
     }
 
-    private Event decodeAcceptedNotify(PaxosMessage.DataGram dataGram)  throws InvalidProtocolBufferException {
+    private Event decodeAcceptedNotify(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.AcceptedNotify notify = PaxosMessage.AcceptedNotify.parseFrom(dataGram.getBody());
         return new Event.ChosenNotify(dataGram.getSender(), notify.getSquadId(), notify.getInstanceId(), notify.getProposal());
     }
@@ -275,8 +315,8 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
     private Event decodeLearnResponse(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.LearnRes res = PaxosMessage.LearnRes.parseFrom(dataGram.getBody());
 
-        List<Pair<Long, ByteString>> ix = res.getInstanceList().stream()
-                .map(r -> Pair.of(r.getInstanceId(), r.getValue()))
+        List<InstanceValue> ix = res.getInstanceValueList().stream()
+                .map(v -> new InstanceValue(v.getSquadId(), v.getInstanceId(), v.getProposal(), v.getValue()))
                 .collect(Collectors.toList());
 
         return new Event.LearnResponse(dataGram.getSender(), res.getSquadId(), ix);

@@ -338,7 +338,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
         private synchronized void click(long current) {
             if (t0 > 0 && current - t0 >= 2) { //2 ms
-                logger.trace("Queue process waiting tasks when timeout");
+                logger.trace("Queue processEvent waiting tasks when timeout");
                 processRequests();
             }
         }
@@ -388,7 +388,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                 }
                 else {
                     LongRange r = rx.get(i);
-                    String content = r.low() + "," + r.high();
+                    String content = task.keyLong.key() +", " + r.low() + "," + r.high();
                     response = createResponse(OK, content);
                 }
 

@@ -61,7 +61,7 @@ public class ClientApp {
     }
 
     private void handleResponse(InetSocketAddress from, HttpResponse response, HttpContent content) {
-        //System.out.println("process");
+        //System.out.println("processEvent");
         boolean isRedirect = HttpTaskRunner.isRedirectCode(response.status().code());
         String s = isRedirect ?
                 response.headers().get(HttpHeaderNames.LOCATION)

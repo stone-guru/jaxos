@@ -1,6 +1,6 @@
 # Jaxos tasks
 * DONE Implement broadcast by netty.channelgroup		    :network:
-* DONE Adopt JCommand to parse the config from args		       :base:
+* DONE Adopt JCommand to parse the settings from args		       :base:
 * DONE client close network gracefully				    :network:
 * DONE use ProtoBuff.ByteString to store the general value	       :base:
 * DONE Proposal judge the majority				  :algorithm:
@@ -16,7 +16,7 @@
 * DONE optimize the thread model				       :base:
 * DONE NEXT support timeout by TimeWheel			    :network:
 * DONE set a fixed gradle version					:dev:
-* DONE use config file for peers' address			       :base:
+* DONE use settings file for peers' address			       :base:
 * DONE connect to other peers lazily  
 * DONE use netty local chanel to unify the broachcast interface	    :network:
   The notify message to local acceptor is by direct call, all others 

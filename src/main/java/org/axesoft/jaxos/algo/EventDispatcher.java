@@ -5,5 +5,5 @@ package org.axesoft.jaxos.algo;
  * @sine 2019/8/25.
  */
 public interface EventDispatcher {
-    Event process(Event event);
+    Event processEvent(Event event);
 }

@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 /**
  * @author gaoyuan
@@ -22,11 +21,10 @@ public class Proposer {
         NONE, PREPARING, ACCEPTING
     }
 
-    private final JaxosSettings config;
+    private final JaxosSettings settings;
     private final SquadContext context;
-    private final Supplier<Communicator> communicator;
+    private final Configuration config;
     private final Learner learner;
-    private final Supplier<EventTimer> timerSupplier;
     private final ProposalNumHolder proposalNumHolder;
 
     private PrepareActor prepareActor;
@@ -42,20 +40,19 @@ public class Proposer {
     private CountDownLatch execEndLatch;
     private volatile ProposeResult result;
 
-    public Proposer(JaxosSettings config, SquadContext context, Learner learner, Supplier<Communicator> communicator, Supplier<EventTimer> timerSupplier) {
+    public Proposer(JaxosSettings settings, Configuration config, SquadContext context, Learner learner) {
+        this.settings = settings;
         this.config = config;
         this.context = context;
-        this.communicator = communicator;
         this.learner = learner;
-        this.proposalNumHolder = new ProposalNumHolder(config.serverId(), JaxosSettings.SERVER_ID_RANGE);
-        this.timerSupplier = timerSupplier;
+        this.proposalNumHolder = new ProposalNumHolder(this.settings.serverId(), JaxosSettings.SERVER_ID_RANGE);
         this.stage = Stage.NONE;
         this.prepareActor = new PrepareActor();
         this.acceptActor = new AcceptActor();
     }
 
     public synchronized ProposeResult propose(long instanceId, ByteString value) throws InterruptedException {
-        if (!communicator.get().available()) {
+        if (!config.getCommunicator().available()) {
             return ProposeResult.NO_QUORUM;
         }
 
@@ -66,7 +63,7 @@ public class Proposer {
 
         this.execEndLatch = new CountDownLatch(1);
 
-        if (config.ignoreLeader()) {
+        if (settings.ignoreLeader()) {
             startPrepare(proposalNumHolder.getProposal0());
         }
         else if (context.isOtherLeaderActive()) {
@@ -79,7 +76,7 @@ public class Proposer {
             startPrepare(proposalNumHolder.getProposal0());
         }
 
-        this.execEndLatch.await(this.config.wholeProposalTimeoutMillis(), TimeUnit.MILLISECONDS);
+        this.execEndLatch.await(this.settings.wholeProposalTimeoutMillis(), TimeUnit.MILLISECONDS);
         if (this.result == null) {
             if (logger.isDebugEnabled()) {
                 logger.debug("Whole Propose timeout");
@@ -101,7 +98,7 @@ public class Proposer {
     }
 
     private boolean endWithMajorityCheck(int n, String step) {
-        if (n <= this.config.peerCount() / 2) {
+        if (n <= this.settings.peerCount() / 2) {
             endWith(ProposeResult.NO_QUORUM, step);
             return true;
         }
@@ -121,8 +118,8 @@ public class Proposer {
         this.messageMark++;
         this.prepareActor.startNewRound(this.proposeValue, proposal0, chosen.proposal);
 
-        this.prepareTimeout = timerSupplier.get().createTimeout(this.config.prepareTimeoutMillis(), TimeUnit.MILLISECONDS,
-                new Event.PrepareTimeout(this.config.serverId(), this.context.squadId(), this.instanceId, this.messageMark));
+        this.prepareTimeout = config.getEventTimer().createTimeout(this.settings.prepareTimeoutMillis(), TimeUnit.MILLISECONDS,
+                new Event.PrepareTimeout(this.settings.serverId(), this.context.squadId(), this.instanceId, this.messageMark));
     }
 
 
@@ -189,8 +186,8 @@ public class Proposer {
         this.stage = Stage.ACCEPTING;
         this.acceptActor.startAccept(value, proposal, chosen.proposal);
 
-        this.acceptTimeout = timerSupplier.get().createTimeout(this.config.acceptTimeoutMillis(), TimeUnit.MILLISECONDS,
-                new Event.AcceptTimeout(config.serverId(), this.context.squadId(), this.instanceId, this.messageMark));
+        this.acceptTimeout = config.getEventTimer().createTimeout(this.settings.acceptTimeoutMillis(), TimeUnit.MILLISECONDS,
+                new Event.AcceptTimeout(settings.serverId(), this.context.squadId(), this.instanceId, this.messageMark));
     }
 
     public void onAcceptReply(Event.AcceptResponse response) {
@@ -307,11 +304,11 @@ public class Proposer {
             this.chosenProposal = chosenProposal;
 
             Event.PrepareRequest req = new Event.PrepareRequest(
-                    Proposer.this.config.serverId(), Proposer.this.context.squadId(),
+                    Proposer.this.settings.serverId(), Proposer.this.context.squadId(),
                     Proposer.this.instanceId, Proposer.this.messageMark,
                     this.proposal, this.chosenProposal);
 
-            communicator.get().broadcast(req);
+            config.getCommunicator().broadcast(req);
         }
 
         public void onReply(Event.PrepareResponse response) {
@@ -351,11 +348,11 @@ public class Proposer {
         }
 
         private boolean isAllReplied() {
-            return repliedNodes.count() == config.peerCount();
+            return repliedNodes.count() == settings.peerCount();
         }
 
         private boolean isAccepted() {
-            return !this.someOneReject && acceptedCount > config.peerCount() / 2;
+            return !this.someOneReject && acceptedCount > settings.peerCount() / 2;
         }
 
         private int myProposal() {
@@ -423,9 +420,9 @@ public class Proposer {
             logger.debug("Start accept instance {} with proposal  {} ", Proposer.this.instanceId, proposal);
 
             Event.AcceptRequest request = new Event.AcceptRequest(
-                    Proposer.this.config.serverId(), Proposer.this.context.squadId(), Proposer.this.instanceId, Proposer.this.messageMark,
+                    Proposer.this.settings.serverId(), Proposer.this.context.squadId(), Proposer.this.instanceId, Proposer.this.messageMark,
                     proposal, value, lastChosenProposal);
-            Proposer.this.communicator.get().broadcast(request);
+            Proposer.this.config.getCommunicator().broadcast(request);
         }
 
         public void onReply(Event.AcceptResponse response) {
@@ -457,11 +454,11 @@ public class Proposer {
         }
 
         boolean isAccepted() {
-            return !this.someoneReject && config.reachQuorum(acceptedCount);
+            return !this.someoneReject && settings.reachQuorum(acceptedCount);
         }
 
         boolean isAllReplied() {
-            return this.repliedNodes.count() == config.peerCount();
+            return this.repliedNodes.count() == settings.peerCount();
         }
 
         boolean isChosenByOther() {
@@ -480,9 +477,9 @@ public class Proposer {
             logger.debug("Notify instance {} chosen", Proposer.this.instanceId);
 
             //Then notify other peers
-            Event notify = new Event.ChosenNotify(Proposer.this.config.serverId(), Proposer.this.context.squadId(),
+            Event notify = new Event.ChosenNotify(Proposer.this.settings.serverId(), Proposer.this.context.squadId(),
                     Proposer.this.instanceId, this.proposal);
-            communicator.get().selfFirstBroadcast(notify);
+            Proposer.this.config.getCommunicator().selfFirstBroadcast(notify);
         }
     }
 }

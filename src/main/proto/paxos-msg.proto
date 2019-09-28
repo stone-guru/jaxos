@@ -93,10 +93,21 @@ message LearnReq {
 
 message LearnRes {
   int32 squadId = 1;
-  repeated InstanceValue instance = 2;
+  repeated InstanceValue instanceValue = 2;
 }
 
 message InstanceValue {
-  int64 instanceId = 1;
-  bytes value = 2;
+  int32 squadId = 1;
+  int64 instanceId = 2;
+  int32 proposal = 3;
+  bytes value = 4;
+}
+
+message ChosenQueryRes {
+  repeated SquadChosen chosen = 1;
+}
+
+message SquadChosen {
+  int32 squadId = 1;
+  int64 instanceId = 2;
 }
