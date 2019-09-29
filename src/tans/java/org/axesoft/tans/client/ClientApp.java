@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
+import org.axesoft.jaxos.base.LongRange;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -15,6 +16,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class ClientApp {
@@ -26,9 +29,40 @@ public class ClientApp {
     );
 
     public static void main(String[] args) throws Exception {
+        main1(args);
+    }
+
+    public static void main1(String[] args) throws Exception {
+        TansClient client = new TansClient("192.168.56.101:8081;192.168.56.102:8082;localhost:8083");
+        final int n = 20;
+        CountDownLatch latch = new CountDownLatch(n);
+        for (int i = 1; i <= n; i++) {
+            final String key = "id" + i;
+            new Thread(() -> {
+                try {
+                    for (int k = 0; k < 1000; k++) {
+                        LongRange r = client.acquire(key, 3);
+                        //Thread.sleep(1);
+                        //System.out.println(r);
+                    }
+                }
+                catch (TimeoutException e) {
+                    e.printStackTrace();
+                }
+                finally {
+                    latch.countDown();
+                }
+            }).run();
+        }
+
+        latch.await();
+        client.close();
+    }
+
+    public static void main2(String[] args) throws Exception {
         String pattern = "http://localhost:8081/acquire?key=%s&n=%d";
 
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
             List<String> urls = new ArrayList<>();
             for (int j = 0; j < 100; j++) {
                 int k = (i + 1) * 10000 + j;
