@@ -4,10 +4,10 @@
 package org.axesoft.tans.client;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
+import org.apache.commons.lang3.time.StopWatch;
 import org.axesoft.jaxos.base.LongRange;
 
 import java.net.InetSocketAddress;
@@ -15,10 +15,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 public class ClientApp {
 
@@ -33,30 +32,62 @@ public class ClientApp {
     }
 
     public static void main1(String[] args) throws Exception {
-        TansClient client = new TansClient("192.168.56.101:8081;192.168.56.102:8082;localhost:8083");
-        final int n = 20;
-        CountDownLatch latch = new CountDownLatch(n);
-        for (int i = 1; i <= n; i++) {
+        int n = 4000;
+        int k = 25;
+
+        TansClientBootstrap cb = new TansClientBootstrap("localhost:8081");
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        final CountDownLatch endLatch = new CountDownLatch(k);
+        for (int i = 0; i < k; i++) {
+            final TansClient client = cb.getClient();
             final String key = "id" + i;
             new Thread(() -> {
                 try {
-                    for (int k = 0; k < 1000; k++) {
-                        LongRange r = client.acquire(key, 3);
-                        //Thread.sleep(1);
-                        //System.out.println(r);
-                    }
+                    startLatch.await();
+                    System.out.println("Start thread for " + key);
+
+                    ClientApp.runClient(client, key, 3, n);
                 }
-                catch (TimeoutException e) {
+                catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 finally {
-                    latch.countDown();
+                    System.out.println("End thread for " + key);
+                    endLatch.countDown();
+                    client.close();
                 }
-            }).run();
+
+            }).start();
         }
 
-        latch.await();
-        client.close();
+        StopWatch watch = StopWatch.createStarted();
+        startLatch.countDown();
+
+        endLatch.await();
+        watch.stop();
+        double total = watch.getTime(TimeUnit.MILLISECONDS);
+        System.out.println(String.format("elapsed %.0f ms, total OPS is %.1f", total,  (n * k) / (total / 1000)));
+        cb.close();
+    }
+
+    private static void runClient(TansClient client, String key, int v, int times) {
+        int i = 0;
+        StopWatch watch = StopWatch.createStarted();
+        try {
+
+            do {
+                LongRange r = client.acquire(key, v);
+                i++;
+            } while (i < times);
+        }
+        catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+        watch.stop();
+        if (i > 0) {
+            double total = watch.getTime(TimeUnit.MILLISECONDS);
+            System.out.println(String.format("elapsed %.0f ms, %.2f ms per req", total, total / i));
+        }
     }
 
     public static void main2(String[] args) throws Exception {
