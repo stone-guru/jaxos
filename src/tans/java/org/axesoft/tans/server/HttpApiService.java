@@ -178,7 +178,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
 
     private void writeResponse(ChannelHandlerContext ctx, boolean keepAlive, FullHttpResponse response) {
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/csv; charset=UTF-8");
         response.headers().set(HttpHeaderNames.HOST, config.address());
         response.headers().set(HttpHeaderNames.FROM, Integer.toString(config.httpPort()));
         response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
@@ -388,7 +388,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                 }
                 else {
                     LongRange r = rx.get(i);
-                    String content = task.keyLong.key() +", " + r.low() + "," + r.high();
+                    String content = task.keyLong.key() +"," + r.low() + "," + r.high();
                     response = createResponse(OK, content);
                 }
 

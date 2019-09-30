@@ -11,20 +11,26 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.channel.pool.SimpleChannelPool;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
+import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.Promise;
 import org.apache.commons.lang3.tuple.Pair;
+import org.axesoft.jaxos.base.Either;
 import org.axesoft.jaxos.base.LongRange;
+import org.axesoft.tans.server.RedirectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.BufferOverflowException;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+
 
 /**
  * @author gaoyuan
@@ -39,6 +45,8 @@ public class TansClientBootstrap {
     private final static AttributeKey<Long> USED_TIMESTAMP = AttributeKey.newInstance("USED_TIMESTAMP");
     private final static AttributeKey<CountDownLatch> LATCH = AttributeKey.newInstance("LATCH");
     private final static AttributeKey<LongRange> RESULT = AttributeKey.newInstance("RESULT");
+
+    private final static String TANS_HANDLER_NAME = "tansHandler";
 
     private static final Logger logger = LoggerFactory.getLogger(TansClientBootstrap.class);
 
@@ -75,7 +83,7 @@ public class TansClientBootstrap {
                     ChannelPipeline p = ch.pipeline();
                     p.addLast(new HttpClientCodec());
                     //p.addLast(new HttpObjectAggregator(1048576));
-                    p.addLast(new HttpClientHandler());
+                    p.addLast(TANS_HANDLER_NAME, new TansClientHandler());
                     ch.attr(HTTP_CLIENT).set(HttpClient.this);
                 }
             });
@@ -99,38 +107,82 @@ public class TansClientBootstrap {
         }
     }
 
-    private class HttpClientHandler extends SimpleChannelInboundHandler<HttpObject> {
-        HttpResponse response;
+    private class TansClientHandler extends SimpleChannelInboundHandler<HttpObject> {
+        private BlockingQueue<Promise<Either<String, LongRange>>> promises = new ArrayBlockingQueue<>(8);
+        private ChannelHandlerContext ctx;
+        private HttpResponse response;
+
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            super.channelActive(ctx);
+            this.ctx = ctx;
+        }
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             super.channelInactive(ctx);
-            Channel channel = ctx.channel();
-            HttpClient client = channel.attr(HTTP_CLIENT).get();
-            logger.info("Channel to {}:{} closed", client.host, client.port);
+
+            synchronized (this) {
+                Promise<Either<String, LongRange>> promise;
+                while ((promise = this.promises.poll()) != null) {
+                    promise.setFailure(new IOException("Connection lost"));
+                }
+                this.promises = null;
+                Channel channel = ctx.channel();
+                HttpClient client = channel.attr(HTTP_CLIENT).get();
+                logger.info("Channel to {}:{} closed", client.host, client.port);
+            }
         }
 
 
         @Override
-        public void channelRead0(ChannelHandlerContext ctx, HttpObject msg) {
+        public synchronized void channelRead0(ChannelHandlerContext ctx, HttpObject msg) {
+            if (this.promises == null) {
+                logger.info("Handler closed, abandon response");
+                return;
+            }
+
             //System.out.println("read a message");
             if (msg instanceof HttpResponse) {
                 response = (HttpResponse) msg;
                 //System.err.println("STATUS: " + response.status());
             }
+
             if (msg instanceof HttpContent) {
                 HttpContent content = (HttpContent) msg;
                 Channel channel = ctx.channel();
+                String body = content.content().toString(CharsetUtil.UTF_8);
 
-                InetSocketAddress addr = channel.attr(ATTR_ADDRESS).get();
-
-                HttpClient client = channel.attr(HTTP_CLIENT).get();
-
-                boolean isRedirect = isRedirectCode(response.status().code());
-
-                String s = isRedirect ?
-                        response.headers().get(HttpHeaderNames.LOCATION)
-                        : content.content().toString(CharsetUtil.UTF_8).lines().findFirst().orElseGet(() -> "");
+                if (response.status().code() == 200) {
+                    LongRange r;
+                    try {
+                        String s = firstLine(body);
+                        String[] rx = s.split(",");
+                        r = new LongRange(Long.parseLong(rx[1]), Long.parseLong(rx[2]));
+                    }
+                    catch (Exception e) {
+                        promises.poll().setFailure(e);
+                        return;
+                    }
+                    channel.attr(RESULT).set(r);
+                    promises.poll().setSuccess(Either.right(r));
+                }
+                else if (isRedirectCode(response.status().code())) {
+                    promises.poll().setFailure(new UnsupportedOperationException("Redirect"));
+                }
+                else {
+                    promises.poll().setFailure(new Exception(body));
+                }
+//
+//                InetSocketAddress addr = channel.attr(ATTR_ADDRESS).get();
+//
+//                HttpClient client = channel.attr(HTTP_CLIENT).get();
+//
+//                boolean isRedirect = isRedirectCode(response.status().code());
+//
+//                String s = isRedirect ?
+//                        response.headers().get(HttpHeaderNames.LOCATION)
+//                        : content.content().toString(CharsetUtil.UTF_8).lines().findFirst().orElseGet(() -> "");
 
 //                String info = String.format("%s, %s, %s [%s]",
 //                        response.headers().get(HttpHeaderNames.HOST),
@@ -139,12 +191,7 @@ public class TansClientBootstrap {
 //                        s);
 //
 //                logger.info("got result {}", info);
-
-                String[] rx = s.split(" *, *");
-                LongRange r = new LongRange(Long.parseLong(rx[1]), Long.parseLong(rx[2]));
-                channel.attr(RESULT).set(r);
-
-                channel.attr(LATCH).get().countDown();
+                //channel.attr(LATCH).get().countDown();
             }
         }
 
@@ -152,6 +199,31 @@ public class TansClientBootstrap {
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
             cause.printStackTrace();
             ctx.close();
+        }
+
+
+        public synchronized io.netty.util.concurrent.Future<Either<String, LongRange>> acquire(String key, int n) {
+            if (this.promises == null) {
+                return this.ctx.executor().newFailedFuture(new IllegalStateException("Channel closed"));
+            }
+
+            HttpRequest request;
+            try {
+                request = requestCache.get(Pair.of(key, n));
+            }
+            catch (ExecutionException e) {
+                return this.ctx.executor().newFailedFuture(e);
+            }
+
+            Promise<Either<String, LongRange>> p = this.ctx.executor().newPromise();
+            if (promises.offer(p)) {
+                ctx.writeAndFlush(request);
+            }
+            else {
+                p.setFailure(new BufferOverflowException());
+            }
+
+            return p;
         }
     }
 
@@ -165,40 +237,27 @@ public class TansClientBootstrap {
         }
 
         @Override
-        public LongRange acquire(String key, int n) throws TimeoutException {
-            HttpRequest request;
-            try {
-                request = requestCache.get(Pair.of(key, n));
-            }
-            catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            }
+        public Future<LongRange> acquire(String key, int n) {
+            final Promise<LongRange> promise = new DefaultPromise<>(channel.eventLoop());
 
+            TansClientHandler handler = (TansClientHandler) this.channel.pipeline().get(TANS_HANDLER_NAME);
+            handler.acquire(key, n).addListener(f -> {
+                if (f.isSuccess()) {
+                    @SuppressWarnings("unchecked")
+                    Either<String, LongRange> r = ((Future<Either<String, LongRange>>) f).get();
+                    if (r.isRight()) {
+                        promise.setSuccess(r.getRight());
+                    }
+                    else {
+                        promise.setFailure(new RedirectException(0));
+                    }
+                }
+                else {
+                    promise.setFailure(f.cause());
+                }
+            });
 
-            //System.out.println("channel active = " + channel.isActive());
-
-            CountDownLatch latch = new CountDownLatch(1);
-
-            channel.attr(LATCH).set(latch);
-            channel.writeAndFlush(request);
-
-            try {
-                //System.out.println("wait response");
-                latch.await(3, TimeUnit.SECONDS);
-            }
-            catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-            if (latch.getCount() > 0) {
-                throw new TimeoutException();
-            }
-
-            LongRange r = channel.attr(RESULT).get();
-
-            return r;
-
-
+            return promise;
         }
 
         @Override
@@ -210,7 +269,6 @@ public class TansClientBootstrap {
             }
         }
     }
-
 
     private ConcurrentMap<InetSocketAddress, HttpClient> clientMap;
     private NioEventLoopGroup worker;
@@ -288,5 +346,13 @@ public class TansClientBootstrap {
             default:
                 return false;
         }
+    }
+
+    public static String firstLine(String s) {
+        int index = s.indexOf('\r');
+        if (index < 0) {
+            return s;
+        }
+        return s.substring(0, index);
     }
 }

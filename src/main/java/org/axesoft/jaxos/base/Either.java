@@ -63,6 +63,11 @@ public abstract class Either<A, B> {
         public Optional<R> asOptional() {
             return Optional.empty();
         }
+
+        @Override
+        public String toString() {
+            return "Left{" + value + '}';
+        }
     }
 
     static class Right<L, R> extends Either<L, R> {
@@ -90,6 +95,11 @@ public abstract class Either<A, B> {
         @Override
         public Optional<R> asOptional() {
             return Optional.of(value);
+        }
+
+        @Override
+        public String toString() {
+            return "Right{" + value + '}';
         }
     }
 

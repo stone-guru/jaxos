@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableList;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
+import io.netty.util.concurrent.Future;
 import org.apache.commons.lang3.time.StopWatch;
 import org.axesoft.jaxos.base.LongRange;
 
@@ -15,9 +16,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public class ClientApp {
 
@@ -32,32 +31,23 @@ public class ClientApp {
     }
 
     public static void main1(String[] args) throws Exception {
-        int n = 4000;
-        int k = 25;
+        int n = 10000;
+        int k = 30;
 
-        TansClientBootstrap cb = new TansClientBootstrap("localhost:8081");
+        TansClientBootstrap cb = new TansClientBootstrap("localhost:8083");
         final CountDownLatch startLatch = new CountDownLatch(1);
         final CountDownLatch endLatch = new CountDownLatch(k);
+        final ExecutorService executor = Executors.newFixedThreadPool(k/2);
+
         for (int i = 0; i < k; i++) {
             final TansClient client = cb.getClient();
-            final String key = "id" + i;
-            new Thread(() -> {
-                try {
-                    startLatch.await();
-                    System.out.println("Start thread for " + key);
-
-                    ClientApp.runClient(client, key, 3, n);
-                }
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                finally {
-                    System.out.println("End thread for " + key);
-                    endLatch.countDown();
-                    client.close();
-                }
-
-            }).start();
+            final String key = "domain-object-id-" + i;
+            Runnable r = () -> {
+                ClientRunner runner = new ClientRunner(client, key, 1, n, executor, endLatch);
+                System.out.println("Start thread for " + key);
+                runner.run();
+            };
+            executor.submit(r);
         }
 
         StopWatch watch = StopWatch.createStarted();
@@ -66,27 +56,70 @@ public class ClientApp {
         endLatch.await();
         watch.stop();
         double total = watch.getTime(TimeUnit.MILLISECONDS);
-        System.out.println(String.format("elapsed %.0f ms, total OPS is %.1f", total,  (n * k) / (total / 1000)));
+        System.out.println(String.format("Total elapsed %.0f ms, total OPS is %.1f", total, (n * k) / (total / 1000)));
         cb.close();
+        executor.shutdownNow();
+
     }
 
-    private static void runClient(TansClient client, String key, int v, int times) {
-        int i = 0;
-        StopWatch watch = StopWatch.createStarted();
-        try {
+    private static class ClientRunner {
+        private TansClient client;
+        private int n;
+        private String key;
+        private int v;
+        private volatile boolean done;
+        private volatile int i;
+        private StopWatch watch;
+        private ExecutorService executor;
+        private CountDownLatch endLatch;
 
-            do {
-                LongRange r = client.acquire(key, v);
-                i++;
-            } while (i < times);
+        public ClientRunner(TansClient client, String key, int v, int n, ExecutorService executor, CountDownLatch endLatch) {
+            this.client = client;
+            this.n = n;
+            this.key = key;
+            this.v = v;
+            this.executor = executor;
+            this.endLatch = endLatch;
         }
-        catch (TimeoutException e) {
-            e.printStackTrace();
+
+        public void run() {
+            this.watch = StopWatch.createStarted();
+            this.i = 0;
+            this.done = false;
+            this.execute();
         }
-        watch.stop();
-        if (i > 0) {
+
+        private void execute() {
+            Future<LongRange> future = client.acquire(key, v);
+            future.addListener(f -> {
+                if (f.isSuccess()) {
+                    i++;
+                    //System.out.println(future.get());
+                    if (i < n) {
+                        executor.submit(this::execute);
+                    }
+                    else {
+                        endExec();
+                    }
+                }
+                else {
+                    f.cause().printStackTrace();
+                    endExec();
+                }
+            });
+        }
+
+        public void endExec() {
+            watch.stop();
             double total = watch.getTime(TimeUnit.MILLISECONDS);
             System.out.println(String.format("elapsed %.0f ms, %.2f ms per req", total, total / i));
+            client.close();
+            this.done = true;
+            endLatch.countDown();
+        }
+
+        public boolean isDone() {
+            return done;
         }
     }
 

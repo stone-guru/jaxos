@@ -1,10 +1,10 @@
 package org.axesoft.tans.client;
 
+import io.netty.util.concurrent.Future;
 import org.axesoft.jaxos.base.LongRange;
 
-import java.util.concurrent.TimeoutException;
 
 public interface TansClient {
-    LongRange acquire(String key, int n) throws TimeoutException;
+    Future<LongRange> acquire(String key, int n);
     void close();
 }
