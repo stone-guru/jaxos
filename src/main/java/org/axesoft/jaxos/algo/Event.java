@@ -3,6 +3,7 @@ package org.axesoft.jaxos.algo;
 import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.Date;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -13,9 +14,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public abstract class Event {
     public enum Code {
-        NOOP, HEART_BEAT, HEART_BEAT_RESPONSE, PREPARE, PREPARE_RESPONSE, ACCEPT, ACCEPT_RESPONSE,
-        ACCEPTED_NOTIFY, ACCEPTED_NOTIFY_RESPONSE, PREPARE_TIMEOUT, ACCEPT_TIMEOUT,
-        START_LEARN, LEARN_REQUEST, LEARN_RESPONSE, CHOSEN_QUERY, CHOSEN_QUERY_RESPONSE, CHOSEN_QUERY_TIMEOUT
+        NOOP, HEART_BEAT, HEART_BEAT_RESPONSE,
+        PROPOSAL_TIMEOUT,
+        PREPARE, PREPARE_RESPONSE, PREPARE_TIMEOUT,
+        ACCEPT, ACCEPT_RESPONSE, ACCEPT_TIMEOUT,
+        ACCEPTED_NOTIFY, ACCEPTED_NOTIFY_RESPONSE,
+        LEARN_REQUEST, LEARN_RESPONSE,
+        CHOSEN_QUERY, CHOSEN_QUERY_RESPONSE, CHOSEN_QUERY_TIMEOUT
     }
 
     //FIXME refact to enum
@@ -26,7 +31,7 @@ public abstract class Event {
     private int senderId;
     private long timestamp;
 
-    public Event(int sender){
+    public Event(int sender) {
         this(sender, System.currentTimeMillis());
     }
 
@@ -41,11 +46,11 @@ public abstract class Event {
         return this.senderId;
     }
 
-    public long timestamp(){
+    public long timestamp() {
         return this.timestamp;
     }
 
-    public int squadId(){
+    public int squadId() {
         return -1;
     }
 
@@ -190,7 +195,7 @@ public abstract class Event {
                 return this;
             }
 
-            public Builder setValueProposer(int i){
+            public Builder setValueProposer(int i) {
                 resp.valueProposer = i;
                 return this;
             }
@@ -230,7 +235,7 @@ public abstract class Event {
             return this.chosenInstanceId;
         }
 
-        public int valueProposer(){
+        public int valueProposer() {
             return this.valueProposer;
         }
 
@@ -283,7 +288,7 @@ public abstract class Event {
             return this.instanceId() - 1;
         }
 
-        public int valueProposer(){
+        public int valueProposer() {
             return this.valueProposer;
         }
 
@@ -411,6 +416,30 @@ public abstract class Event {
         }
     }
 
+    public static class ProposalTimeout extends BallotEvent {
+        public ProposalTimeout(int senderId, int squadId, long instanceId, int round) {
+            super(senderId, squadId, instanceId, round);
+        }
+
+        @Override
+        public Code code() {
+            return Code.PROPOSAL_TIMEOUT;
+        }
+
+        @Override
+        public long chosenInstanceId() {
+            return 0;
+        }
+
+        @Override
+        public String toString() {
+            return "ProposalTimeout{" +
+                    "squadId=" + super.squadId +
+                    ", instanceId=" + super.instanceId +
+                    ", timestamp=" + new Date(super.timestamp()) +
+                    '}';
+        }
+    }
 
     public static abstract class InstanceEvent extends Event {
 
@@ -477,7 +506,7 @@ public abstract class Event {
             return Code.LEARN_RESPONSE;
         }
 
-        public int squadId(){
+        public int squadId() {
             return squadId;
         }
 
@@ -494,16 +523,16 @@ public abstract class Event {
                     '}';
         }
 
-        public long lowInstanceId(){
+        public long lowInstanceId() {
             return instanceIdOf(0);
         }
 
-        public long highInstanceId(){
+        public long highInstanceId() {
             return instanceIdOf(instances.size() - 1);
         }
 
-        private long instanceIdOf(int i){
-            if(i >= 0 && i < instances.size()){
+        private long instanceIdOf(int i) {
+            if (i >= 0 && i < instances.size()) {
                 return instances.get(i).instanceId;
             }
             return 0;
@@ -529,13 +558,13 @@ public abstract class Event {
             this.squadChosen = squadChosen;
         }
 
-        public List<Pair<Integer, Long>> squadChosen(){
+        public List<Pair<Integer, Long>> squadChosen() {
             return squadChosen;
         }
 
-        public long chosenInstanceIdOf(int squadId){
-            for(Pair<Integer, Long> p : squadChosen){
-                if(p.getLeft() == squadId){
+        public long chosenInstanceIdOf(int squadId) {
+            for (Pair<Integer, Long> p : squadChosen) {
+                if (p.getLeft() == squadId) {
                     return p.getRight();
                 }
             }

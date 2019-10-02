@@ -1,19 +1,18 @@
 package org.axesoft.jaxos.algo;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import io.netty.util.Timeout;
 import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.base.IntBitSet;
-import org.axesoft.tans.server.ConflictException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
+import java.util.ConcurrentModificationException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author gaoyuan
@@ -32,6 +31,7 @@ public class Proposer {
     private final Learner learner;
     private final ProposalNumHolder proposalNumHolder;
 
+    private Timeout proposalTimeout;
     private PrepareActor prepareActor;
     private Timeout prepareTimeout;
     private AcceptActor acceptActor;
@@ -42,9 +42,7 @@ public class Proposer {
     private int messageMark = 0;
     private int round = 0;
     private Stage stage;
-    private CountDownLatch execEndLatch;
-    private volatile ProposeResult result;
-    private SettableFuture<Void> resultFuture;
+    private AtomicReference<SettableFuture<Void>> resultFutureRef;
 
     public Proposer(JaxosSettings settings, Configuration config, SquadContext context, Learner learner) {
         this.settings = settings;
@@ -55,25 +53,28 @@ public class Proposer {
         this.stage = Stage.NONE;
         this.prepareActor = new PrepareActor();
         this.acceptActor = new AcceptActor();
+        this.resultFutureRef = new AtomicReference<>(null);
     }
 
-    public ListenableFuture<Void> propose(long instanceId, ByteString value) throws InterruptedException {
+    public ListenableFuture<Void> propose(long instanceId, ByteString value, SettableFuture<Void> resultFuture) {
+        if (!resultFutureRef.compareAndSet(null, resultFuture)) {
+            resultFuture.setException(new ConcurrentModificationException("Previous propose not end"));
+            return resultFuture;
+        }
+
         if (!config.getCommunicator().available()) {
-            return Futures.immediateFailedFuture(new CommunicatorException("Not enough server connected"));
+            return endAs(new CommunicatorException("Not enough server connected"));
         }
 
         this.instanceId = instanceId;
         this.proposeValue = value;
         this.round = 0;
-        this.result = null;
-
-        this.resultFuture = SettableFuture.create();
 
         if (settings.ignoreLeader()) {
             startPrepare(proposalNumHolder.getProposal0());
         }
         else if (context.isOtherLeaderActive()) {
-            return Futures.immediateFailedFuture(new RedirectException(context.lastSuccessPrepare().serverId()));
+            return endAs(new RedirectException(context.lastSuccessPrepare().serverId()));
         }
         else if (context.isLeader()) {
             startAccept(this.proposeValue, context.lastSuccessPrepare().proposal(), settings.serverId());
@@ -82,38 +83,49 @@ public class Proposer {
             startPrepare(proposalNumHolder.getProposal0());
         }
 
-        this.execEndLatch.await(this.settings.wholeProposalTimeoutMillis(), TimeUnit.MILLISECONDS);
-        if (this.result == null) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("S{}: Whole Propose timeout for instance {} ", context.squadId(), instanceId);
-            }
-            this.result = ProposeResult.TIME_OUT;
-        }
-
-        return this.resultFuture;
+        this.proposalTimeout = config.getEventTimer().createTimeout(this.settings.wholeProposalTimeoutMillis(), TimeUnit.MILLISECONDS,
+                new Event.ProposalTimeout(this.settings.serverId(), this.context.squadId(), this.instanceId, 0));
+        return resultFuture;
     }
 
-    private void endWith(Throwable error) {
+    private ListenableFuture<Void> endAs(Throwable error) {
         this.stage = Stage.NONE;
+        if (this.proposalTimeout != null) {
+            this.proposalTimeout.cancel();
+            this.proposalTimeout = null;
+        }
 
         if (logger.isTraceEnabled()) {
             logger.trace("S{}: Propose instance({}) end with {}",
                     context.squadId(), this.instanceId, error == null ? "SUCCESS" : error.getMessage());
         }
+        SettableFuture<Void> future = this.resultFutureRef.get();
+        this.resultFutureRef.set(null);
+
         if (error == null) {
-            this.resultFuture.set(null);
+            future.set(null);
         }
         else {
-            this.resultFuture.setException(error);
+            future.setException(error);
         }
+        return future;
     }
 
     private boolean endWithMajorityCheck(int n, String step) {
         if (n <= this.settings.peerCount() / 2) {
-            endWith(new NoQuorumException("Not enough peers response at " + step));
+            endAs(new NoQuorumException("Not enough peers response at " + step));
             return true;
         }
         return false;
+    }
+
+    public void onProposalTimeout(Event.ProposalTimeout event) {
+        if (this.stage != Stage.NONE && event.squadId() == context.squadId() && event.instanceId() == this.instanceId) {
+            endAs(new TimeoutException(String.format("S%d I%d whole proposal timeout", context.squadId(), this.instanceId)));
+        }
+        else {
+            logger.info("Ignore unnecessary {}", event);
+        }
     }
 
     private void startPrepare(int proposal0) {
@@ -121,7 +133,7 @@ public class Proposer {
         if (instanceId != chosen.instanceId + 1) {
             String msg = String.format("when prepare instance %d while last chosen is %d.%d",
                     context.squadId(), instanceId, chosen.instanceId);
-            endWith(new ProposalConflictException(msg));
+            endAs(new ProposalConflictException(msg));
             return;
         }
 
@@ -175,10 +187,10 @@ public class Proposer {
                         logger.debug("S{} I{} Other proposer help finish ", context.squadId(), this.instanceId);
                     }
 
-                    endWith(null);
+                    endAs(null);
                 }
                 else {
-                    endWith(new ProposalConflictException(this.instanceId + " CONFLICT other value chosen"));
+                    endAs(new ProposalConflictException(this.instanceId + " CONFLICT other value chosen"));
                 }
                 return;
             }
@@ -192,7 +204,7 @@ public class Proposer {
         if (instanceId != chosen.instanceId + 1) {
             String msg = String.format("when accept instance %d.%d while last chosen is %d",
                     context.squadId(), instanceId, chosen.instanceId);
-            endWith(new ProposalConflictException(msg));
+            endAs(new ProposalConflictException(msg));
             return;
         }
         this.stage = Stage.ACCEPTING;
@@ -237,18 +249,18 @@ public class Proposer {
         if (this.acceptActor.isAccepted()) {
             this.acceptActor.notifyChosen();
             if (this.acceptActor.proposer == settings.serverId()) {
-                endWith(null);
+                endAs(null);
             }
             else {
                 String msg = String.format("S%d I%d send other value at Accept", context.squadId(), this.instanceId);
-                endWith(new ProposalConflictException(msg));
+                endAs(new ProposalConflictException(msg));
             }
         }
         else if (this.acceptActor.isChosenByOther()) {
-            endWith(new ProposalConflictException("Chosen by other at accept"));
+            endAs(new ProposalConflictException("Chosen by other at accept"));
         }
         else if (this.round >= 100) {
-            endWith(new ProposalConflictException("REJECT at accept more than 100 times"));
+            endAs(new ProposalConflictException("REJECT at accept more than 100 times"));
         }
         else {
             //use another prepare status to detect, whether this value chosen

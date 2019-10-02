@@ -22,9 +22,9 @@ public class ClientApp {
 
     public static void main2(String[] args) throws Exception {
         int n = 1500;
-        int k = 1;
+        int k = 4;
 
-        int p = 10;
+        int p = 8;
 
         final CountDownLatch startLatch = new CountDownLatch(1);
         final CountDownLatch endLatch = new CountDownLatch(p);
@@ -40,7 +40,7 @@ public class ClientApp {
                     run(k, n, startLatch, checker, millis, times);
                 }
                 catch (Exception e) {
-                    e.printStackTrace();
+                    System.out.println("Exec end with " + e.getMessage());
                 }
                 finally {
                     endLatch.countDown();
@@ -58,7 +58,7 @@ public class ClientApp {
         System.out.println(String.format("Total finish %d in %.2f seconds, OPS is %.1f",
                 times.get(), sec, times.get() / sec));
 
-        checker.printErrorMsg();
+        checker.printCheckResult();
     }
 
     public static void run(int k, int n, CountDownLatch startLatch, ResultChecker checker, AtomicLong millis, AtomicLong times) throws Exception {
@@ -75,7 +75,7 @@ public class ClientApp {
             for (int m = 0; m < k; m++) {
                 for (int i = 0; i < n; i++) {
                     count++;
-                    String key = "object-id-" + (i % 100);
+                    String key = "object-id-" + (i % 20);
                     Future<LongRange> future = client.acquire(key, 1);
                     LongRange r = future.get();
                     checker.accept(key, r.low(), r.high());
@@ -112,7 +112,7 @@ public class ClientApp {
             combinator.accept(low, high);
         }
 
-        public void printErrorMsg() {
+        public void printCheckResult() {
             List<String> keys = new ArrayList<>(combinatorMap.keySet());
             keys.sort(String::compareTo);
 
@@ -169,11 +169,7 @@ public class ClientApp {
         }
 
         private void tryConcat(int allowRemain) {
-            for (; ; ) {
-                if (ranges.isEmpty()) {
-                    return;
-                }
-
+            while (!this.ranges.isEmpty()) {
                 LongRange r0 = ranges.first();
 
                 if (last == 0 || r0.low() == last + 1) {
@@ -181,15 +177,15 @@ public class ClientApp {
                     ranges.remove(r0);
                 }
                 else {
-                    if(r0.low() <= last){
+                    if (r0.low() <= last) {
                         errMsg = String.format("Overlapped [%d, %d]", r0.low(), r0.high());
-                        return;
+                        break;
                     }
                     if (r0.low() > last + 1) {
                         if (ranges.size() > allowRemain) {
                             errMsg = String.format("gap between %d, %s", last, r0.toString());
                         }
-                        return;
+                        break;
                     }
                 }
             }

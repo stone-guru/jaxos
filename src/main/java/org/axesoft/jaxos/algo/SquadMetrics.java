@@ -7,16 +7,20 @@ import org.axesoft.jaxos.base.Velometer;
  * @sine 2019/9/7.
  */
 public class SquadMetrics {
+    public enum ProposalResult {
+        SUCCESS, CONFLICT, OTHER
+    }
+
     private Velometer proposeVelometer = new Velometer();
     private Velometer conflictVelometer = new Velometer();
     private Velometer successVelometer = new Velometer();
     private Velometer otherVelometer = new Velometer();
     private volatile double currentProposeElapsed;
 
-    public void recordPropose(long nanos, ProposeResult r){
-        proposeVelometer.record(nanos);
+    public void recordPropose(long millis, ProposalResult result){
+        proposeVelometer.record(millis);
 
-        switch (r.code()){
+        switch (result){
             case SUCCESS:
                 successVelometer.record(1);
                 break;

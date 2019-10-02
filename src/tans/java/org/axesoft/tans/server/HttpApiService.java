@@ -18,6 +18,7 @@ import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
+import org.axesoft.jaxos.algo.ProposalConflictException;
 import org.axesoft.jaxos.algo.RedirectException;
 import org.axesoft.jaxos.base.*;
 import org.slf4j.Logger;
@@ -105,11 +106,26 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
         this.queueTimer = new Timer("Queue Flush", true);
         this.queueTimer.scheduleAtFixedRate(new TimerTask() {
+            private boolean interrupted = false;
+
             @Override
             public void run() {
+                if (interrupted) {
+                    return;
+                }
                 long current = System.currentTimeMillis();
                 for (RequestQueue q : requestQueues) {
-                    q.click(current);
+                    try {
+                        q.click(current);
+                    }
+                    catch (Exception e) {
+                        if (e.getCause() instanceof InterruptedException) {
+                            interrupted = true;
+                        }
+                        else {
+                            logger.error("Exception when flush request queue", e);
+                        }
+                    }
                 }
             }
         }, 1000, 1);
@@ -384,7 +400,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             catch (RedirectException e) {
                 otherLeaderId = e.getServerId();
             }
-            catch (ConflictException e) {
+            catch (ProposalConflictException e) {
                 errorResponse = createResponse(HttpResponseStatus.CONFLICT, "CONFLICT");
             }
             catch (Exception e) {

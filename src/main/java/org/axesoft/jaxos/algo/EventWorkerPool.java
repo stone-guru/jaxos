@@ -85,6 +85,10 @@ public class EventWorkerPool implements EventTimer {
         return timer.newTimeout((t) -> this.submitEventToSelf(timeoutEvent), delay, timeUnit);
     }
 
+    public ExecutorService learnerExecutor(){
+        return this.learnerExecutor;
+    }
+
     public void shutdown() {
         learnerExecutor.shutdownNow();
         for (ExecutorService executor : this.ballotExecutors) {

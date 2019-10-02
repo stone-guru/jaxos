@@ -1,10 +1,14 @@
 package org.axesoft.jaxos.algo;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.*;
 import com.google.protobuf.ByteString;
 import org.axesoft.jaxos.JaxosSettings;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author gaoyuan
@@ -38,23 +42,23 @@ public class Squad implements EventDispatcher {
      * @param v value to be proposed
      * @throws InterruptedException
      */
-    public ProposeResult propose(long instanceId, ByteString v) throws InterruptedException {
-        final long startNano = System.nanoTime();
+    public ListenableFuture<Void> propose(long instanceId, ByteString v, SettableFuture<Void> resultFuture) {
+        attachMetricsListener(resultFuture);
 
         SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessPrepare();
         //logger.info("last request is {}, current is {}", lastRequestInfo, new Date());
 
-        ProposeResult result;
         if (this.context.isOtherLeaderActive() && !this.settings.ignoreLeader()) {
-            result = ProposeResult.otherLeader(lastSuccessRequestRecord.serverId());
+            if (logger.isDebugEnabled()) {
+                logger.debug("S{} I{} redirect to {}", context.squadId(), instanceId, lastSuccessRequestRecord.serverId());
+            }
+            resultFuture.setException(new RedirectException(lastSuccessRequestRecord.serverId()));
         }
         else {
-            result = null;//proposer.propose(instanceId, v);
+            proposer.propose(instanceId, v, resultFuture);
         }
 
-        this.metrics.recordPropose(System.nanoTime() - startNano, result);
-
-        return result;
+        return resultFuture;
     }
 
     @Override
@@ -78,6 +82,32 @@ public class Squad implements EventDispatcher {
         else {
             throw new UnsupportedOperationException("Unknown event type of " + request.code());
         }
+    }
+
+    private void attachMetricsListener(ListenableFuture<Void> future) {
+        final long startNano = System.nanoTime();
+
+        Futures.addCallback(future, new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable Void result) {
+                record(SquadMetrics.ProposalResult.SUCCESS);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                if (t instanceof ProposalConflictException) {
+                    record(SquadMetrics.ProposalResult.CONFLICT);
+                }
+                else {
+                    record(SquadMetrics.ProposalResult.OTHER);
+                }
+            }
+
+            private void record(SquadMetrics.ProposalResult result) {
+                Squad.this.metrics.recordPropose(System.nanoTime() - startNano, result);
+            }
+
+        }, MoreExecutors.directExecutor());
     }
 
     public long lastChosenInstanceId() {
@@ -136,6 +166,10 @@ public class Squad implements EventDispatcher {
                 acceptor.onChosenNotify(((Event.ChosenNotify) event));
                 return null;
             }
+            case PROPOSAL_TIMEOUT: {
+                proposer.onProposalTimeout((Event.ProposalTimeout) event);
+                return null;
+            }
             default: {
                 throw new UnsupportedOperationException(event.code().toString());
             }
@@ -178,8 +212,10 @@ public class Squad implements EventDispatcher {
             long instanceId = i.instanceId();
             this.configuration.getLogger().savePromise(response.squadId(), instanceId, i.proposal(), i.value());
             if (!this.stateMachineRunner.learnValue(response.squadId(), instanceId, i.proposal(), i.value())) {
-                logger.warn("Learned instance {} is not continued, cache it first", instanceId);
-                this.stateMachineRunner.cacheChosenValue(response.squadId(), instanceId, i.proposal(), i.value());
+                if (instanceId > this.stateMachineRunner.lastChosenInstanceId(i.squadId())) {
+                    logger.warn("Learned instance {} is not continued, cache it first", instanceId);
+                    this.stateMachineRunner.cacheChosenValue(response.squadId(), instanceId, i.proposal(), i.value());
+                }
             }
         }
     }

@@ -60,7 +60,6 @@ dependencies {
     implementation group: 'org.pcollections', name: 'pcollections', version: '2.1.2'
     // Use JUnit test framework
     testImplementation 'junit:junit:4.10'
-
 }
 
 // Define the main class for the application
@@ -68,7 +67,10 @@ mainClassName = 'org.axesoft.tans.server.ServerApp'
 applicationDefaultJvmArgs = ['-server', '-Xmx512m', '-XX:+UseG1GC',
                              '-XX:MaxGCPauseMillis=5',
                              '-XX:ParallelGCThreads=3',
+                             '-XX:+AlwaysPreTouch',
+                             '-XX:InitiatingHeapOccupancyPercent=60',
                              '-Xlog:gc*']
+
 
 //applicationDefaultJvmArgs = ['-server', '-Xmx1g', '-Xms1g',
 //                             '-XX:+UnlockExperimentalVMOptions',

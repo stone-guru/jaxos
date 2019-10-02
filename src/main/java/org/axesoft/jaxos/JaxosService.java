@@ -2,7 +2,9 @@ package org.axesoft.jaxos;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import io.netty.util.Timeout;
 import org.apache.commons.lang3.tuple.Pair;
@@ -89,14 +91,19 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     }
 
     @Override
-    public ProposeResult propose(int squadId, long instanceId, ByteString v) throws InterruptedException {
+    public ListenableFuture<Void> propose(int squadId, long instanceId, ByteString v) {
         if (!this.isRunning()) {
             throw new IllegalStateException(SERVICE_NAME + " is not running");
         }
         checkArgument(squadId >= 0 && squadId < squads.length,
                 "Invalid squadId(%s) while partition number is %s ", squadId, squads.length);
 
-        return this.squads[squadId].propose(instanceId, v);
+        SettableFuture<Void> resultFuture = SettableFuture.create();
+
+        eventWorkerPool.queueBallotTask(squadId,
+                () -> this.squads[squadId].propose(instanceId, v, resultFuture));
+
+        return resultFuture;
     }
 
     public void printMetrics() {

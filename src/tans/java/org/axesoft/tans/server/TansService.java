@@ -2,6 +2,7 @@ package org.axesoft.tans.server;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang3.tuple.Pair;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -81,34 +83,40 @@ public class TansService implements StateMachine {
         logger.info("TANS state machine closed");
     }
 
-    public List<LongRange> acquire(int squadId, List<KeyLong> requests) throws InterruptedException {
+    public List<LongRange> acquire(int squadId, List<KeyLong> requests) {
         checkArgument(requests.size() > 0, "requests is empty");
 
         TansNumberProposal proposal;
-        ProposeResult result;
+        ListenableFuture<Void> resulFuture;
 
         synchronized (machineLocks[squadId]) {
             proposal = this.numberMaps[squadId].createProposal(requests);
             ByteString bx = toProposal(proposal.numbers);
-            result = proponent.get().propose(squadId, proposal.instanceId, bx);
+            resulFuture = proponent.get().propose(squadId, proposal.instanceId, bx);
         }
 
-        if (!result.isSuccess()) {
-            logger.debug("Try acquire on key({}) abort by {}", requests, result.code());
-        }
+        try {
+            resulFuture.get();
 
-        if (result.code() == ProposeResult.Code.OTHER_LEADER) {
-            throw new RedirectException((int) result.param());
-        }
-
-        if (result.isSuccess()) {
             return produceResult(requests, proposal.numbers);
         }
-        else if (result.code() == ProposeResult.Code.CONFLICT) {
-            throw new ConflictException();
+        catch (InterruptedException e) {
+            //logger.debug("Execution interrupted", e);
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
         }
-        else {
-            throw new IllegalStateException(result.code().toString());
+        catch (ExecutionException e) {
+            logger.debug("Try acquire on key({}) abort by {}", requests, e.getCause().getMessage());
+
+            if (e.getCause() instanceof RedirectException) {
+                throw (RedirectException) e.getCause();
+            }
+            else if (e.getCause() instanceof ProposalConflictException) {
+                throw (ProposalConflictException) e.getCause();
+            }
+            else {
+                throw new IllegalArgumentException(e.getCause());
+            }
         }
     }
 
