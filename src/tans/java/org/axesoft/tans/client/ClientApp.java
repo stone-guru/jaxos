@@ -75,7 +75,7 @@ public class ClientApp {
             for (int m = 0; m < k; m++) {
                 for (int i = 0; i < n; i++) {
                     count++;
-                    String key = "object-id-" + (i % 20);
+                    String key = "object-id-" + (i % 60);
                     Future<LongRange> future = client.acquire(key, 1);
                     LongRange r = future.get();
                     checker.accept(key, r.low(), r.high());

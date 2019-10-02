@@ -3,12 +3,11 @@ package org.axesoft.jaxos.algo;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
 import com.google.protobuf.ByteString;
+import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.ExecutionException;
 
 /**
  * @author gaoyuan
@@ -152,7 +151,10 @@ public class Squad implements EventDispatcher {
                 return null;
             }
             case ACCEPT: {
-                return acceptor.accept((Event.AcceptRequest) event);
+                long nano = System.nanoTime();
+                Event.BallotEvent e = acceptor.accept((Event.AcceptRequest) event);
+                this.metrics.recordAccept(System.nanoTime() - nano);
+                return e;
             }
             case ACCEPT_RESPONSE: {
                 proposer.onAcceptReply((Event.AcceptResponse) event);
@@ -225,13 +227,13 @@ public class Squad implements EventDispatcher {
         double successRate = this.metrics.successRate();
         double conflictRate = this.metrics.conflictRate();
         double otherRate = metrics.otherRate();
-        long delta = this.metrics.delta();
-        double elapsed = this.metrics.compute(current);
+        long delta = this.metrics.proposeDelta();
+        Pair<Double, Double> elapsed = this.metrics.compute(current);
 
-        String msg = String.format("ID=%d, T=%d, E=%.3f, S=%.2f, C=%.2f, O=%.2f in %.0f sec, TT=%d, SR=%.3f, LI=%d",
-                this.context.squadId(), delta, elapsed,
-                successRate, conflictRate, otherRate, seconds,
-                this.metrics.times(), this.metrics.totalSuccessRate(), this.acceptor.lastChosenInstanceId());
+        String msg = String.format("ID=%d, PT=%d, PE=%.3f, S=%.2f, C=%.2f, O=%.2f, AE=%.3f (%.0f s), TT=%d, SR=%.3f, LI=%d",
+                this.context.squadId(), delta, elapsed.getLeft(),
+                successRate, conflictRate, otherRate, elapsed.getRight(), seconds,
+                this.metrics.proposeTimes(), this.metrics.totalSuccessRate(), this.acceptor.lastChosenInstanceId());
         logger.info(msg);
     }
 

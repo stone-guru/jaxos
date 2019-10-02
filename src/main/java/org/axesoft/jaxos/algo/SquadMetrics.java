@@ -1,5 +1,6 @@
 package org.axesoft.jaxos.algo;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.base.Velometer;
 
 /**
@@ -12,13 +13,19 @@ public class SquadMetrics {
     }
 
     private Velometer proposeVelometer = new Velometer();
+    private Velometer acceptVelometer = new Velometer();
     private Velometer conflictVelometer = new Velometer();
     private Velometer successVelometer = new Velometer();
     private Velometer otherVelometer = new Velometer();
     private volatile double currentProposeElapsed;
+    private volatile double currentAcceptElapsed;
 
-    public void recordPropose(long millis, ProposalResult result){
-        proposeVelometer.record(millis);
+    public void recordAccept(long nanos){
+        acceptVelometer.record(nanos);
+    }
+
+    public void recordPropose(long nanos, ProposalResult result){
+        proposeVelometer.record(nanos);
 
         switch (result){
             case SUCCESS:
@@ -36,22 +43,30 @@ public class SquadMetrics {
         return proposeVelometer.lastTimestamp();
     }
 
-    public long times(){
+    public long proposeTimes(){
         return proposeVelometer.times();
     }
 
-    public long delta() {
+    public long proposeDelta() {
         return proposeVelometer.timesDelta();
     }
 
-    public double compute(long timestamp){
-        this.currentProposeElapsed = proposeVelometer.compute(timestamp);
+    public long acceptTimes(){
+        return acceptVelometer.times();
+    }
 
+    public long acceptDelta(){
+        return acceptVelometer.timesDelta();
+    }
+
+    public Pair<Double, Double> compute(long timestamp){
+        this.currentProposeElapsed = proposeVelometer.compute(timestamp);
+        this.currentAcceptElapsed = acceptVelometer.compute(timestamp);
         this.conflictVelometer.compute(timestamp);
         this.successVelometer.compute(timestamp);
         this.otherVelometer.compute(timestamp);
 
-        return this.currentProposeElapsed;
+        return Pair.of(this.currentProposeElapsed, this.currentAcceptElapsed);
     }
 
     public double totalSuccessRate(){
