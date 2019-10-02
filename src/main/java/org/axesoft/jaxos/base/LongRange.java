@@ -1,6 +1,6 @@
 package org.axesoft.jaxos.base;
 
-public class LongRange {
+public class LongRange implements Comparable<LongRange> {
     private long low;
     private long high;
 
@@ -19,9 +19,12 @@ public class LongRange {
 
     @Override
     public String toString() {
-        return "LongRange{" +
-                "low=" + low +
-                ", high=" + high +
-                '}';
+        return "LongRange{" + low +", " + high +'}';
+    }
+
+
+    @Override
+    public int compareTo(LongRange o) {
+        return Long.compare(this.low, o.low);
     }
 }

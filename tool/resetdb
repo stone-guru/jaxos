@@ -4,3 +4,4 @@ rm -rf ./logs/*.log
 rm -rf ./log/db*
 rm -rf /mnt/ram/db*
 rm -rf /media/bison/Elements/work/db*
+rm -rf /media/bison/udisk/db*

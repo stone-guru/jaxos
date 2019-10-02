@@ -49,7 +49,7 @@ public class Squad implements EventDispatcher {
             result = ProposeResult.otherLeader(lastSuccessRequestRecord.serverId());
         }
         else {
-            result = proposer.propose(instanceId, v);
+            result = null;//proposer.propose(instanceId, v);
         }
 
         this.metrics.recordPropose(System.nanoTime() - startNano, result);
@@ -59,9 +59,9 @@ public class Squad implements EventDispatcher {
 
     @Override
     public Event processEvent(Event request) {
-        if (logger.isTraceEnabled()) {
-            logger.trace("Process event {}", request);
-        }
+//        if (logger.isTraceEnabled()) {
+//            logger.trace("Process event {}", request);
+//        }
 
         if (request instanceof Event.BallotEvent) {
             Event.BallotEvent ballotRequest = (Event.BallotEvent) request;

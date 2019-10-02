@@ -49,7 +49,8 @@ message PrepareRes {
   int32 maxProposal = 5;
   int32 acceptedProposal = 6;
   bytes acceptedValue = 7;
-  int64 chosenInstanceId = 8;
+  int32 valueProposer = 8;
+  int64 chosenInstanceId = 9;
 }
 
 message AcceptReq {
@@ -58,7 +59,8 @@ message AcceptReq {
   int32 round = 3;
   int32 proposal = 4;
   bytes value = 5;
-  int32 lastChosenProposal = 6;
+  int32 valueProposer = 6;
+  int32 lastChosenProposal = 7;
 }
 
 message AcceptRes {

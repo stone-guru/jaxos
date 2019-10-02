@@ -5,10 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang3.tuple.Pair;
-import org.axesoft.jaxos.algo.CheckPoint;
-import org.axesoft.jaxos.algo.Proponent;
-import org.axesoft.jaxos.algo.ProposeResult;
-import org.axesoft.jaxos.algo.StateMachine;
+import org.axesoft.jaxos.algo.*;
 import org.axesoft.jaxos.base.LongRange;
 import org.axesoft.tans.protobuff.TansMessage;
 import org.pcollections.HashTreePMap;
@@ -60,7 +57,7 @@ public class TansService implements StateMachine {
     public void consume(int squadId, long instanceId, ByteString proposal) {
         List<TansNumber> nx = fromProposal(proposal);
         if (logger.isTraceEnabled()) {
-            logger.trace("TANS state machine consumer {} event from instance {}", nx.size(), instanceId);
+            logger.trace("TANS state machine consumer {} event from instance {}.{}", nx.size(), squadId, instanceId);
         }
         this.numberMaps[squadId].consume(instanceId, nx);
     }

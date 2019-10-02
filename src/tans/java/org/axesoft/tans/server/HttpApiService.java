@@ -15,8 +15,10 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
+import org.axesoft.jaxos.algo.RedirectException;
 import org.axesoft.jaxos.base.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +43,8 @@ public final class HttpApiService extends AbstractExecutionThreadService {
     private static final String ACQUIRE_PATH = "/acquire";
     private static final String KEY_ARG_NAME = "key";
     private static final String NUM_ARG_NAME = "n";
+
+    private static final String PARTITION_PATH = "/partition_number";
 
     private static final String ARG_KEY_REQUIRED_MSG = "argument of '" + KEY_ARG_NAME + "' is required";
 
@@ -193,7 +197,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
     }
 
-    public class HttpChannelHandler extends SimpleChannelInboundHandler<Object> {
+    public class HttpChannelHandler extends ChannelInboundHandlerAdapter {
         private HttpRequest request;
         private boolean keepAlive;
 
@@ -203,9 +207,9 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
             if (msg instanceof HttpRequest) {
-                HttpRequest request = this.request = (HttpRequest) msg;
+                this.request = (HttpRequest) msg;
                 this.keepAlive = HttpUtil.isKeepAlive(request);
                 if (HttpUtil.is100ContinueExpected(request)) {
                     send100Continue(ctx);
@@ -213,25 +217,37 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             }
 
             if (msg instanceof LastHttpContent) {
-                if (ACQUIRE_PATH.equals(getRawUri(request.uri()))) {
-                    Either<String, Pair<String, Long>> either = parseRequest(request);
-                    if (!either.isRight()) {
-                        writeResponse(ctx, keepAlive,
-                                new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST,
-                                        Unpooled.copiedBuffer(either.getLeft(), CharsetUtil.UTF_8)));
-                        return;
+                try {
+                    final String rawUrl = getRawUri(request.uri());
+                    if (ACQUIRE_PATH.equals(rawUrl)) {
+                        Either<String, Pair<String, Long>> either = parseRequest(request);
+                        if (!either.isRight()) {
+                            writeResponse(ctx, keepAlive,
+                                    new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST,
+                                            Unpooled.copiedBuffer(either.getLeft(), CharsetUtil.UTF_8)));
+                            return;
+                        }
+
+                        final String key = either.getRight().getKey();
+                        final long v = either.getRight().getValue();
+                        int i = tansService.squadIdOf(key);
+
+                        requestQueues[i].addRequest(key, v, this.keepAlive, ctx);
                     }
-
-                    final String key = either.getRight().getKey();
-                    final long v = either.getRight().getValue();
-                    int i = tansService.squadIdOf(key);
-
-                    requestQueues[i].addRequest(key, v, this.keepAlive, ctx);
+                    else if (PARTITION_PATH.equals(rawUrl)) {
+                        String s = Integer.toString(config.jaxConfig().partitionNumber());
+                        writeResponse(ctx, keepAlive,
+                                new DefaultFullHttpResponse(HTTP_1_1, OK,
+                                        Unpooled.copiedBuffer(s + "\r\n", CharsetUtil.UTF_8)));
+                    }
+                    else {
+                        FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND,
+                                NOT_FOUND_BYTEBUF.retainedDuplicate());
+                        writeResponse(ctx, keepAlive, response);
+                    }
                 }
-                else {
-                    FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND,
-                            NOT_FOUND_BYTEBUF);
-                    writeResponse(ctx, keepAlive, response);
+                finally {
+                    ReferenceCountUtil.release(request);
                 }
             }
         }
@@ -321,7 +337,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
         private synchronized void addRequest(String key, long v, boolean keepAlive, ChannelHandlerContext ctx) {
             if (logger.isTraceEnabled()) {
-                logger.trace("RequestQueue accept request {} {} {}", key, v, keepAlive);
+                logger.trace("S{} RequestQueue accept request {} {} {}", squadId, key, v, keepAlive);
             }
             HttpApiService.this.requestCounter.inc();
             HttpApiService.this.requestSlideCounter.recordAtNow(1);
@@ -338,7 +354,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
         private synchronized void click(long current) {
             if (t0 > 0 && current - t0 >= 2) { //2 ms
-                logger.trace("Queue processEvent waiting tasks when timeout");
+                logger.trace("S{}: Queue processEvent waiting tasks when timeout", squadId);
                 processRequests();
             }
         }
@@ -376,24 +392,31 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                 errorResponse = createResponse(INTERNAL_SERVER_ERROR, "INTERNAL ERROR");
             }
 
-            for (int i = 0; i < requests.size(); i++) {
-                TansRequest task = tasks.get(i);
+            try {
+                for (int i = 0; i < requests.size(); i++) {
+                    TansRequest task = tasks.get(i);
 
-                FullHttpResponse response;
+                    FullHttpResponse response;
+                    if (errorResponse != null) {
+                        response = errorResponse.retainedDuplicate();
+                    }
+                    else if (otherLeaderId >= 0) {
+                        response = createRedirectResponse(otherLeaderId, task.keyLong.key(), task.keyLong.value());
+                    }
+                    else {
+                        LongRange r = rx.get(i);
+                        String content = task.keyLong.key() + "," + r.low() + "," + r.high();
+                        response = createResponse(OK, content);
+                    }
+
+                    logger.trace("write response ");
+                    writeResponse(task.ctx, task.keepAlive, response);
+                }
+            }
+            finally {
                 if (errorResponse != null) {
-                    response = errorResponse;
+                    ReferenceCountUtil.release(errorResponse);
                 }
-                else if (otherLeaderId >= 0) {
-                    response = createRedirectResponse(otherLeaderId, task.keyLong.key(), task.keyLong.value());
-                }
-                else {
-                    LongRange r = rx.get(i);
-                    String content = task.keyLong.key() +"," + r.low() + "," + r.high();
-                    response = createResponse(OK, content);
-                }
-
-                logger.trace("write response ");
-                writeResponse(task.ctx, task.keepAlive, response);
             }
         }
     }

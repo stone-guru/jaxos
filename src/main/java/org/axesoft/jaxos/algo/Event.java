@@ -159,6 +159,7 @@ public abstract class Event {
         private int maxBallot;
         private int acceptedBallot;
         private ByteString acceptedValue;
+        private int valueProposer;
         private long chosenInstanceId;
 
         public static class Builder {
@@ -186,6 +187,11 @@ public abstract class Event {
 
             public Builder setChosenInstanceId(long i) {
                 resp.chosenInstanceId = i;
+                return this;
+            }
+
+            public Builder setValueProposer(int i){
+                resp.valueProposer = i;
                 return this;
             }
 
@@ -224,6 +230,10 @@ public abstract class Event {
             return this.chosenInstanceId;
         }
 
+        public int valueProposer(){
+            return this.valueProposer;
+        }
+
         @Override
         public String toString() {
             return "PrepareResponse{" + super.toString() +
@@ -231,6 +241,7 @@ public abstract class Event {
                     ", maxBallot=" + maxBallot +
                     ", acceptedBallot=" + acceptedBallot +
                     ", acceptedValue=B[" + acceptedValue.size() + "]" +
+                    ", valueProposer=" + valueProposer +
                     ", chosenInstanceId=" + chosenInstanceId +
                     '}';
         }
@@ -240,11 +251,13 @@ public abstract class Event {
         private int ballot;
         private int lastChosenBallot;
         private ByteString value;
+        private int valueProposer;
 
-        public AcceptRequest(int sender, int squadId, long instanceId, int round, int ballot, ByteString value, int lastChosenBallot) {
+        public AcceptRequest(int sender, int squadId, long instanceId, int round, int ballot, ByteString value, int valueProposer, int lastChosenBallot) {
             super(sender, squadId, instanceId, round);
             this.ballot = ballot;
             this.value = checkNotNull(value);
+            this.valueProposer = valueProposer;
             this.lastChosenBallot = lastChosenBallot;
         }
 
@@ -270,10 +283,15 @@ public abstract class Event {
             return this.instanceId() - 1;
         }
 
+        public int valueProposer(){
+            return this.valueProposer;
+        }
+
         @Override
         public String toString() {
             return "AcceptRequest{" + super.toString() +
                     ", ballot=" + ballot +
+                    ", valueProposer=" + valueProposer +
                     ", value=B[" + value.size() + "]" +
                     ", lastChosenBallot=" + lastChosenBallot +
                     '}';

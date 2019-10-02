@@ -1,4 +1,4 @@
-package org.axesoft.tans.server;
+package org.axesoft.jaxos.algo;
 
 public class RedirectException extends  RuntimeException {
     private int serverId;

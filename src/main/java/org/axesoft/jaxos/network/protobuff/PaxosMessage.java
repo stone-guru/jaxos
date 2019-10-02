@@ -225,26 +225,26 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>.org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
+     * <code>optional .org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
      */
     int getCodeValue();
     /**
-     * <code>.org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
+     * <code>optional .org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
      */
     org.axesoft.jaxos.network.protobuff.PaxosMessage.Code getCode();
 
     /**
-     * <code>int32 sender = 2;</code>
+     * <code>optional int32 sender = 2;</code>
      */
     int getSender();
 
     /**
-     * <code>int64 timestamp = 3;</code>
+     * <code>optional int64 timestamp = 3;</code>
      */
     long getTimestamp();
 
     /**
-     * <code>bytes body = 4;</code>
+     * <code>optional bytes body = 4;</code>
      */
     com.google.protobuf.ByteString getBody();
   }
@@ -255,38 +255,28 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.DataGram)
       DataGramOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use DataGram.newBuilder() to construct.
     private DataGram(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private DataGram() {
       code_ = 0;
+      sender_ = 0;
+      timestamp_ = 0L;
       body_ = com.google.protobuf.ByteString.EMPTY;
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new DataGram();
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private DataGram(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
+      int mutable_bitField0_ = 0;
       try {
         boolean done = false;
         while (!done) {
@@ -295,6 +285,12 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
               int rawValue = input.readEnum();
 
@@ -316,13 +312,6 @@ public final class PaxosMessage {
               body_ = input.readBytes();
               break;
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -331,7 +320,6 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -340,7 +328,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_DataGram_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_DataGram_fieldAccessorTable
@@ -351,16 +338,15 @@ public final class PaxosMessage {
     public static final int CODE_FIELD_NUMBER = 1;
     private int code_;
     /**
-     * <code>.org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
+     * <code>optional .org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
      */
     public int getCodeValue() {
       return code_;
     }
     /**
-     * <code>.org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
+     * <code>optional .org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
      */
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.Code getCode() {
-      @SuppressWarnings("deprecation")
       org.axesoft.jaxos.network.protobuff.PaxosMessage.Code result = org.axesoft.jaxos.network.protobuff.PaxosMessage.Code.valueOf(code_);
       return result == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.Code.UNRECOGNIZED : result;
     }
@@ -368,7 +354,7 @@ public final class PaxosMessage {
     public static final int SENDER_FIELD_NUMBER = 2;
     private int sender_;
     /**
-     * <code>int32 sender = 2;</code>
+     * <code>optional int32 sender = 2;</code>
      */
     public int getSender() {
       return sender_;
@@ -377,7 +363,7 @@ public final class PaxosMessage {
     public static final int TIMESTAMP_FIELD_NUMBER = 3;
     private long timestamp_;
     /**
-     * <code>int64 timestamp = 3;</code>
+     * <code>optional int64 timestamp = 3;</code>
      */
     public long getTimestamp() {
       return timestamp_;
@@ -386,14 +372,13 @@ public final class PaxosMessage {
     public static final int BODY_FIELD_NUMBER = 4;
     private com.google.protobuf.ByteString body_;
     /**
-     * <code>bytes body = 4;</code>
+     * <code>optional bytes body = 4;</code>
      */
     public com.google.protobuf.ByteString getBody() {
       return body_;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -403,7 +388,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (code_ != org.axesoft.jaxos.network.protobuff.PaxosMessage.Code.NONE.getNumber()) {
@@ -418,10 +402,8 @@ public final class PaxosMessage {
       if (!body_.isEmpty()) {
         output.writeBytes(4, body_);
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -443,11 +425,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(4, body_);
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -458,15 +440,15 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram) obj;
 
-      if (code_ != other.code_) return false;
-      if (getSender()
-          != other.getSender()) return false;
-      if (getTimestamp()
-          != other.getTimestamp()) return false;
-      if (!getBody()
-          .equals(other.getBody())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && code_ == other.code_;
+      result = result && (getSender()
+          == other.getSender());
+      result = result && (getTimestamp()
+          == other.getTimestamp());
+      result = result && getBody()
+          .equals(other.getBody());
+      return result;
     }
 
     @java.lang.Override
@@ -475,7 +457,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + CODE_FIELD_NUMBER;
       hash = (53 * hash) + code_;
       hash = (37 * hash) + SENDER_FIELD_NUMBER;
@@ -490,17 +472,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -560,7 +531,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -568,7 +538,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -592,7 +561,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_DataGram_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_DataGram_fieldAccessorTable
@@ -615,7 +583,6 @@ public final class PaxosMessage {
                 .alwaysUseFieldBuilders) {
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         code_ = 0;
@@ -629,18 +596,15 @@ public final class PaxosMessage {
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_DataGram_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram result = buildPartial();
         if (!result.isInitialized()) {
@@ -649,7 +613,6 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram(this);
         result.code_ = code_;
@@ -660,39 +623,32 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram)other);
@@ -716,17 +672,14 @@ public final class PaxosMessage {
         if (other.getBody() != com.google.protobuf.ByteString.EMPTY) {
           setBody(other.getBody());
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -747,13 +700,13 @@ public final class PaxosMessage {
 
       private int code_ = 0;
       /**
-       * <code>.org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
+       * <code>optional .org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
        */
       public int getCodeValue() {
         return code_;
       }
       /**
-       * <code>.org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
+       * <code>optional .org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
        */
       public Builder setCodeValue(int value) {
         code_ = value;
@@ -761,15 +714,14 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>.org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
+       * <code>optional .org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
        */
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.Code getCode() {
-        @SuppressWarnings("deprecation")
         org.axesoft.jaxos.network.protobuff.PaxosMessage.Code result = org.axesoft.jaxos.network.protobuff.PaxosMessage.Code.valueOf(code_);
         return result == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.Code.UNRECOGNIZED : result;
       }
       /**
-       * <code>.org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
+       * <code>optional .org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
        */
       public Builder setCode(org.axesoft.jaxos.network.protobuff.PaxosMessage.Code value) {
         if (value == null) {
@@ -781,7 +733,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>.org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
+       * <code>optional .org.axesoft.jaxos.network.protobuff.Code code = 1;</code>
        */
       public Builder clearCode() {
         
@@ -792,13 +744,13 @@ public final class PaxosMessage {
 
       private int sender_ ;
       /**
-       * <code>int32 sender = 2;</code>
+       * <code>optional int32 sender = 2;</code>
        */
       public int getSender() {
         return sender_;
       }
       /**
-       * <code>int32 sender = 2;</code>
+       * <code>optional int32 sender = 2;</code>
        */
       public Builder setSender(int value) {
         
@@ -807,7 +759,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 sender = 2;</code>
+       * <code>optional int32 sender = 2;</code>
        */
       public Builder clearSender() {
         
@@ -818,13 +770,13 @@ public final class PaxosMessage {
 
       private long timestamp_ ;
       /**
-       * <code>int64 timestamp = 3;</code>
+       * <code>optional int64 timestamp = 3;</code>
        */
       public long getTimestamp() {
         return timestamp_;
       }
       /**
-       * <code>int64 timestamp = 3;</code>
+       * <code>optional int64 timestamp = 3;</code>
        */
       public Builder setTimestamp(long value) {
         
@@ -833,7 +785,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 timestamp = 3;</code>
+       * <code>optional int64 timestamp = 3;</code>
        */
       public Builder clearTimestamp() {
         
@@ -844,13 +796,13 @@ public final class PaxosMessage {
 
       private com.google.protobuf.ByteString body_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>bytes body = 4;</code>
+       * <code>optional bytes body = 4;</code>
        */
       public com.google.protobuf.ByteString getBody() {
         return body_;
       }
       /**
-       * <code>bytes body = 4;</code>
+       * <code>optional bytes body = 4;</code>
        */
       public Builder setBody(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -862,7 +814,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>bytes body = 4;</code>
+       * <code>optional bytes body = 4;</code>
        */
       public Builder clearBody() {
         
@@ -870,16 +822,14 @@ public final class PaxosMessage {
         onChanged();
         return this;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -898,12 +848,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<DataGram>
         PARSER = new com.google.protobuf.AbstractParser<DataGram>() {
-      @java.lang.Override
       public DataGram parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new DataGram(input, extensionRegistry);
+          return new DataGram(input, extensionRegistry);
       }
     };
 
@@ -916,7 +865,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.DataGram getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -928,27 +876,27 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     int getSquadId();
 
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     long getInstanceId();
 
     /**
-     * <code>int32 round = 3;</code>
+     * <code>optional int32 round = 3;</code>
      */
     int getRound();
 
     /**
-     * <code>int32 proposal = 4;</code>
+     * <code>optional int32 proposal = 4;</code>
      */
     int getProposal();
 
     /**
-     * <code>int32 lastChosenProposal = 5;</code>
+     * <code>optional int32 lastChosenProposal = 5;</code>
      */
     int getLastChosenProposal();
   }
@@ -959,36 +907,29 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.PrepareReq)
       PrepareReqOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use PrepareReq.newBuilder() to construct.
     private PrepareReq(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private PrepareReq() {
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new PrepareReq();
+      squadId_ = 0;
+      instanceId_ = 0L;
+      round_ = 0;
+      proposal_ = 0;
+      lastChosenProposal_ = 0;
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private PrepareReq(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
+      int mutable_bitField0_ = 0;
       try {
         boolean done = false;
         while (!done) {
@@ -997,6 +938,12 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
 
               squadId_ = input.readInt32();
@@ -1022,13 +969,6 @@ public final class PaxosMessage {
               lastChosenProposal_ = input.readInt32();
               break;
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -1037,7 +977,6 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -1046,7 +985,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable
@@ -1057,7 +995,7 @@ public final class PaxosMessage {
     public static final int SQUADID_FIELD_NUMBER = 1;
     private int squadId_;
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     public int getSquadId() {
       return squadId_;
@@ -1066,7 +1004,7 @@ public final class PaxosMessage {
     public static final int INSTANCEID_FIELD_NUMBER = 2;
     private long instanceId_;
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     public long getInstanceId() {
       return instanceId_;
@@ -1075,7 +1013,7 @@ public final class PaxosMessage {
     public static final int ROUND_FIELD_NUMBER = 3;
     private int round_;
     /**
-     * <code>int32 round = 3;</code>
+     * <code>optional int32 round = 3;</code>
      */
     public int getRound() {
       return round_;
@@ -1084,7 +1022,7 @@ public final class PaxosMessage {
     public static final int PROPOSAL_FIELD_NUMBER = 4;
     private int proposal_;
     /**
-     * <code>int32 proposal = 4;</code>
+     * <code>optional int32 proposal = 4;</code>
      */
     public int getProposal() {
       return proposal_;
@@ -1093,14 +1031,13 @@ public final class PaxosMessage {
     public static final int LASTCHOSENPROPOSAL_FIELD_NUMBER = 5;
     private int lastChosenProposal_;
     /**
-     * <code>int32 lastChosenProposal = 5;</code>
+     * <code>optional int32 lastChosenProposal = 5;</code>
      */
     public int getLastChosenProposal() {
       return lastChosenProposal_;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -1110,7 +1047,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (squadId_ != 0) {
@@ -1128,10 +1064,8 @@ public final class PaxosMessage {
       if (lastChosenProposal_ != 0) {
         output.writeInt32(5, lastChosenProposal_);
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -1157,11 +1091,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(5, lastChosenProposal_);
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -1172,18 +1106,18 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq) obj;
 
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (getInstanceId()
-          != other.getInstanceId()) return false;
-      if (getRound()
-          != other.getRound()) return false;
-      if (getProposal()
-          != other.getProposal()) return false;
-      if (getLastChosenProposal()
-          != other.getLastChosenProposal()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && (getSquadId()
+          == other.getSquadId());
+      result = result && (getInstanceId()
+          == other.getInstanceId());
+      result = result && (getRound()
+          == other.getRound());
+      result = result && (getProposal()
+          == other.getProposal());
+      result = result && (getLastChosenProposal()
+          == other.getLastChosenProposal());
+      return result;
     }
 
     @java.lang.Override
@@ -1192,7 +1126,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
       hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
@@ -1209,17 +1143,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -1279,7 +1202,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -1287,7 +1209,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -1311,7 +1232,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable
@@ -1334,7 +1254,6 @@ public final class PaxosMessage {
                 .alwaysUseFieldBuilders) {
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         squadId_ = 0;
@@ -1350,18 +1269,15 @@ public final class PaxosMessage {
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq result = buildPartial();
         if (!result.isInitialized()) {
@@ -1370,7 +1286,6 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq(this);
         result.squadId_ = squadId_;
@@ -1382,39 +1297,32 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq)other);
@@ -1441,17 +1349,14 @@ public final class PaxosMessage {
         if (other.getLastChosenProposal() != 0) {
           setLastChosenProposal(other.getLastChosenProposal());
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1472,13 +1377,13 @@ public final class PaxosMessage {
 
       private int squadId_ ;
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public int getSquadId() {
         return squadId_;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder setSquadId(int value) {
         
@@ -1487,7 +1392,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder clearSquadId() {
         
@@ -1498,13 +1403,13 @@ public final class PaxosMessage {
 
       private long instanceId_ ;
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public long getInstanceId() {
         return instanceId_;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder setInstanceId(long value) {
         
@@ -1513,7 +1418,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder clearInstanceId() {
         
@@ -1524,13 +1429,13 @@ public final class PaxosMessage {
 
       private int round_ ;
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public int getRound() {
         return round_;
       }
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public Builder setRound(int value) {
         
@@ -1539,7 +1444,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public Builder clearRound() {
         
@@ -1550,13 +1455,13 @@ public final class PaxosMessage {
 
       private int proposal_ ;
       /**
-       * <code>int32 proposal = 4;</code>
+       * <code>optional int32 proposal = 4;</code>
        */
       public int getProposal() {
         return proposal_;
       }
       /**
-       * <code>int32 proposal = 4;</code>
+       * <code>optional int32 proposal = 4;</code>
        */
       public Builder setProposal(int value) {
         
@@ -1565,7 +1470,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 proposal = 4;</code>
+       * <code>optional int32 proposal = 4;</code>
        */
       public Builder clearProposal() {
         
@@ -1576,13 +1481,13 @@ public final class PaxosMessage {
 
       private int lastChosenProposal_ ;
       /**
-       * <code>int32 lastChosenProposal = 5;</code>
+       * <code>optional int32 lastChosenProposal = 5;</code>
        */
       public int getLastChosenProposal() {
         return lastChosenProposal_;
       }
       /**
-       * <code>int32 lastChosenProposal = 5;</code>
+       * <code>optional int32 lastChosenProposal = 5;</code>
        */
       public Builder setLastChosenProposal(int value) {
         
@@ -1591,7 +1496,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 lastChosenProposal = 5;</code>
+       * <code>optional int32 lastChosenProposal = 5;</code>
        */
       public Builder clearLastChosenProposal() {
         
@@ -1599,16 +1504,14 @@ public final class PaxosMessage {
         onChanged();
         return this;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -1627,12 +1530,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<PrepareReq>
         PARSER = new com.google.protobuf.AbstractParser<PrepareReq>() {
-      @java.lang.Override
       public PrepareReq parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PrepareReq(input, extensionRegistry);
+          return new PrepareReq(input, extensionRegistry);
       }
     };
 
@@ -1645,7 +1547,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -1657,42 +1558,47 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     int getSquadId();
 
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     long getInstanceId();
 
     /**
-     * <code>int32 round = 3;</code>
+     * <code>optional int32 round = 3;</code>
      */
     int getRound();
 
     /**
-     * <code>int32 result = 4;</code>
+     * <code>optional int32 result = 4;</code>
      */
     int getResult();
 
     /**
-     * <code>int32 maxProposal = 5;</code>
+     * <code>optional int32 maxProposal = 5;</code>
      */
     int getMaxProposal();
 
     /**
-     * <code>int32 acceptedProposal = 6;</code>
+     * <code>optional int32 acceptedProposal = 6;</code>
      */
     int getAcceptedProposal();
 
     /**
-     * <code>bytes acceptedValue = 7;</code>
+     * <code>optional bytes acceptedValue = 7;</code>
      */
     com.google.protobuf.ByteString getAcceptedValue();
 
     /**
-     * <code>int64 chosenInstanceId = 8;</code>
+     * <code>optional int32 valueProposer = 8;</code>
+     */
+    int getValueProposer();
+
+    /**
+     * <code>optional int64 chosenInstanceId = 9;</code>
      */
     long getChosenInstanceId();
   }
@@ -1703,37 +1609,33 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.PrepareRes)
       PrepareResOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use PrepareRes.newBuilder() to construct.
     private PrepareRes(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private PrepareRes() {
+      squadId_ = 0;
+      instanceId_ = 0L;
+      round_ = 0;
+      result_ = 0;
+      maxProposal_ = 0;
+      acceptedProposal_ = 0;
       acceptedValue_ = com.google.protobuf.ByteString.EMPTY;
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new PrepareRes();
+      valueProposer_ = 0;
+      chosenInstanceId_ = 0L;
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private PrepareRes(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
+      int mutable_bitField0_ = 0;
       try {
         boolean done = false;
         while (!done) {
@@ -1742,6 +1644,12 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
 
               squadId_ = input.readInt32();
@@ -1779,14 +1687,12 @@ public final class PaxosMessage {
             }
             case 64: {
 
-              chosenInstanceId_ = input.readInt64();
+              valueProposer_ = input.readInt32();
               break;
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
+            case 72: {
+
+              chosenInstanceId_ = input.readInt64();
               break;
             }
           }
@@ -1797,7 +1703,6 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -1806,7 +1711,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_fieldAccessorTable
@@ -1817,7 +1721,7 @@ public final class PaxosMessage {
     public static final int SQUADID_FIELD_NUMBER = 1;
     private int squadId_;
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     public int getSquadId() {
       return squadId_;
@@ -1826,7 +1730,7 @@ public final class PaxosMessage {
     public static final int INSTANCEID_FIELD_NUMBER = 2;
     private long instanceId_;
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     public long getInstanceId() {
       return instanceId_;
@@ -1835,7 +1739,7 @@ public final class PaxosMessage {
     public static final int ROUND_FIELD_NUMBER = 3;
     private int round_;
     /**
-     * <code>int32 round = 3;</code>
+     * <code>optional int32 round = 3;</code>
      */
     public int getRound() {
       return round_;
@@ -1844,7 +1748,7 @@ public final class PaxosMessage {
     public static final int RESULT_FIELD_NUMBER = 4;
     private int result_;
     /**
-     * <code>int32 result = 4;</code>
+     * <code>optional int32 result = 4;</code>
      */
     public int getResult() {
       return result_;
@@ -1853,7 +1757,7 @@ public final class PaxosMessage {
     public static final int MAXPROPOSAL_FIELD_NUMBER = 5;
     private int maxProposal_;
     /**
-     * <code>int32 maxProposal = 5;</code>
+     * <code>optional int32 maxProposal = 5;</code>
      */
     public int getMaxProposal() {
       return maxProposal_;
@@ -1862,7 +1766,7 @@ public final class PaxosMessage {
     public static final int ACCEPTEDPROPOSAL_FIELD_NUMBER = 6;
     private int acceptedProposal_;
     /**
-     * <code>int32 acceptedProposal = 6;</code>
+     * <code>optional int32 acceptedProposal = 6;</code>
      */
     public int getAcceptedProposal() {
       return acceptedProposal_;
@@ -1871,23 +1775,31 @@ public final class PaxosMessage {
     public static final int ACCEPTEDVALUE_FIELD_NUMBER = 7;
     private com.google.protobuf.ByteString acceptedValue_;
     /**
-     * <code>bytes acceptedValue = 7;</code>
+     * <code>optional bytes acceptedValue = 7;</code>
      */
     public com.google.protobuf.ByteString getAcceptedValue() {
       return acceptedValue_;
     }
 
-    public static final int CHOSENINSTANCEID_FIELD_NUMBER = 8;
+    public static final int VALUEPROPOSER_FIELD_NUMBER = 8;
+    private int valueProposer_;
+    /**
+     * <code>optional int32 valueProposer = 8;</code>
+     */
+    public int getValueProposer() {
+      return valueProposer_;
+    }
+
+    public static final int CHOSENINSTANCEID_FIELD_NUMBER = 9;
     private long chosenInstanceId_;
     /**
-     * <code>int64 chosenInstanceId = 8;</code>
+     * <code>optional int64 chosenInstanceId = 9;</code>
      */
     public long getChosenInstanceId() {
       return chosenInstanceId_;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -1897,7 +1809,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (squadId_ != 0) {
@@ -1921,13 +1832,14 @@ public final class PaxosMessage {
       if (!acceptedValue_.isEmpty()) {
         output.writeBytes(7, acceptedValue_);
       }
-      if (chosenInstanceId_ != 0L) {
-        output.writeInt64(8, chosenInstanceId_);
+      if (valueProposer_ != 0) {
+        output.writeInt32(8, valueProposer_);
       }
-      unknownFields.writeTo(output);
+      if (chosenInstanceId_ != 0L) {
+        output.writeInt64(9, chosenInstanceId_);
+      }
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -1961,15 +1873,19 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(7, acceptedValue_);
       }
+      if (valueProposer_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(8, valueProposer_);
+      }
       if (chosenInstanceId_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(8, chosenInstanceId_);
+          .computeInt64Size(9, chosenInstanceId_);
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -1980,24 +1896,26 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes) obj;
 
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (getInstanceId()
-          != other.getInstanceId()) return false;
-      if (getRound()
-          != other.getRound()) return false;
-      if (getResult()
-          != other.getResult()) return false;
-      if (getMaxProposal()
-          != other.getMaxProposal()) return false;
-      if (getAcceptedProposal()
-          != other.getAcceptedProposal()) return false;
-      if (!getAcceptedValue()
-          .equals(other.getAcceptedValue())) return false;
-      if (getChosenInstanceId()
-          != other.getChosenInstanceId()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && (getSquadId()
+          == other.getSquadId());
+      result = result && (getInstanceId()
+          == other.getInstanceId());
+      result = result && (getRound()
+          == other.getRound());
+      result = result && (getResult()
+          == other.getResult());
+      result = result && (getMaxProposal()
+          == other.getMaxProposal());
+      result = result && (getAcceptedProposal()
+          == other.getAcceptedProposal());
+      result = result && getAcceptedValue()
+          .equals(other.getAcceptedValue());
+      result = result && (getValueProposer()
+          == other.getValueProposer());
+      result = result && (getChosenInstanceId()
+          == other.getChosenInstanceId());
+      return result;
     }
 
     @java.lang.Override
@@ -2006,7 +1924,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
       hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
@@ -2022,6 +1940,8 @@ public final class PaxosMessage {
       hash = (53 * hash) + getAcceptedProposal();
       hash = (37 * hash) + ACCEPTEDVALUE_FIELD_NUMBER;
       hash = (53 * hash) + getAcceptedValue().hashCode();
+      hash = (37 * hash) + VALUEPROPOSER_FIELD_NUMBER;
+      hash = (53 * hash) + getValueProposer();
       hash = (37 * hash) + CHOSENINSTANCEID_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getChosenInstanceId());
@@ -2030,17 +1950,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -2100,7 +2009,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -2108,7 +2016,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -2132,7 +2039,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_fieldAccessorTable
@@ -2155,7 +2061,6 @@ public final class PaxosMessage {
                 .alwaysUseFieldBuilders) {
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         squadId_ = 0;
@@ -2172,23 +2077,22 @@ public final class PaxosMessage {
 
         acceptedValue_ = com.google.protobuf.ByteString.EMPTY;
 
+        valueProposer_ = 0;
+
         chosenInstanceId_ = 0L;
 
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes result = buildPartial();
         if (!result.isInitialized()) {
@@ -2197,7 +2101,6 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes(this);
         result.squadId_ = squadId_;
@@ -2207,44 +2110,38 @@ public final class PaxosMessage {
         result.maxProposal_ = maxProposal_;
         result.acceptedProposal_ = acceptedProposal_;
         result.acceptedValue_ = acceptedValue_;
+        result.valueProposer_ = valueProposer_;
         result.chosenInstanceId_ = chosenInstanceId_;
         onBuilt();
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes)other);
@@ -2277,20 +2174,20 @@ public final class PaxosMessage {
         if (other.getAcceptedValue() != com.google.protobuf.ByteString.EMPTY) {
           setAcceptedValue(other.getAcceptedValue());
         }
+        if (other.getValueProposer() != 0) {
+          setValueProposer(other.getValueProposer());
+        }
         if (other.getChosenInstanceId() != 0L) {
           setChosenInstanceId(other.getChosenInstanceId());
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -2311,13 +2208,13 @@ public final class PaxosMessage {
 
       private int squadId_ ;
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public int getSquadId() {
         return squadId_;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder setSquadId(int value) {
         
@@ -2326,7 +2223,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder clearSquadId() {
         
@@ -2337,13 +2234,13 @@ public final class PaxosMessage {
 
       private long instanceId_ ;
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public long getInstanceId() {
         return instanceId_;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder setInstanceId(long value) {
         
@@ -2352,7 +2249,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder clearInstanceId() {
         
@@ -2363,13 +2260,13 @@ public final class PaxosMessage {
 
       private int round_ ;
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public int getRound() {
         return round_;
       }
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public Builder setRound(int value) {
         
@@ -2378,7 +2275,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public Builder clearRound() {
         
@@ -2389,13 +2286,13 @@ public final class PaxosMessage {
 
       private int result_ ;
       /**
-       * <code>int32 result = 4;</code>
+       * <code>optional int32 result = 4;</code>
        */
       public int getResult() {
         return result_;
       }
       /**
-       * <code>int32 result = 4;</code>
+       * <code>optional int32 result = 4;</code>
        */
       public Builder setResult(int value) {
         
@@ -2404,7 +2301,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 result = 4;</code>
+       * <code>optional int32 result = 4;</code>
        */
       public Builder clearResult() {
         
@@ -2415,13 +2312,13 @@ public final class PaxosMessage {
 
       private int maxProposal_ ;
       /**
-       * <code>int32 maxProposal = 5;</code>
+       * <code>optional int32 maxProposal = 5;</code>
        */
       public int getMaxProposal() {
         return maxProposal_;
       }
       /**
-       * <code>int32 maxProposal = 5;</code>
+       * <code>optional int32 maxProposal = 5;</code>
        */
       public Builder setMaxProposal(int value) {
         
@@ -2430,7 +2327,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 maxProposal = 5;</code>
+       * <code>optional int32 maxProposal = 5;</code>
        */
       public Builder clearMaxProposal() {
         
@@ -2441,13 +2338,13 @@ public final class PaxosMessage {
 
       private int acceptedProposal_ ;
       /**
-       * <code>int32 acceptedProposal = 6;</code>
+       * <code>optional int32 acceptedProposal = 6;</code>
        */
       public int getAcceptedProposal() {
         return acceptedProposal_;
       }
       /**
-       * <code>int32 acceptedProposal = 6;</code>
+       * <code>optional int32 acceptedProposal = 6;</code>
        */
       public Builder setAcceptedProposal(int value) {
         
@@ -2456,7 +2353,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 acceptedProposal = 6;</code>
+       * <code>optional int32 acceptedProposal = 6;</code>
        */
       public Builder clearAcceptedProposal() {
         
@@ -2467,13 +2364,13 @@ public final class PaxosMessage {
 
       private com.google.protobuf.ByteString acceptedValue_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>bytes acceptedValue = 7;</code>
+       * <code>optional bytes acceptedValue = 7;</code>
        */
       public com.google.protobuf.ByteString getAcceptedValue() {
         return acceptedValue_;
       }
       /**
-       * <code>bytes acceptedValue = 7;</code>
+       * <code>optional bytes acceptedValue = 7;</code>
        */
       public Builder setAcceptedValue(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -2485,7 +2382,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>bytes acceptedValue = 7;</code>
+       * <code>optional bytes acceptedValue = 7;</code>
        */
       public Builder clearAcceptedValue() {
         
@@ -2494,15 +2391,41 @@ public final class PaxosMessage {
         return this;
       }
 
+      private int valueProposer_ ;
+      /**
+       * <code>optional int32 valueProposer = 8;</code>
+       */
+      public int getValueProposer() {
+        return valueProposer_;
+      }
+      /**
+       * <code>optional int32 valueProposer = 8;</code>
+       */
+      public Builder setValueProposer(int value) {
+        
+        valueProposer_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 valueProposer = 8;</code>
+       */
+      public Builder clearValueProposer() {
+        
+        valueProposer_ = 0;
+        onChanged();
+        return this;
+      }
+
       private long chosenInstanceId_ ;
       /**
-       * <code>int64 chosenInstanceId = 8;</code>
+       * <code>optional int64 chosenInstanceId = 9;</code>
        */
       public long getChosenInstanceId() {
         return chosenInstanceId_;
       }
       /**
-       * <code>int64 chosenInstanceId = 8;</code>
+       * <code>optional int64 chosenInstanceId = 9;</code>
        */
       public Builder setChosenInstanceId(long value) {
         
@@ -2511,7 +2434,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 chosenInstanceId = 8;</code>
+       * <code>optional int64 chosenInstanceId = 9;</code>
        */
       public Builder clearChosenInstanceId() {
         
@@ -2519,16 +2442,14 @@ public final class PaxosMessage {
         onChanged();
         return this;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -2547,12 +2468,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<PrepareRes>
         PARSER = new com.google.protobuf.AbstractParser<PrepareRes>() {
-      @java.lang.Override
       public PrepareRes parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PrepareRes(input, extensionRegistry);
+          return new PrepareRes(input, extensionRegistry);
       }
     };
 
@@ -2565,7 +2485,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareRes getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -2577,32 +2496,37 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     int getSquadId();
 
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     long getInstanceId();
 
     /**
-     * <code>int32 round = 3;</code>
+     * <code>optional int32 round = 3;</code>
      */
     int getRound();
 
     /**
-     * <code>int32 proposal = 4;</code>
+     * <code>optional int32 proposal = 4;</code>
      */
     int getProposal();
 
     /**
-     * <code>bytes value = 5;</code>
+     * <code>optional bytes value = 5;</code>
      */
     com.google.protobuf.ByteString getValue();
 
     /**
-     * <code>int32 lastChosenProposal = 6;</code>
+     * <code>optional int32 valueProposer = 6;</code>
+     */
+    int getValueProposer();
+
+    /**
+     * <code>optional int32 lastChosenProposal = 7;</code>
      */
     int getLastChosenProposal();
   }
@@ -2613,37 +2537,31 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.AcceptReq)
       AcceptReqOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use AcceptReq.newBuilder() to construct.
     private AcceptReq(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private AcceptReq() {
+      squadId_ = 0;
+      instanceId_ = 0L;
+      round_ = 0;
+      proposal_ = 0;
       value_ = com.google.protobuf.ByteString.EMPTY;
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new AcceptReq();
+      valueProposer_ = 0;
+      lastChosenProposal_ = 0;
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private AcceptReq(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
+      int mutable_bitField0_ = 0;
       try {
         boolean done = false;
         while (!done) {
@@ -2652,6 +2570,12 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
 
               squadId_ = input.readInt32();
@@ -2679,14 +2603,12 @@ public final class PaxosMessage {
             }
             case 48: {
 
-              lastChosenProposal_ = input.readInt32();
+              valueProposer_ = input.readInt32();
               break;
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
+            case 56: {
+
+              lastChosenProposal_ = input.readInt32();
               break;
             }
           }
@@ -2697,7 +2619,6 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -2706,7 +2627,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_fieldAccessorTable
@@ -2717,7 +2637,7 @@ public final class PaxosMessage {
     public static final int SQUADID_FIELD_NUMBER = 1;
     private int squadId_;
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     public int getSquadId() {
       return squadId_;
@@ -2726,7 +2646,7 @@ public final class PaxosMessage {
     public static final int INSTANCEID_FIELD_NUMBER = 2;
     private long instanceId_;
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     public long getInstanceId() {
       return instanceId_;
@@ -2735,7 +2655,7 @@ public final class PaxosMessage {
     public static final int ROUND_FIELD_NUMBER = 3;
     private int round_;
     /**
-     * <code>int32 round = 3;</code>
+     * <code>optional int32 round = 3;</code>
      */
     public int getRound() {
       return round_;
@@ -2744,7 +2664,7 @@ public final class PaxosMessage {
     public static final int PROPOSAL_FIELD_NUMBER = 4;
     private int proposal_;
     /**
-     * <code>int32 proposal = 4;</code>
+     * <code>optional int32 proposal = 4;</code>
      */
     public int getProposal() {
       return proposal_;
@@ -2753,23 +2673,31 @@ public final class PaxosMessage {
     public static final int VALUE_FIELD_NUMBER = 5;
     private com.google.protobuf.ByteString value_;
     /**
-     * <code>bytes value = 5;</code>
+     * <code>optional bytes value = 5;</code>
      */
     public com.google.protobuf.ByteString getValue() {
       return value_;
     }
 
-    public static final int LASTCHOSENPROPOSAL_FIELD_NUMBER = 6;
+    public static final int VALUEPROPOSER_FIELD_NUMBER = 6;
+    private int valueProposer_;
+    /**
+     * <code>optional int32 valueProposer = 6;</code>
+     */
+    public int getValueProposer() {
+      return valueProposer_;
+    }
+
+    public static final int LASTCHOSENPROPOSAL_FIELD_NUMBER = 7;
     private int lastChosenProposal_;
     /**
-     * <code>int32 lastChosenProposal = 6;</code>
+     * <code>optional int32 lastChosenProposal = 7;</code>
      */
     public int getLastChosenProposal() {
       return lastChosenProposal_;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -2779,7 +2707,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (squadId_ != 0) {
@@ -2797,13 +2724,14 @@ public final class PaxosMessage {
       if (!value_.isEmpty()) {
         output.writeBytes(5, value_);
       }
-      if (lastChosenProposal_ != 0) {
-        output.writeInt32(6, lastChosenProposal_);
+      if (valueProposer_ != 0) {
+        output.writeInt32(6, valueProposer_);
       }
-      unknownFields.writeTo(output);
+      if (lastChosenProposal_ != 0) {
+        output.writeInt32(7, lastChosenProposal_);
+      }
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -2829,15 +2757,19 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(5, value_);
       }
+      if (valueProposer_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(6, valueProposer_);
+      }
       if (lastChosenProposal_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(6, lastChosenProposal_);
+          .computeInt32Size(7, lastChosenProposal_);
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -2848,20 +2780,22 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq) obj;
 
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (getInstanceId()
-          != other.getInstanceId()) return false;
-      if (getRound()
-          != other.getRound()) return false;
-      if (getProposal()
-          != other.getProposal()) return false;
-      if (!getValue()
-          .equals(other.getValue())) return false;
-      if (getLastChosenProposal()
-          != other.getLastChosenProposal()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && (getSquadId()
+          == other.getSquadId());
+      result = result && (getInstanceId()
+          == other.getInstanceId());
+      result = result && (getRound()
+          == other.getRound());
+      result = result && (getProposal()
+          == other.getProposal());
+      result = result && getValue()
+          .equals(other.getValue());
+      result = result && (getValueProposer()
+          == other.getValueProposer());
+      result = result && (getLastChosenProposal()
+          == other.getLastChosenProposal());
+      return result;
     }
 
     @java.lang.Override
@@ -2870,7 +2804,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
       hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
@@ -2882,6 +2816,8 @@ public final class PaxosMessage {
       hash = (53 * hash) + getProposal();
       hash = (37 * hash) + VALUE_FIELD_NUMBER;
       hash = (53 * hash) + getValue().hashCode();
+      hash = (37 * hash) + VALUEPROPOSER_FIELD_NUMBER;
+      hash = (53 * hash) + getValueProposer();
       hash = (37 * hash) + LASTCHOSENPROPOSAL_FIELD_NUMBER;
       hash = (53 * hash) + getLastChosenProposal();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -2889,17 +2825,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -2959,7 +2884,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -2967,7 +2891,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -2991,7 +2914,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_fieldAccessorTable
@@ -3014,7 +2936,6 @@ public final class PaxosMessage {
                 .alwaysUseFieldBuilders) {
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         squadId_ = 0;
@@ -3027,23 +2948,22 @@ public final class PaxosMessage {
 
         value_ = com.google.protobuf.ByteString.EMPTY;
 
+        valueProposer_ = 0;
+
         lastChosenProposal_ = 0;
 
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq result = buildPartial();
         if (!result.isInitialized()) {
@@ -3052,7 +2972,6 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq(this);
         result.squadId_ = squadId_;
@@ -3060,44 +2979,38 @@ public final class PaxosMessage {
         result.round_ = round_;
         result.proposal_ = proposal_;
         result.value_ = value_;
+        result.valueProposer_ = valueProposer_;
         result.lastChosenProposal_ = lastChosenProposal_;
         onBuilt();
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq)other);
@@ -3124,20 +3037,20 @@ public final class PaxosMessage {
         if (other.getValue() != com.google.protobuf.ByteString.EMPTY) {
           setValue(other.getValue());
         }
+        if (other.getValueProposer() != 0) {
+          setValueProposer(other.getValueProposer());
+        }
         if (other.getLastChosenProposal() != 0) {
           setLastChosenProposal(other.getLastChosenProposal());
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -3158,13 +3071,13 @@ public final class PaxosMessage {
 
       private int squadId_ ;
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public int getSquadId() {
         return squadId_;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder setSquadId(int value) {
         
@@ -3173,7 +3086,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder clearSquadId() {
         
@@ -3184,13 +3097,13 @@ public final class PaxosMessage {
 
       private long instanceId_ ;
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public long getInstanceId() {
         return instanceId_;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder setInstanceId(long value) {
         
@@ -3199,7 +3112,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder clearInstanceId() {
         
@@ -3210,13 +3123,13 @@ public final class PaxosMessage {
 
       private int round_ ;
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public int getRound() {
         return round_;
       }
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public Builder setRound(int value) {
         
@@ -3225,7 +3138,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public Builder clearRound() {
         
@@ -3236,13 +3149,13 @@ public final class PaxosMessage {
 
       private int proposal_ ;
       /**
-       * <code>int32 proposal = 4;</code>
+       * <code>optional int32 proposal = 4;</code>
        */
       public int getProposal() {
         return proposal_;
       }
       /**
-       * <code>int32 proposal = 4;</code>
+       * <code>optional int32 proposal = 4;</code>
        */
       public Builder setProposal(int value) {
         
@@ -3251,7 +3164,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 proposal = 4;</code>
+       * <code>optional int32 proposal = 4;</code>
        */
       public Builder clearProposal() {
         
@@ -3262,13 +3175,13 @@ public final class PaxosMessage {
 
       private com.google.protobuf.ByteString value_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>bytes value = 5;</code>
+       * <code>optional bytes value = 5;</code>
        */
       public com.google.protobuf.ByteString getValue() {
         return value_;
       }
       /**
-       * <code>bytes value = 5;</code>
+       * <code>optional bytes value = 5;</code>
        */
       public Builder setValue(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -3280,7 +3193,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>bytes value = 5;</code>
+       * <code>optional bytes value = 5;</code>
        */
       public Builder clearValue() {
         
@@ -3289,15 +3202,41 @@ public final class PaxosMessage {
         return this;
       }
 
+      private int valueProposer_ ;
+      /**
+       * <code>optional int32 valueProposer = 6;</code>
+       */
+      public int getValueProposer() {
+        return valueProposer_;
+      }
+      /**
+       * <code>optional int32 valueProposer = 6;</code>
+       */
+      public Builder setValueProposer(int value) {
+        
+        valueProposer_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 valueProposer = 6;</code>
+       */
+      public Builder clearValueProposer() {
+        
+        valueProposer_ = 0;
+        onChanged();
+        return this;
+      }
+
       private int lastChosenProposal_ ;
       /**
-       * <code>int32 lastChosenProposal = 6;</code>
+       * <code>optional int32 lastChosenProposal = 7;</code>
        */
       public int getLastChosenProposal() {
         return lastChosenProposal_;
       }
       /**
-       * <code>int32 lastChosenProposal = 6;</code>
+       * <code>optional int32 lastChosenProposal = 7;</code>
        */
       public Builder setLastChosenProposal(int value) {
         
@@ -3306,7 +3245,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 lastChosenProposal = 6;</code>
+       * <code>optional int32 lastChosenProposal = 7;</code>
        */
       public Builder clearLastChosenProposal() {
         
@@ -3314,16 +3253,14 @@ public final class PaxosMessage {
         onChanged();
         return this;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -3342,12 +3279,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<AcceptReq>
         PARSER = new com.google.protobuf.AbstractParser<AcceptReq>() {
-      @java.lang.Override
       public AcceptReq parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new AcceptReq(input, extensionRegistry);
+          return new AcceptReq(input, extensionRegistry);
       }
     };
 
@@ -3360,7 +3296,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptReq getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -3372,32 +3307,32 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     int getSquadId();
 
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     long getInstanceId();
 
     /**
-     * <code>int32 round = 3;</code>
+     * <code>optional int32 round = 3;</code>
      */
     int getRound();
 
     /**
-     * <code>int32 result = 4;</code>
+     * <code>optional int32 result = 4;</code>
      */
     int getResult();
 
     /**
-     * <code>int32 maxProposal = 5;</code>
+     * <code>optional int32 maxProposal = 5;</code>
      */
     int getMaxProposal();
 
     /**
-     * <code>int64 chosenInstanceId = 6;</code>
+     * <code>optional int64 chosenInstanceId = 6;</code>
      */
     long getChosenInstanceId();
   }
@@ -3408,36 +3343,30 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.AcceptRes)
       AcceptResOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use AcceptRes.newBuilder() to construct.
     private AcceptRes(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private AcceptRes() {
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new AcceptRes();
+      squadId_ = 0;
+      instanceId_ = 0L;
+      round_ = 0;
+      result_ = 0;
+      maxProposal_ = 0;
+      chosenInstanceId_ = 0L;
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private AcceptRes(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
+      int mutable_bitField0_ = 0;
       try {
         boolean done = false;
         while (!done) {
@@ -3446,6 +3375,12 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
 
               squadId_ = input.readInt32();
@@ -3476,13 +3411,6 @@ public final class PaxosMessage {
               chosenInstanceId_ = input.readInt64();
               break;
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -3491,7 +3419,6 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -3500,7 +3427,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_fieldAccessorTable
@@ -3511,7 +3437,7 @@ public final class PaxosMessage {
     public static final int SQUADID_FIELD_NUMBER = 1;
     private int squadId_;
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     public int getSquadId() {
       return squadId_;
@@ -3520,7 +3446,7 @@ public final class PaxosMessage {
     public static final int INSTANCEID_FIELD_NUMBER = 2;
     private long instanceId_;
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     public long getInstanceId() {
       return instanceId_;
@@ -3529,7 +3455,7 @@ public final class PaxosMessage {
     public static final int ROUND_FIELD_NUMBER = 3;
     private int round_;
     /**
-     * <code>int32 round = 3;</code>
+     * <code>optional int32 round = 3;</code>
      */
     public int getRound() {
       return round_;
@@ -3538,7 +3464,7 @@ public final class PaxosMessage {
     public static final int RESULT_FIELD_NUMBER = 4;
     private int result_;
     /**
-     * <code>int32 result = 4;</code>
+     * <code>optional int32 result = 4;</code>
      */
     public int getResult() {
       return result_;
@@ -3547,7 +3473,7 @@ public final class PaxosMessage {
     public static final int MAXPROPOSAL_FIELD_NUMBER = 5;
     private int maxProposal_;
     /**
-     * <code>int32 maxProposal = 5;</code>
+     * <code>optional int32 maxProposal = 5;</code>
      */
     public int getMaxProposal() {
       return maxProposal_;
@@ -3556,14 +3482,13 @@ public final class PaxosMessage {
     public static final int CHOSENINSTANCEID_FIELD_NUMBER = 6;
     private long chosenInstanceId_;
     /**
-     * <code>int64 chosenInstanceId = 6;</code>
+     * <code>optional int64 chosenInstanceId = 6;</code>
      */
     public long getChosenInstanceId() {
       return chosenInstanceId_;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -3573,7 +3498,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (squadId_ != 0) {
@@ -3594,10 +3518,8 @@ public final class PaxosMessage {
       if (chosenInstanceId_ != 0L) {
         output.writeInt64(6, chosenInstanceId_);
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -3627,11 +3549,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(6, chosenInstanceId_);
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -3642,20 +3564,20 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes) obj;
 
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (getInstanceId()
-          != other.getInstanceId()) return false;
-      if (getRound()
-          != other.getRound()) return false;
-      if (getResult()
-          != other.getResult()) return false;
-      if (getMaxProposal()
-          != other.getMaxProposal()) return false;
-      if (getChosenInstanceId()
-          != other.getChosenInstanceId()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && (getSquadId()
+          == other.getSquadId());
+      result = result && (getInstanceId()
+          == other.getInstanceId());
+      result = result && (getRound()
+          == other.getRound());
+      result = result && (getResult()
+          == other.getResult());
+      result = result && (getMaxProposal()
+          == other.getMaxProposal());
+      result = result && (getChosenInstanceId()
+          == other.getChosenInstanceId());
+      return result;
     }
 
     @java.lang.Override
@@ -3664,7 +3586,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
       hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
@@ -3684,17 +3606,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -3754,7 +3665,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -3762,7 +3672,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -3786,7 +3695,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_fieldAccessorTable
@@ -3809,7 +3717,6 @@ public final class PaxosMessage {
                 .alwaysUseFieldBuilders) {
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         squadId_ = 0;
@@ -3827,18 +3734,15 @@ public final class PaxosMessage {
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes result = buildPartial();
         if (!result.isInitialized()) {
@@ -3847,7 +3751,6 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes(this);
         result.squadId_ = squadId_;
@@ -3860,39 +3763,32 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes)other);
@@ -3922,17 +3818,14 @@ public final class PaxosMessage {
         if (other.getChosenInstanceId() != 0L) {
           setChosenInstanceId(other.getChosenInstanceId());
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -3953,13 +3846,13 @@ public final class PaxosMessage {
 
       private int squadId_ ;
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public int getSquadId() {
         return squadId_;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder setSquadId(int value) {
         
@@ -3968,7 +3861,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder clearSquadId() {
         
@@ -3979,13 +3872,13 @@ public final class PaxosMessage {
 
       private long instanceId_ ;
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public long getInstanceId() {
         return instanceId_;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder setInstanceId(long value) {
         
@@ -3994,7 +3887,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder clearInstanceId() {
         
@@ -4005,13 +3898,13 @@ public final class PaxosMessage {
 
       private int round_ ;
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public int getRound() {
         return round_;
       }
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public Builder setRound(int value) {
         
@@ -4020,7 +3913,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 round = 3;</code>
+       * <code>optional int32 round = 3;</code>
        */
       public Builder clearRound() {
         
@@ -4031,13 +3924,13 @@ public final class PaxosMessage {
 
       private int result_ ;
       /**
-       * <code>int32 result = 4;</code>
+       * <code>optional int32 result = 4;</code>
        */
       public int getResult() {
         return result_;
       }
       /**
-       * <code>int32 result = 4;</code>
+       * <code>optional int32 result = 4;</code>
        */
       public Builder setResult(int value) {
         
@@ -4046,7 +3939,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 result = 4;</code>
+       * <code>optional int32 result = 4;</code>
        */
       public Builder clearResult() {
         
@@ -4057,13 +3950,13 @@ public final class PaxosMessage {
 
       private int maxProposal_ ;
       /**
-       * <code>int32 maxProposal = 5;</code>
+       * <code>optional int32 maxProposal = 5;</code>
        */
       public int getMaxProposal() {
         return maxProposal_;
       }
       /**
-       * <code>int32 maxProposal = 5;</code>
+       * <code>optional int32 maxProposal = 5;</code>
        */
       public Builder setMaxProposal(int value) {
         
@@ -4072,7 +3965,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 maxProposal = 5;</code>
+       * <code>optional int32 maxProposal = 5;</code>
        */
       public Builder clearMaxProposal() {
         
@@ -4083,13 +3976,13 @@ public final class PaxosMessage {
 
       private long chosenInstanceId_ ;
       /**
-       * <code>int64 chosenInstanceId = 6;</code>
+       * <code>optional int64 chosenInstanceId = 6;</code>
        */
       public long getChosenInstanceId() {
         return chosenInstanceId_;
       }
       /**
-       * <code>int64 chosenInstanceId = 6;</code>
+       * <code>optional int64 chosenInstanceId = 6;</code>
        */
       public Builder setChosenInstanceId(long value) {
         
@@ -4098,7 +3991,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 chosenInstanceId = 6;</code>
+       * <code>optional int64 chosenInstanceId = 6;</code>
        */
       public Builder clearChosenInstanceId() {
         
@@ -4106,16 +3999,14 @@ public final class PaxosMessage {
         onChanged();
         return this;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -4134,12 +4025,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<AcceptRes>
         PARSER = new com.google.protobuf.AbstractParser<AcceptRes>() {
-      @java.lang.Override
       public AcceptRes parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new AcceptRes(input, extensionRegistry);
+          return new AcceptRes(input, extensionRegistry);
       }
     };
 
@@ -4152,7 +4042,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptRes getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -4164,17 +4053,17 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     int getSquadId();
 
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     long getInstanceId();
 
     /**
-     * <code>int32 proposal = 3;</code>
+     * <code>optional int32 proposal = 3;</code>
      */
     int getProposal();
   }
@@ -4185,36 +4074,27 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.AcceptedNotify)
       AcceptedNotifyOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use AcceptedNotify.newBuilder() to construct.
     private AcceptedNotify(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private AcceptedNotify() {
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new AcceptedNotify();
+      squadId_ = 0;
+      instanceId_ = 0L;
+      proposal_ = 0;
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private AcceptedNotify(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
+      int mutable_bitField0_ = 0;
       try {
         boolean done = false;
         while (!done) {
@@ -4223,6 +4103,12 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
 
               squadId_ = input.readInt32();
@@ -4238,13 +4124,6 @@ public final class PaxosMessage {
               proposal_ = input.readInt32();
               break;
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -4253,7 +4132,6 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -4262,7 +4140,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_fieldAccessorTable
@@ -4273,7 +4150,7 @@ public final class PaxosMessage {
     public static final int SQUADID_FIELD_NUMBER = 1;
     private int squadId_;
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     public int getSquadId() {
       return squadId_;
@@ -4282,7 +4159,7 @@ public final class PaxosMessage {
     public static final int INSTANCEID_FIELD_NUMBER = 2;
     private long instanceId_;
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     public long getInstanceId() {
       return instanceId_;
@@ -4291,14 +4168,13 @@ public final class PaxosMessage {
     public static final int PROPOSAL_FIELD_NUMBER = 3;
     private int proposal_;
     /**
-     * <code>int32 proposal = 3;</code>
+     * <code>optional int32 proposal = 3;</code>
      */
     public int getProposal() {
       return proposal_;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -4308,7 +4184,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (squadId_ != 0) {
@@ -4320,10 +4195,8 @@ public final class PaxosMessage {
       if (proposal_ != 0) {
         output.writeInt32(3, proposal_);
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -4341,11 +4214,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(3, proposal_);
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -4356,14 +4229,14 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify) obj;
 
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (getInstanceId()
-          != other.getInstanceId()) return false;
-      if (getProposal()
-          != other.getProposal()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && (getSquadId()
+          == other.getSquadId());
+      result = result && (getInstanceId()
+          == other.getInstanceId());
+      result = result && (getProposal()
+          == other.getProposal());
+      return result;
     }
 
     @java.lang.Override
@@ -4372,7 +4245,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
       hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
@@ -4385,17 +4258,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -4455,7 +4317,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -4463,7 +4324,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -4487,7 +4347,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_fieldAccessorTable
@@ -4510,7 +4369,6 @@ public final class PaxosMessage {
                 .alwaysUseFieldBuilders) {
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         squadId_ = 0;
@@ -4522,18 +4380,15 @@ public final class PaxosMessage {
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify result = buildPartial();
         if (!result.isInitialized()) {
@@ -4542,7 +4397,6 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify(this);
         result.squadId_ = squadId_;
@@ -4552,39 +4406,32 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify)other);
@@ -4605,17 +4452,14 @@ public final class PaxosMessage {
         if (other.getProposal() != 0) {
           setProposal(other.getProposal());
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -4636,13 +4480,13 @@ public final class PaxosMessage {
 
       private int squadId_ ;
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public int getSquadId() {
         return squadId_;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder setSquadId(int value) {
         
@@ -4651,7 +4495,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder clearSquadId() {
         
@@ -4662,13 +4506,13 @@ public final class PaxosMessage {
 
       private long instanceId_ ;
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public long getInstanceId() {
         return instanceId_;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder setInstanceId(long value) {
         
@@ -4677,7 +4521,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder clearInstanceId() {
         
@@ -4688,13 +4532,13 @@ public final class PaxosMessage {
 
       private int proposal_ ;
       /**
-       * <code>int32 proposal = 3;</code>
+       * <code>optional int32 proposal = 3;</code>
        */
       public int getProposal() {
         return proposal_;
       }
       /**
-       * <code>int32 proposal = 3;</code>
+       * <code>optional int32 proposal = 3;</code>
        */
       public Builder setProposal(int value) {
         
@@ -4703,7 +4547,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 proposal = 3;</code>
+       * <code>optional int32 proposal = 3;</code>
        */
       public Builder clearProposal() {
         
@@ -4711,16 +4555,14 @@ public final class PaxosMessage {
         onChanged();
         return this;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -4739,12 +4581,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<AcceptedNotify>
         PARSER = new com.google.protobuf.AbstractParser<AcceptedNotify>() {
-      @java.lang.Override
       public AcceptedNotify parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new AcceptedNotify(input, extensionRegistry);
+          return new AcceptedNotify(input, extensionRegistry);
       }
     };
 
@@ -4757,7 +4598,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.AcceptedNotify getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -4799,7 +4639,6 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.ChosenInstanceIdRes)
       ChosenInstanceIdResOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use ChosenInstanceIdRes.newBuilder() to construct.
     private ChosenInstanceIdRes(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -4809,28 +4648,16 @@ public final class PaxosMessage {
     }
 
     @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new ChosenInstanceIdRes();
-    }
-
-    @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private ChosenInstanceIdRes(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
       int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
         boolean done = false;
         while (!done) {
@@ -4839,20 +4666,19 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 10: {
-              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
                 chosenInstance_ = new java.util.ArrayList<org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId>();
                 mutable_bitField0_ |= 0x00000001;
               }
               chosenInstance_.add(
                   input.readMessage(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId.parser(), extensionRegistry));
-              break;
-            }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
               break;
             }
           }
@@ -4863,10 +4689,9 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000001) != 0)) {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
           chosenInstance_ = java.util.Collections.unmodifiableList(chosenInstance_);
         }
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -4875,7 +4700,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceIdRes_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceIdRes_fieldAccessorTable
@@ -4919,7 +4743,6 @@ public final class PaxosMessage {
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -4929,16 +4752,13 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       for (int i = 0; i < chosenInstance_.size(); i++) {
         output.writeMessage(1, chosenInstance_.get(i));
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -4948,11 +4768,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, chosenInstance_.get(i));
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -4963,10 +4783,10 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes) obj;
 
-      if (!getChosenInstanceList()
-          .equals(other.getChosenInstanceList())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && getChosenInstanceList()
+          .equals(other.getChosenInstanceList());
+      return result;
     }
 
     @java.lang.Override
@@ -4975,7 +4795,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       if (getChosenInstanceCount() > 0) {
         hash = (37 * hash) + CHOSENINSTANCE_FIELD_NUMBER;
         hash = (53 * hash) + getChosenInstanceList().hashCode();
@@ -4985,17 +4805,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -5055,7 +4864,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -5063,7 +4871,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -5087,7 +4894,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceIdRes_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceIdRes_fieldAccessorTable
@@ -5111,7 +4917,6 @@ public final class PaxosMessage {
           getChosenInstanceFieldBuilder();
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         if (chosenInstanceBuilder_ == null) {
@@ -5123,18 +4928,15 @@ public final class PaxosMessage {
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceIdRes_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes result = buildPartial();
         if (!result.isInitialized()) {
@@ -5143,12 +4945,11 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes(this);
         int from_bitField0_ = bitField0_;
         if (chosenInstanceBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) != 0)) {
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
             chosenInstance_ = java.util.Collections.unmodifiableList(chosenInstance_);
             bitField0_ = (bitField0_ & ~0x00000001);
           }
@@ -5160,39 +4961,32 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes)other);
@@ -5230,17 +5024,14 @@ public final class PaxosMessage {
             }
           }
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -5263,7 +5054,7 @@ public final class PaxosMessage {
       private java.util.List<org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId> chosenInstance_ =
         java.util.Collections.emptyList();
       private void ensureChosenInstanceIsMutable() {
-        if (!((bitField0_ & 0x00000001) != 0)) {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
           chosenInstance_ = new java.util.ArrayList<org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId>(chosenInstance_);
           bitField0_ |= 0x00000001;
          }
@@ -5492,23 +5283,21 @@ public final class PaxosMessage {
           chosenInstanceBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdOrBuilder>(
                   chosenInstance_,
-                  ((bitField0_ & 0x00000001) != 0),
+                  ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
                   isClean());
           chosenInstance_ = null;
         }
         return chosenInstanceBuilder_;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -5527,12 +5316,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<ChosenInstanceIdRes>
         PARSER = new com.google.protobuf.AbstractParser<ChosenInstanceIdRes>() {
-      @java.lang.Override
       public ChosenInstanceIdRes parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ChosenInstanceIdRes(input, extensionRegistry);
+          return new ChosenInstanceIdRes(input, extensionRegistry);
       }
     };
 
@@ -5545,7 +5333,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceIdRes getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -5557,12 +5344,12 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     int getSquadId();
 
     /**
-     * <code>int64 chosenInstanceId = 2;</code>
+     * <code>optional int64 chosenInstanceId = 2;</code>
      */
     long getChosenInstanceId();
   }
@@ -5573,36 +5360,26 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.ChosenInstanceId)
       ChosenInstanceIdOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use ChosenInstanceId.newBuilder() to construct.
     private ChosenInstanceId(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private ChosenInstanceId() {
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new ChosenInstanceId();
+      squadId_ = 0;
+      chosenInstanceId_ = 0L;
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private ChosenInstanceId(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
+      int mutable_bitField0_ = 0;
       try {
         boolean done = false;
         while (!done) {
@@ -5611,6 +5388,12 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
 
               squadId_ = input.readInt32();
@@ -5621,13 +5404,6 @@ public final class PaxosMessage {
               chosenInstanceId_ = input.readInt64();
               break;
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -5636,7 +5412,6 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -5645,7 +5420,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceId_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceId_fieldAccessorTable
@@ -5656,7 +5430,7 @@ public final class PaxosMessage {
     public static final int SQUADID_FIELD_NUMBER = 1;
     private int squadId_;
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     public int getSquadId() {
       return squadId_;
@@ -5665,14 +5439,13 @@ public final class PaxosMessage {
     public static final int CHOSENINSTANCEID_FIELD_NUMBER = 2;
     private long chosenInstanceId_;
     /**
-     * <code>int64 chosenInstanceId = 2;</code>
+     * <code>optional int64 chosenInstanceId = 2;</code>
      */
     public long getChosenInstanceId() {
       return chosenInstanceId_;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -5682,7 +5455,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (squadId_ != 0) {
@@ -5691,10 +5463,8 @@ public final class PaxosMessage {
       if (chosenInstanceId_ != 0L) {
         output.writeInt64(2, chosenInstanceId_);
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -5708,11 +5478,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(2, chosenInstanceId_);
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -5723,12 +5493,12 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId) obj;
 
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (getChosenInstanceId()
-          != other.getChosenInstanceId()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && (getSquadId()
+          == other.getSquadId());
+      result = result && (getChosenInstanceId()
+          == other.getChosenInstanceId());
+      return result;
     }
 
     @java.lang.Override
@@ -5737,7 +5507,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
       hash = (37 * hash) + CHOSENINSTANCEID_FIELD_NUMBER;
@@ -5748,17 +5518,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -5818,7 +5577,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -5826,7 +5584,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -5850,7 +5607,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceId_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceId_fieldAccessorTable
@@ -5873,7 +5629,6 @@ public final class PaxosMessage {
                 .alwaysUseFieldBuilders) {
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         squadId_ = 0;
@@ -5883,18 +5638,15 @@ public final class PaxosMessage {
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceId_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId result = buildPartial();
         if (!result.isInitialized()) {
@@ -5903,7 +5655,6 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId(this);
         result.squadId_ = squadId_;
@@ -5912,39 +5663,32 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId)other);
@@ -5962,17 +5706,14 @@ public final class PaxosMessage {
         if (other.getChosenInstanceId() != 0L) {
           setChosenInstanceId(other.getChosenInstanceId());
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -5993,13 +5734,13 @@ public final class PaxosMessage {
 
       private int squadId_ ;
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public int getSquadId() {
         return squadId_;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder setSquadId(int value) {
         
@@ -6008,7 +5749,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder clearSquadId() {
         
@@ -6019,13 +5760,13 @@ public final class PaxosMessage {
 
       private long chosenInstanceId_ ;
       /**
-       * <code>int64 chosenInstanceId = 2;</code>
+       * <code>optional int64 chosenInstanceId = 2;</code>
        */
       public long getChosenInstanceId() {
         return chosenInstanceId_;
       }
       /**
-       * <code>int64 chosenInstanceId = 2;</code>
+       * <code>optional int64 chosenInstanceId = 2;</code>
        */
       public Builder setChosenInstanceId(long value) {
         
@@ -6034,7 +5775,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 chosenInstanceId = 2;</code>
+       * <code>optional int64 chosenInstanceId = 2;</code>
        */
       public Builder clearChosenInstanceId() {
         
@@ -6042,16 +5783,14 @@ public final class PaxosMessage {
         onChanged();
         return this;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -6070,12 +5809,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<ChosenInstanceId>
         PARSER = new com.google.protobuf.AbstractParser<ChosenInstanceId>() {
-      @java.lang.Override
       public ChosenInstanceId parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ChosenInstanceId(input, extensionRegistry);
+          return new ChosenInstanceId(input, extensionRegistry);
       }
     };
 
@@ -6088,7 +5826,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInstanceId getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -6100,17 +5837,17 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     int getSquadId();
 
     /**
-     * <code>int64 lowInstanceId = 2;</code>
+     * <code>optional int64 lowInstanceId = 2;</code>
      */
     long getLowInstanceId();
 
     /**
-     * <code>int64 highInstanceId = 3;</code>
+     * <code>optional int64 highInstanceId = 3;</code>
      */
     long getHighInstanceId();
   }
@@ -6121,36 +5858,27 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.LearnReq)
       LearnReqOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use LearnReq.newBuilder() to construct.
     private LearnReq(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private LearnReq() {
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new LearnReq();
+      squadId_ = 0;
+      lowInstanceId_ = 0L;
+      highInstanceId_ = 0L;
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private LearnReq(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
+      int mutable_bitField0_ = 0;
       try {
         boolean done = false;
         while (!done) {
@@ -6159,6 +5887,12 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
 
               squadId_ = input.readInt32();
@@ -6174,13 +5908,6 @@ public final class PaxosMessage {
               highInstanceId_ = input.readInt64();
               break;
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -6189,7 +5916,6 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -6198,7 +5924,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_LearnReq_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_LearnReq_fieldAccessorTable
@@ -6209,7 +5934,7 @@ public final class PaxosMessage {
     public static final int SQUADID_FIELD_NUMBER = 1;
     private int squadId_;
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     public int getSquadId() {
       return squadId_;
@@ -6218,7 +5943,7 @@ public final class PaxosMessage {
     public static final int LOWINSTANCEID_FIELD_NUMBER = 2;
     private long lowInstanceId_;
     /**
-     * <code>int64 lowInstanceId = 2;</code>
+     * <code>optional int64 lowInstanceId = 2;</code>
      */
     public long getLowInstanceId() {
       return lowInstanceId_;
@@ -6227,14 +5952,13 @@ public final class PaxosMessage {
     public static final int HIGHINSTANCEID_FIELD_NUMBER = 3;
     private long highInstanceId_;
     /**
-     * <code>int64 highInstanceId = 3;</code>
+     * <code>optional int64 highInstanceId = 3;</code>
      */
     public long getHighInstanceId() {
       return highInstanceId_;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -6244,7 +5968,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (squadId_ != 0) {
@@ -6256,10 +5979,8 @@ public final class PaxosMessage {
       if (highInstanceId_ != 0L) {
         output.writeInt64(3, highInstanceId_);
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -6277,11 +5998,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(3, highInstanceId_);
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -6292,14 +6013,14 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq) obj;
 
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (getLowInstanceId()
-          != other.getLowInstanceId()) return false;
-      if (getHighInstanceId()
-          != other.getHighInstanceId()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && (getSquadId()
+          == other.getSquadId());
+      result = result && (getLowInstanceId()
+          == other.getLowInstanceId());
+      result = result && (getHighInstanceId()
+          == other.getHighInstanceId());
+      return result;
     }
 
     @java.lang.Override
@@ -6308,7 +6029,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
       hash = (37 * hash) + LOWINSTANCEID_FIELD_NUMBER;
@@ -6322,17 +6043,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -6392,7 +6102,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -6400,7 +6109,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -6424,7 +6132,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_LearnReq_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_LearnReq_fieldAccessorTable
@@ -6447,7 +6154,6 @@ public final class PaxosMessage {
                 .alwaysUseFieldBuilders) {
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         squadId_ = 0;
@@ -6459,18 +6165,15 @@ public final class PaxosMessage {
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_LearnReq_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq result = buildPartial();
         if (!result.isInitialized()) {
@@ -6479,7 +6182,6 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq(this);
         result.squadId_ = squadId_;
@@ -6489,39 +6191,32 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq)other);
@@ -6542,17 +6237,14 @@ public final class PaxosMessage {
         if (other.getHighInstanceId() != 0L) {
           setHighInstanceId(other.getHighInstanceId());
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -6573,13 +6265,13 @@ public final class PaxosMessage {
 
       private int squadId_ ;
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public int getSquadId() {
         return squadId_;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder setSquadId(int value) {
         
@@ -6588,7 +6280,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder clearSquadId() {
         
@@ -6599,13 +6291,13 @@ public final class PaxosMessage {
 
       private long lowInstanceId_ ;
       /**
-       * <code>int64 lowInstanceId = 2;</code>
+       * <code>optional int64 lowInstanceId = 2;</code>
        */
       public long getLowInstanceId() {
         return lowInstanceId_;
       }
       /**
-       * <code>int64 lowInstanceId = 2;</code>
+       * <code>optional int64 lowInstanceId = 2;</code>
        */
       public Builder setLowInstanceId(long value) {
         
@@ -6614,7 +6306,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 lowInstanceId = 2;</code>
+       * <code>optional int64 lowInstanceId = 2;</code>
        */
       public Builder clearLowInstanceId() {
         
@@ -6625,13 +6317,13 @@ public final class PaxosMessage {
 
       private long highInstanceId_ ;
       /**
-       * <code>int64 highInstanceId = 3;</code>
+       * <code>optional int64 highInstanceId = 3;</code>
        */
       public long getHighInstanceId() {
         return highInstanceId_;
       }
       /**
-       * <code>int64 highInstanceId = 3;</code>
+       * <code>optional int64 highInstanceId = 3;</code>
        */
       public Builder setHighInstanceId(long value) {
         
@@ -6640,7 +6332,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 highInstanceId = 3;</code>
+       * <code>optional int64 highInstanceId = 3;</code>
        */
       public Builder clearHighInstanceId() {
         
@@ -6648,16 +6340,14 @@ public final class PaxosMessage {
         onChanged();
         return this;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -6676,12 +6366,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<LearnReq>
         PARSER = new com.google.protobuf.AbstractParser<LearnReq>() {
-      @java.lang.Override
       public LearnReq parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new LearnReq(input, extensionRegistry);
+          return new LearnReq(input, extensionRegistry);
       }
     };
 
@@ -6694,7 +6383,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnReq getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -6706,7 +6394,7 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     int getSquadId();
 
@@ -6741,38 +6429,26 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.LearnRes)
       LearnResOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use LearnRes.newBuilder() to construct.
     private LearnRes(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private LearnRes() {
+      squadId_ = 0;
       instanceValue_ = java.util.Collections.emptyList();
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new LearnRes();
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private LearnRes(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
       int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
         boolean done = false;
         while (!done) {
@@ -6781,25 +6457,24 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
 
               squadId_ = input.readInt32();
               break;
             }
             case 18: {
-              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
                 instanceValue_ = new java.util.ArrayList<org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue>();
-                mutable_bitField0_ |= 0x00000001;
+                mutable_bitField0_ |= 0x00000002;
               }
               instanceValue_.add(
                   input.readMessage(org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue.parser(), extensionRegistry));
-              break;
-            }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
               break;
             }
           }
@@ -6810,10 +6485,9 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000001) != 0)) {
+        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
           instanceValue_ = java.util.Collections.unmodifiableList(instanceValue_);
         }
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -6822,7 +6496,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_LearnRes_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_LearnRes_fieldAccessorTable
@@ -6830,10 +6503,11 @@ public final class PaxosMessage {
               org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes.class, org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes.Builder.class);
     }
 
+    private int bitField0_;
     public static final int SQUADID_FIELD_NUMBER = 1;
     private int squadId_;
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     public int getSquadId() {
       return squadId_;
@@ -6875,7 +6549,6 @@ public final class PaxosMessage {
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -6885,7 +6558,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (squadId_ != 0) {
@@ -6894,10 +6566,8 @@ public final class PaxosMessage {
       for (int i = 0; i < instanceValue_.size(); i++) {
         output.writeMessage(2, instanceValue_.get(i));
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -6911,11 +6581,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, instanceValue_.get(i));
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -6926,12 +6596,12 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes) obj;
 
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (!getInstanceValueList()
-          .equals(other.getInstanceValueList())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && (getSquadId()
+          == other.getSquadId());
+      result = result && getInstanceValueList()
+          .equals(other.getInstanceValueList());
+      return result;
     }
 
     @java.lang.Override
@@ -6940,7 +6610,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
       if (getInstanceValueCount() > 0) {
@@ -6952,17 +6622,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -7022,7 +6681,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -7030,7 +6688,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -7054,7 +6711,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_LearnRes_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_LearnRes_fieldAccessorTable
@@ -7078,32 +6734,28 @@ public final class PaxosMessage {
           getInstanceValueFieldBuilder();
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         squadId_ = 0;
 
         if (instanceValueBuilder_ == null) {
           instanceValue_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
+          bitField0_ = (bitField0_ & ~0x00000002);
         } else {
           instanceValueBuilder_.clear();
         }
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_LearnRes_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes result = buildPartial();
         if (!result.isInitialized()) {
@@ -7112,57 +6764,51 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes(this);
         int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
         result.squadId_ = squadId_;
         if (instanceValueBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) != 0)) {
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
             instanceValue_ = java.util.Collections.unmodifiableList(instanceValue_);
-            bitField0_ = (bitField0_ & ~0x00000001);
+            bitField0_ = (bitField0_ & ~0x00000002);
           }
           result.instanceValue_ = instanceValue_;
         } else {
           result.instanceValue_ = instanceValueBuilder_.build();
         }
+        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes)other);
@@ -7181,7 +6827,7 @@ public final class PaxosMessage {
           if (!other.instanceValue_.isEmpty()) {
             if (instanceValue_.isEmpty()) {
               instanceValue_ = other.instanceValue_;
-              bitField0_ = (bitField0_ & ~0x00000001);
+              bitField0_ = (bitField0_ & ~0x00000002);
             } else {
               ensureInstanceValueIsMutable();
               instanceValue_.addAll(other.instanceValue_);
@@ -7194,7 +6840,7 @@ public final class PaxosMessage {
               instanceValueBuilder_.dispose();
               instanceValueBuilder_ = null;
               instanceValue_ = other.instanceValue_;
-              bitField0_ = (bitField0_ & ~0x00000001);
+              bitField0_ = (bitField0_ & ~0x00000002);
               instanceValueBuilder_ = 
                 com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getInstanceValueFieldBuilder() : null;
@@ -7203,17 +6849,14 @@ public final class PaxosMessage {
             }
           }
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -7235,13 +6878,13 @@ public final class PaxosMessage {
 
       private int squadId_ ;
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public int getSquadId() {
         return squadId_;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder setSquadId(int value) {
         
@@ -7250,7 +6893,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder clearSquadId() {
         
@@ -7262,9 +6905,9 @@ public final class PaxosMessage {
       private java.util.List<org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue> instanceValue_ =
         java.util.Collections.emptyList();
       private void ensureInstanceValueIsMutable() {
-        if (!((bitField0_ & 0x00000001) != 0)) {
+        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
           instanceValue_ = new java.util.ArrayList<org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue>(instanceValue_);
-          bitField0_ |= 0x00000001;
+          bitField0_ |= 0x00000002;
          }
       }
 
@@ -7414,7 +7057,7 @@ public final class PaxosMessage {
       public Builder clearInstanceValue() {
         if (instanceValueBuilder_ == null) {
           instanceValue_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
+          bitField0_ = (bitField0_ & ~0x00000002);
           onChanged();
         } else {
           instanceValueBuilder_.clear();
@@ -7491,23 +7134,21 @@ public final class PaxosMessage {
           instanceValueBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue, org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValueOrBuilder>(
                   instanceValue_,
-                  ((bitField0_ & 0x00000001) != 0),
+                  ((bitField0_ & 0x00000002) == 0x00000002),
                   getParentForChildren(),
                   isClean());
           instanceValue_ = null;
         }
         return instanceValueBuilder_;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -7526,12 +7167,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<LearnRes>
         PARSER = new com.google.protobuf.AbstractParser<LearnRes>() {
-      @java.lang.Override
       public LearnRes parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new LearnRes(input, extensionRegistry);
+          return new LearnRes(input, extensionRegistry);
       }
     };
 
@@ -7544,7 +7184,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -7556,22 +7195,22 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     int getSquadId();
 
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     long getInstanceId();
 
     /**
-     * <code>int32 proposal = 3;</code>
+     * <code>optional int32 proposal = 3;</code>
      */
     int getProposal();
 
     /**
-     * <code>bytes value = 4;</code>
+     * <code>optional bytes value = 4;</code>
      */
     com.google.protobuf.ByteString getValue();
   }
@@ -7582,37 +7221,28 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.InstanceValue)
       InstanceValueOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use InstanceValue.newBuilder() to construct.
     private InstanceValue(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private InstanceValue() {
+      squadId_ = 0;
+      instanceId_ = 0L;
+      proposal_ = 0;
       value_ = com.google.protobuf.ByteString.EMPTY;
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new InstanceValue();
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private InstanceValue(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
+      int mutable_bitField0_ = 0;
       try {
         boolean done = false;
         while (!done) {
@@ -7621,6 +7251,12 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
 
               squadId_ = input.readInt32();
@@ -7641,13 +7277,6 @@ public final class PaxosMessage {
               value_ = input.readBytes();
               break;
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -7656,7 +7285,6 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -7665,7 +7293,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_InstanceValue_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_InstanceValue_fieldAccessorTable
@@ -7676,7 +7303,7 @@ public final class PaxosMessage {
     public static final int SQUADID_FIELD_NUMBER = 1;
     private int squadId_;
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     public int getSquadId() {
       return squadId_;
@@ -7685,7 +7312,7 @@ public final class PaxosMessage {
     public static final int INSTANCEID_FIELD_NUMBER = 2;
     private long instanceId_;
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     public long getInstanceId() {
       return instanceId_;
@@ -7694,7 +7321,7 @@ public final class PaxosMessage {
     public static final int PROPOSAL_FIELD_NUMBER = 3;
     private int proposal_;
     /**
-     * <code>int32 proposal = 3;</code>
+     * <code>optional int32 proposal = 3;</code>
      */
     public int getProposal() {
       return proposal_;
@@ -7703,14 +7330,13 @@ public final class PaxosMessage {
     public static final int VALUE_FIELD_NUMBER = 4;
     private com.google.protobuf.ByteString value_;
     /**
-     * <code>bytes value = 4;</code>
+     * <code>optional bytes value = 4;</code>
      */
     public com.google.protobuf.ByteString getValue() {
       return value_;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -7720,7 +7346,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (squadId_ != 0) {
@@ -7735,10 +7360,8 @@ public final class PaxosMessage {
       if (!value_.isEmpty()) {
         output.writeBytes(4, value_);
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -7760,11 +7383,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(4, value_);
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -7775,16 +7398,16 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue) obj;
 
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (getInstanceId()
-          != other.getInstanceId()) return false;
-      if (getProposal()
-          != other.getProposal()) return false;
-      if (!getValue()
-          .equals(other.getValue())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && (getSquadId()
+          == other.getSquadId());
+      result = result && (getInstanceId()
+          == other.getInstanceId());
+      result = result && (getProposal()
+          == other.getProposal());
+      result = result && getValue()
+          .equals(other.getValue());
+      return result;
     }
 
     @java.lang.Override
@@ -7793,7 +7416,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
       hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
@@ -7808,17 +7431,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -7878,7 +7490,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -7886,7 +7497,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -7910,7 +7520,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_InstanceValue_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_InstanceValue_fieldAccessorTable
@@ -7933,7 +7542,6 @@ public final class PaxosMessage {
                 .alwaysUseFieldBuilders) {
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         squadId_ = 0;
@@ -7947,18 +7555,15 @@ public final class PaxosMessage {
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_InstanceValue_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue result = buildPartial();
         if (!result.isInitialized()) {
@@ -7967,7 +7572,6 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue(this);
         result.squadId_ = squadId_;
@@ -7978,39 +7582,32 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue)other);
@@ -8034,17 +7631,14 @@ public final class PaxosMessage {
         if (other.getValue() != com.google.protobuf.ByteString.EMPTY) {
           setValue(other.getValue());
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -8065,13 +7659,13 @@ public final class PaxosMessage {
 
       private int squadId_ ;
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public int getSquadId() {
         return squadId_;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder setSquadId(int value) {
         
@@ -8080,7 +7674,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder clearSquadId() {
         
@@ -8091,13 +7685,13 @@ public final class PaxosMessage {
 
       private long instanceId_ ;
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public long getInstanceId() {
         return instanceId_;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder setInstanceId(long value) {
         
@@ -8106,7 +7700,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder clearInstanceId() {
         
@@ -8117,13 +7711,13 @@ public final class PaxosMessage {
 
       private int proposal_ ;
       /**
-       * <code>int32 proposal = 3;</code>
+       * <code>optional int32 proposal = 3;</code>
        */
       public int getProposal() {
         return proposal_;
       }
       /**
-       * <code>int32 proposal = 3;</code>
+       * <code>optional int32 proposal = 3;</code>
        */
       public Builder setProposal(int value) {
         
@@ -8132,7 +7726,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 proposal = 3;</code>
+       * <code>optional int32 proposal = 3;</code>
        */
       public Builder clearProposal() {
         
@@ -8143,13 +7737,13 @@ public final class PaxosMessage {
 
       private com.google.protobuf.ByteString value_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>bytes value = 4;</code>
+       * <code>optional bytes value = 4;</code>
        */
       public com.google.protobuf.ByteString getValue() {
         return value_;
       }
       /**
-       * <code>bytes value = 4;</code>
+       * <code>optional bytes value = 4;</code>
        */
       public Builder setValue(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -8161,7 +7755,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>bytes value = 4;</code>
+       * <code>optional bytes value = 4;</code>
        */
       public Builder clearValue() {
         
@@ -8169,16 +7763,14 @@ public final class PaxosMessage {
         onChanged();
         return this;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -8197,12 +7789,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<InstanceValue>
         PARSER = new com.google.protobuf.AbstractParser<InstanceValue>() {
-      @java.lang.Override
       public InstanceValue parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new InstanceValue(input, extensionRegistry);
+          return new InstanceValue(input, extensionRegistry);
       }
     };
 
@@ -8215,7 +7806,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -8257,7 +7847,6 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.ChosenQueryRes)
       ChosenQueryResOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use ChosenQueryRes.newBuilder() to construct.
     private ChosenQueryRes(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -8267,28 +7856,16 @@ public final class PaxosMessage {
     }
 
     @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new ChosenQueryRes();
-    }
-
-    @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private ChosenQueryRes(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
       int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
         boolean done = false;
         while (!done) {
@@ -8297,20 +7874,19 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 10: {
-              if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
                 chosen_ = new java.util.ArrayList<org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen>();
                 mutable_bitField0_ |= 0x00000001;
               }
               chosen_.add(
                   input.readMessage(org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen.parser(), extensionRegistry));
-              break;
-            }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
               break;
             }
           }
@@ -8321,10 +7897,9 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000001) != 0)) {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
           chosen_ = java.util.Collections.unmodifiableList(chosen_);
         }
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -8333,7 +7908,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenQueryRes_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenQueryRes_fieldAccessorTable
@@ -8377,7 +7951,6 @@ public final class PaxosMessage {
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -8387,16 +7960,13 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       for (int i = 0; i < chosen_.size(); i++) {
         output.writeMessage(1, chosen_.get(i));
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -8406,11 +7976,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, chosen_.get(i));
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -8421,10 +7991,10 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes) obj;
 
-      if (!getChosenList()
-          .equals(other.getChosenList())) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && getChosenList()
+          .equals(other.getChosenList());
+      return result;
     }
 
     @java.lang.Override
@@ -8433,7 +8003,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       if (getChosenCount() > 0) {
         hash = (37 * hash) + CHOSEN_FIELD_NUMBER;
         hash = (53 * hash) + getChosenList().hashCode();
@@ -8443,17 +8013,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -8513,7 +8072,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -8521,7 +8079,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -8545,7 +8102,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenQueryRes_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenQueryRes_fieldAccessorTable
@@ -8569,7 +8125,6 @@ public final class PaxosMessage {
           getChosenFieldBuilder();
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         if (chosenBuilder_ == null) {
@@ -8581,18 +8136,15 @@ public final class PaxosMessage {
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenQueryRes_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes result = buildPartial();
         if (!result.isInitialized()) {
@@ -8601,12 +8153,11 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes(this);
         int from_bitField0_ = bitField0_;
         if (chosenBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) != 0)) {
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
             chosen_ = java.util.Collections.unmodifiableList(chosen_);
             bitField0_ = (bitField0_ & ~0x00000001);
           }
@@ -8618,39 +8169,32 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes)other);
@@ -8688,17 +8232,14 @@ public final class PaxosMessage {
             }
           }
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -8721,7 +8262,7 @@ public final class PaxosMessage {
       private java.util.List<org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen> chosen_ =
         java.util.Collections.emptyList();
       private void ensureChosenIsMutable() {
-        if (!((bitField0_ & 0x00000001) != 0)) {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
           chosen_ = new java.util.ArrayList<org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen>(chosen_);
           bitField0_ |= 0x00000001;
          }
@@ -8950,23 +8491,21 @@ public final class PaxosMessage {
           chosenBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen, org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosenOrBuilder>(
                   chosen_,
-                  ((bitField0_ & 0x00000001) != 0),
+                  ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
                   isClean());
           chosen_ = null;
         }
         return chosenBuilder_;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -8985,12 +8524,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<ChosenQueryRes>
         PARSER = new com.google.protobuf.AbstractParser<ChosenQueryRes>() {
-      @java.lang.Override
       public ChosenQueryRes parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ChosenQueryRes(input, extensionRegistry);
+          return new ChosenQueryRes(input, extensionRegistry);
       }
     };
 
@@ -9003,7 +8541,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenQueryRes getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -9015,12 +8552,12 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     int getSquadId();
 
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     long getInstanceId();
   }
@@ -9031,36 +8568,26 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.SquadChosen)
       SquadChosenOrBuilder {
-  private static final long serialVersionUID = 0L;
     // Use SquadChosen.newBuilder() to construct.
     private SquadChosen(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private SquadChosen() {
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new SquadChosen();
+      squadId_ = 0;
+      instanceId_ = 0L;
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return this.unknownFields;
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
     private SquadChosen(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
+      int mutable_bitField0_ = 0;
       try {
         boolean done = false;
         while (!done) {
@@ -9069,6 +8596,12 @@ public final class PaxosMessage {
             case 0:
               done = true;
               break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
             case 8: {
 
               squadId_ = input.readInt32();
@@ -9079,13 +8612,6 @@ public final class PaxosMessage {
               instanceId_ = input.readInt64();
               break;
             }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -9094,7 +8620,6 @@ public final class PaxosMessage {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
@@ -9103,7 +8628,6 @@ public final class PaxosMessage {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_SquadChosen_descriptor;
     }
 
-    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_SquadChosen_fieldAccessorTable
@@ -9114,7 +8638,7 @@ public final class PaxosMessage {
     public static final int SQUADID_FIELD_NUMBER = 1;
     private int squadId_;
     /**
-     * <code>int32 squadId = 1;</code>
+     * <code>optional int32 squadId = 1;</code>
      */
     public int getSquadId() {
       return squadId_;
@@ -9123,14 +8647,13 @@ public final class PaxosMessage {
     public static final int INSTANCEID_FIELD_NUMBER = 2;
     private long instanceId_;
     /**
-     * <code>int64 instanceId = 2;</code>
+     * <code>optional int64 instanceId = 2;</code>
      */
     public long getInstanceId() {
       return instanceId_;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -9140,7 +8663,6 @@ public final class PaxosMessage {
       return true;
     }
 
-    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (squadId_ != 0) {
@@ -9149,10 +8671,8 @@ public final class PaxosMessage {
       if (instanceId_ != 0L) {
         output.writeInt64(2, instanceId_);
       }
-      unknownFields.writeTo(output);
     }
 
-    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -9166,11 +8686,11 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(2, instanceId_);
       }
-      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
+    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -9181,12 +8701,12 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen) obj;
 
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (getInstanceId()
-          != other.getInstanceId()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
+      boolean result = true;
+      result = result && (getSquadId()
+          == other.getSquadId());
+      result = result && (getInstanceId()
+          == other.getInstanceId());
+      return result;
     }
 
     @java.lang.Override
@@ -9195,7 +8715,7 @@ public final class PaxosMessage {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
       hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
@@ -9206,17 +8726,6 @@ public final class PaxosMessage {
       return hash;
     }
 
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
     public static org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -9276,7 +8785,6 @@ public final class PaxosMessage {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -9284,7 +8792,6 @@ public final class PaxosMessage {
     public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -9308,7 +8815,6 @@ public final class PaxosMessage {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_SquadChosen_descriptor;
       }
 
-      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_SquadChosen_fieldAccessorTable
@@ -9331,7 +8837,6 @@ public final class PaxosMessage {
                 .alwaysUseFieldBuilders) {
         }
       }
-      @java.lang.Override
       public Builder clear() {
         super.clear();
         squadId_ = 0;
@@ -9341,18 +8846,15 @@ public final class PaxosMessage {
         return this;
       }
 
-      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_SquadChosen_descriptor;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen getDefaultInstanceForType() {
         return org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen.getDefaultInstance();
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen build() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen result = buildPartial();
         if (!result.isInitialized()) {
@@ -9361,7 +8863,6 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen(this);
         result.squadId_ = squadId_;
@@ -9370,39 +8871,32 @@ public final class PaxosMessage {
         return result;
       }
 
-      @java.lang.Override
       public Builder clone() {
-        return super.clone();
+        return (Builder) super.clone();
       }
-      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
+          Object value) {
+        return (Builder) super.setField(field, value);
       }
-      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
+        return (Builder) super.clearField(field);
       }
-      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
+        return (Builder) super.clearOneof(oneof);
       }
-      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
       }
-      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen) {
           return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen)other);
@@ -9420,17 +8914,14 @@ public final class PaxosMessage {
         if (other.getInstanceId() != 0L) {
           setInstanceId(other.getInstanceId());
         }
-        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
-      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -9451,13 +8942,13 @@ public final class PaxosMessage {
 
       private int squadId_ ;
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public int getSquadId() {
         return squadId_;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder setSquadId(int value) {
         
@@ -9466,7 +8957,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 squadId = 1;</code>
+       * <code>optional int32 squadId = 1;</code>
        */
       public Builder clearSquadId() {
         
@@ -9477,13 +8968,13 @@ public final class PaxosMessage {
 
       private long instanceId_ ;
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public long getInstanceId() {
         return instanceId_;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder setInstanceId(long value) {
         
@@ -9492,7 +8983,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 instanceId = 2;</code>
+       * <code>optional int64 instanceId = 2;</code>
        */
       public Builder clearInstanceId() {
         
@@ -9500,16 +8991,14 @@ public final class PaxosMessage {
         onChanged();
         return this;
       }
-      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
+        return this;
       }
 
-      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
+        return this;
       }
 
 
@@ -9528,12 +9017,11 @@ public final class PaxosMessage {
 
     private static final com.google.protobuf.Parser<SquadChosen>
         PARSER = new com.google.protobuf.AbstractParser<SquadChosen>() {
-      @java.lang.Override
       public SquadChosen parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new SquadChosen(input, extensionRegistry);
+          return new SquadChosen(input, extensionRegistry);
       }
     };
 
@@ -9546,7 +9034,6 @@ public final class PaxosMessage {
       return PARSER;
     }
 
-    @java.lang.Override
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.SquadChosen getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -9634,45 +9121,54 @@ public final class PaxosMessage {
       "\n\004body\030\004 \001(\014\"n\n\nPrepareReq\022\017\n\007squadId\030\001 " +
       "\001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\020" +
       "\n\010proposal\030\004 \001(\005\022\032\n\022lastChosenProposal\030\005" +
-      " \001(\005\"\260\001\n\nPrepareRes\022\017\n\007squadId\030\001 \001(\005\022\022\n\n" +
+      " \001(\005\"\307\001\n\nPrepareRes\022\017\n\007squadId\030\001 \001(\005\022\022\n\n" +
       "instanceId\030\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\016\n\006resul" +
-      "t\030\004 \001(\005\022\023\n\013maxProposal\030\005 \001(\005\022\030\n\020accepted" +
-      "Proposal\030\006 \001(\005\022\025\n\racceptedValue\030\007 \001(\014\022\030\n" +
-      "\020chosenInstanceId\030\010 \001(\003\"|\n\tAcceptReq\022\017\n\007" +
-      "squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\r\n\005rou" +
-      "nd\030\003 \001(\005\022\020\n\010proposal\030\004 \001(\005\022\r\n\005value\030\005 \001(" +
-      "\014\022\032\n\022lastChosenProposal\030\006 \001(\005\"~\n\tAcceptR" +
-      "es\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022" +
-      "\r\n\005round\030\003 \001(\005\022\016\n\006result\030\004 \001(\005\022\023\n\013maxPro" +
-      "posal\030\005 \001(\005\022\030\n\020chosenInstanceId\030\006 \001(\003\"G\n" +
-      "\016AcceptedNotify\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninst" +
-      "anceId\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\"d\n\023Chosen" +
-      "InstanceIdRes\022M\n\016chosenInstance\030\001 \003(\01325." +
-      "org.axesoft.jaxos.network.protobuff.Chos" +
-      "enInstanceId\"=\n\020ChosenInstanceId\022\017\n\007squa" +
-      "dId\030\001 \001(\005\022\030\n\020chosenInstanceId\030\002 \001(\003\"J\n\010L" +
-      "earnReq\022\017\n\007squadId\030\001 \001(\005\022\025\n\rlowInstanceI" +
-      "d\030\002 \001(\003\022\026\n\016highInstanceId\030\003 \001(\003\"f\n\010Learn" +
-      "Res\022\017\n\007squadId\030\001 \001(\005\022I\n\rinstanceValue\030\002 " +
-      "\003(\01322.org.axesoft.jaxos.network.protobuf" +
-      "f.InstanceValue\"U\n\rInstanceValue\022\017\n\007squa" +
-      "dId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\020\n\010proposa" +
-      "l\030\003 \001(\005\022\r\n\005value\030\004 \001(\014\"R\n\016ChosenQueryRes" +
-      "\022@\n\006chosen\030\001 \003(\01320.org.axesoft.jaxos.net" +
-      "work.protobuff.SquadChosen\"2\n\013SquadChose" +
-      "n\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003*\363" +
-      "\001\n\004Code\022\010\n\004NONE\020\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021\n\r" +
-      "HEARTBEAT_RES\020\002\022\017\n\013PREPARE_REQ\020\003\022\017\n\013PREP" +
-      "ARE_RES\020\004\022\016\n\nACCEPT_REQ\020\005\022\016\n\nACCEPT_RES\020" +
-      "\006\022\023\n\017ACCEPTED_NOTIFY\020\007\022\020\n\014ACCEPTED_ACK\020\010" +
-      "\022\010\n\004NOOP\020\n\022\r\n\tLEARN_REQ\020\013\022\r\n\tLEARN_RES\020\014" +
-      "\022\024\n\020CHOSEN_QUERY_REQ\020\r\022\024\n\020CHOSEN_QUERY_R" +
-      "ES\020\016B\016B\014PaxosMessageb\006proto3"
+      "t\030\004 \001(\005\022\023\n\013maxProposal\030\005 \001(\005\022\030\n\020accepted",
+      "Proposal\030\006 \001(\005\022\025\n\racceptedValue\030\007 \001(\014\022\025\n" +
+      "\rvalueProposer\030\010 \001(\005\022\030\n\020chosenInstanceId" +
+      "\030\t \001(\003\"\223\001\n\tAcceptReq\022\017\n\007squadId\030\001 \001(\005\022\022\n" +
+      "\ninstanceId\030\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\020\n\010prop" +
+      "osal\030\004 \001(\005\022\r\n\005value\030\005 \001(\014\022\025\n\rvaluePropos" +
+      "er\030\006 \001(\005\022\032\n\022lastChosenProposal\030\007 \001(\005\"~\n\t" +
+      "AcceptRes\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId" +
+      "\030\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\016\n\006result\030\004 \001(\005\022\023\n" +
+      "\013maxProposal\030\005 \001(\005\022\030\n\020chosenInstanceId\030\006" +
+      " \001(\003\"G\n\016AcceptedNotify\022\017\n\007squadId\030\001 \001(\005\022",
+      "\022\n\ninstanceId\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\"d\n" +
+      "\023ChosenInstanceIdRes\022M\n\016chosenInstance\030\001" +
+      " \003(\01325.org.axesoft.jaxos.network.protobu" +
+      "ff.ChosenInstanceId\"=\n\020ChosenInstanceId\022" +
+      "\017\n\007squadId\030\001 \001(\005\022\030\n\020chosenInstanceId\030\002 \001" +
+      "(\003\"J\n\010LearnReq\022\017\n\007squadId\030\001 \001(\005\022\025\n\rlowIn" +
+      "stanceId\030\002 \001(\003\022\026\n\016highInstanceId\030\003 \001(\003\"f" +
+      "\n\010LearnRes\022\017\n\007squadId\030\001 \001(\005\022I\n\rinstanceV" +
+      "alue\030\002 \003(\01322.org.axesoft.jaxos.network.p" +
+      "rotobuff.InstanceValue\"U\n\rInstanceValue\022",
+      "\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\020\n\010" +
+      "proposal\030\003 \001(\005\022\r\n\005value\030\004 \001(\014\"R\n\016ChosenQ" +
+      "ueryRes\022@\n\006chosen\030\001 \003(\01320.org.axesoft.ja" +
+      "xos.network.protobuff.SquadChosen\"2\n\013Squ" +
+      "adChosen\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030" +
+      "\002 \001(\003*\363\001\n\004Code\022\010\n\004NONE\020\000\022\021\n\rHEARTBEAT_RE" +
+      "Q\020\001\022\021\n\rHEARTBEAT_RES\020\002\022\017\n\013PREPARE_REQ\020\003\022" +
+      "\017\n\013PREPARE_RES\020\004\022\016\n\nACCEPT_REQ\020\005\022\016\n\nACCE" +
+      "PT_RES\020\006\022\023\n\017ACCEPTED_NOTIFY\020\007\022\020\n\014ACCEPTE" +
+      "D_ACK\020\010\022\010\n\004NOOP\020\n\022\r\n\tLEARN_REQ\020\013\022\r\n\tLEAR",
+      "N_RES\020\014\022\024\n\020CHOSEN_QUERY_REQ\020\r\022\024\n\020CHOSEN_" +
+      "QUERY_RES\020\016B\016B\014PaxosMessageb\006proto3"
     };
-    descriptor = com.google.protobuf.Descriptors.FileDescriptor
+    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
+        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
+          public com.google.protobuf.ExtensionRegistry assignDescriptors(
+              com.google.protobuf.Descriptors.FileDescriptor root) {
+            descriptor = root;
+            return null;
+          }
+        };
+    com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
-        });
+        }, assigner);
     internal_static_org_axesoft_jaxos_network_protobuff_DataGram_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_org_axesoft_jaxos_network_protobuff_DataGram_fieldAccessorTable = new
@@ -9690,13 +9186,13 @@ public final class PaxosMessage {
     internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor,
-        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Result", "MaxProposal", "AcceptedProposal", "AcceptedValue", "ChosenInstanceId", });
+        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Result", "MaxProposal", "AcceptedProposal", "AcceptedValue", "ValueProposer", "ChosenInstanceId", });
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_descriptor,
-        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Proposal", "Value", "LastChosenProposal", });
+        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Proposal", "Value", "ValueProposer", "LastChosenProposal", });
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_fieldAccessorTable = new

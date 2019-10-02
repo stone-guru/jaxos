@@ -9,27 +9,31 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.pool.ChannelPool;
-import io.netty.channel.pool.ChannelPoolHandler;
-import io.netty.channel.pool.SimpleChannelPool;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.FailedFuture;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.base.Either;
 import org.axesoft.jaxos.base.LongRange;
-import org.axesoft.tans.server.RedirectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.BufferOverflowException;
+import java.time.Duration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.Function;
 
 
 /**
@@ -41,7 +45,7 @@ public class TansClientBootstrap {
     private final static int MAX_CONNECTION_IDLE_SECONDS = 30;
 
     private final static AttributeKey<InetSocketAddress> ATTR_ADDRESS = AttributeKey.newInstance("ADDRESS");
-    private final static AttributeKey<HttpClient> HTTP_CLIENT = AttributeKey.newInstance("HTTP_CLIENT");
+    private final static AttributeKey<HttpConnector> ATTR_CONNECTOR = AttributeKey.newInstance("HTTP_CLIENT");
     private final static AttributeKey<Long> USED_TIMESTAMP = AttributeKey.newInstance("USED_TIMESTAMP");
     private final static AttributeKey<CountDownLatch> LATCH = AttributeKey.newInstance("LATCH");
     private final static AttributeKey<LongRange> RESULT = AttributeKey.newInstance("RESULT");
@@ -50,66 +54,69 @@ public class TansClientBootstrap {
 
     private static final Logger logger = LoggerFactory.getLogger(TansClientBootstrap.class);
 
-    private class HttpClient {
+    private class HttpConnector {
         private final String host;
         private final int port;
 
         private Bootstrap bootstrap;
         private ChannelPool channelPool;
+        private volatile Channel channel = null;
 
-        private HttpClient(NioEventLoopGroup worker, String host, int port) {
+        private HttpConnector(NioEventLoopGroup worker, String host, int port) {
             this.host = host;
             this.port = port;
             this.bootstrap = new Bootstrap();
             this.bootstrap.group(worker)
                     .channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
-                    .remoteAddress(host, port);
+                    .remoteAddress(host, port)
+                    .handler(new ChannelInitializer<>() {
+                        @Override
+                        protected void initChannel(Channel ch) throws Exception {
+                            logger.info("Channel to {}:{} created", host, port);
+                            ChannelPipeline p = ch.pipeline();
+                            p.addLast(new HttpClientCodec());
+                            //p.addLast(new HttpObjectAggregator(1048576));
+                            p.addLast(TANS_HANDLER_NAME, new TansClientHandler());
 
-            this.channelPool = new SimpleChannelPool(bootstrap, new ChannelPoolHandler() {
-                @Override
-                public void channelReleased(Channel ch) throws Exception {
-                    logger.info("Channel released {}", ch.remoteAddress());
+                            ch.attr(ATTR_CONNECTOR).set(HttpConnector.this);
+                            ch.attr(ATTR_ADDRESS).set(InetSocketAddress.createUnresolved(host, port));
+                        }
+                    });
+
+            connect();
+        }
+
+        private void connect() {
+            if (closed) {
+                return;
+            }
+            this.bootstrap.connect(host, port).addListener(f -> {
+                if (f.isSuccess()) {
+                    logger.info("Connected to {}:{}", host, port);
+                    HttpConnector.this.channel = ((ChannelFuture) f).channel();
                 }
-
-                @Override
-                public void channelAcquired(Channel ch) throws Exception {
-                    logger.info("Channel acquired {}", ch.remoteAddress());
-                }
-
-                @Override
-                public void channelCreated(Channel ch) throws Exception {
-                    logger.info("Channel created {}", ch.remoteAddress());
-                    ChannelPipeline p = ch.pipeline();
-                    p.addLast(new HttpClientCodec());
-                    //p.addLast(new HttpObjectAggregator(1048576));
-                    p.addLast(TANS_HANDLER_NAME, new TansClientHandler());
-                    ch.attr(HTTP_CLIENT).set(HttpClient.this);
+                else {
+                    logger.error("Unable to connect to {}:{}, try again", host, port);
+                    worker.schedule(() -> connect(), 1, TimeUnit.SECONDS);
                 }
             });
         }
 
         private Channel getChannel() {
-            try {
-                return this.channelPool.acquire().get();
-            }
-            catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-            return null;
+            return this.channel;
         }
 
         private void returnChannel(Channel channel) {
-            this.channelPool.release(channel);
+            //this.channelPool.release(channel);
         }
     }
 
     private class TansClientHandler extends SimpleChannelInboundHandler<HttpObject> {
         private BlockingQueue<Promise<Either<String, LongRange>>> promises = new ArrayBlockingQueue<>(8);
         private ChannelHandlerContext ctx;
+        private HttpRequest request;
+        private int times = 0;
         private HttpResponse response;
 
         @Override
@@ -129,7 +136,8 @@ public class TansClientBootstrap {
                 }
                 this.promises = null;
                 Channel channel = ctx.channel();
-                HttpClient client = channel.attr(HTTP_CLIENT).get();
+                HttpConnector client = channel.attr(ATTR_CONNECTOR).get();
+                client.connect();
                 logger.info("Channel to {}:{} closed", client.host, client.port);
             }
         }
@@ -141,16 +149,13 @@ public class TansClientBootstrap {
                 logger.info("Handler closed, abandon response");
                 return;
             }
-
-            //System.out.println("read a message");
             if (msg instanceof HttpResponse) {
                 response = (HttpResponse) msg;
-                //System.err.println("STATUS: " + response.status());
             }
 
             if (msg instanceof HttpContent) {
+                times++;
                 HttpContent content = (HttpContent) msg;
-                Channel channel = ctx.channel();
                 String body = content.content().toString(CharsetUtil.UTF_8);
 
                 if (response.status().code() == 200) {
@@ -164,34 +169,20 @@ public class TansClientBootstrap {
                         promises.poll().setFailure(e);
                         return;
                     }
-                    channel.attr(RESULT).set(r);
                     promises.poll().setSuccess(Either.right(r));
                 }
                 else if (isRedirectCode(response.status().code())) {
-                    promises.poll().setFailure(new UnsupportedOperationException("Redirect"));
+                    String location = response.headers().get(HttpHeaderNames.LOCATION);
+                    promises.poll().setSuccess(Either.left(location));
                 }
                 else {
-                    promises.poll().setFailure(new Exception(body));
+                    if (response.status().code() == 409 && times < 3) {
+                        logger.info("Retry send request {}", times);
+                        ctx.writeAndFlush(request);
+                        return;
+                    }
+                    promises.poll().setFailure(new Exception(response.status().toString()));
                 }
-//
-//                InetSocketAddress addr = channel.attr(ATTR_ADDRESS).get();
-//
-//                HttpClient client = channel.attr(HTTP_CLIENT).get();
-//
-//                boolean isRedirect = isRedirectCode(response.status().code());
-//
-//                String s = isRedirect ?
-//                        response.headers().get(HttpHeaderNames.LOCATION)
-//                        : content.content().toString(CharsetUtil.UTF_8).lines().findFirst().orElseGet(() -> "");
-
-//                String info = String.format("%s, %s, %s [%s]",
-//                        response.headers().get(HttpHeaderNames.HOST),
-//                        response.headers().get(HttpHeaderNames.FROM),
-//                        response.status().codeAsText(),
-//                        s);
-//
-//                logger.info("got result {}", info);
-                //channel.attr(LATCH).get().countDown();
             }
         }
 
@@ -203,11 +194,11 @@ public class TansClientBootstrap {
 
 
         public synchronized io.netty.util.concurrent.Future<Either<String, LongRange>> acquire(String key, int n) {
+            times = 0;
             if (this.promises == null) {
                 return this.ctx.executor().newFailedFuture(new IllegalStateException("Channel closed"));
             }
 
-            HttpRequest request;
             try {
                 request = requestCache.get(Pair.of(key, n));
             }
@@ -228,19 +219,53 @@ public class TansClientBootstrap {
     }
 
     private class PooledTansClient implements TansClient {
-        private HttpClient httpClient;
-        private Channel channel;
+        private Function<String, HttpConnector> connectorFunc;
+        private HttpConnector connector;
 
-        public PooledTansClient(HttpClient httpClient) {
-            this.httpClient = httpClient;
-            this.channel = httpClient.getChannel();
+        public PooledTansClient(Function<String, HttpConnector> connectorFunc) {
+            this.connectorFunc = connectorFunc;
+        }
+
+        private synchronized HttpConnector getConnector(String key) {
+            connector = this.connectorFunc.apply(key);
+            return connector;
+        }
+
+        private synchronized HttpConnector redirect(String key, String location) {
+            logger.info("Handler redirect of {} for {}", location, key);
+            URI uri;
+            try {
+                uri = new URI(location);
+            }
+            catch (URISyntaxException e) {
+                logger.error("error", e);
+                return null;
+            }
+
+            InetSocketAddress address = InetSocketAddress.createUnresolved(uri.getHost(), uri.getPort());
+            connector = getOrCreateHttpClient(address);
+            keyLeaderCache.put(key, address);
+            return connector;
         }
 
         @Override
         public Future<LongRange> acquire(String key, int n) {
-            final Promise<LongRange> promise = new DefaultPromise<>(channel.eventLoop());
+            HttpConnector connector = getConnector(key);
+            if (connector == null) {
+                return new FailedFuture<>(worker.next(), new ConnectException("Can not get connection for " + key));
+            }
+            Channel c = connector.getChannel();
+            if (c == null) {
+                return new FailedFuture<>(worker.next(), new ConnectException("Can not get channel for " + key));
+            }
 
-            TansClientHandler handler = (TansClientHandler) this.channel.pipeline().get(TANS_HANDLER_NAME);
+            final Promise<LongRange> promise = new DefaultPromise<>(worker.next());
+            acquire(key, n, c, promise);
+            return promise;
+        }
+
+        private void acquire(String key, int n, Channel channel, Promise<LongRange> promise) {
+            TansClientHandler handler = (TansClientHandler) channel.pipeline().get(TANS_HANDLER_NAME);
             handler.acquire(key, n).addListener(f -> {
                 if (f.isSuccess()) {
                     @SuppressWarnings("unchecked")
@@ -249,42 +274,49 @@ public class TansClientBootstrap {
                         promise.setSuccess(r.getRight());
                     }
                     else {
-                        promise.setFailure(new RedirectException(0));
+                        HttpConnector c2 = redirect(key, r.getLeft());
+                        worker.submit(() -> acquire(key, n, c2.getChannel(), promise));
                     }
                 }
                 else {
-                    promise.setFailure(f.cause());
+                    String msg = f.cause().getMessage();
+                    if (msg.contains("409")) {//conflict
+                        logger.info("encounter CONFLICT retry after 100 ms");
+                        worker.schedule(() -> acquire(key, n, channel, promise), 100, TimeUnit.MILLISECONDS);
+                    }
+                    else if (msg.contains("500")) {
+                        logger.info("encounter INTERNAL error retry after 300 ms");
+                        worker.schedule(() -> acquire(key, n, channel, promise), 300, TimeUnit.MILLISECONDS);
+                    }
+                    else {
+                        promise.setFailure(f.cause());
+                    }
                 }
             });
-
-            return promise;
         }
 
         @Override
-        public void close() {
-            synchronized (this) {
-                this.httpClient.returnChannel(this.channel);
-                this.httpClient = null;
-                this.channel = null;
-            }
+        public synchronized void close() {
         }
     }
 
-    private ConcurrentMap<InetSocketAddress, HttpClient> clientMap;
+    private ConcurrentMap<InetSocketAddress, HttpConnector> connectorMap;
     private NioEventLoopGroup worker;
 
     private LoadingCache<Pair<String, Integer>, HttpRequest> requestCache;
+    private LoadingCache<String, InetSocketAddress> keyLeaderCache;
+    private volatile boolean closed = false;
 
     public TansClientBootstrap(String servers) {
-        worker = new NioEventLoopGroup();
+        worker = new NioEventLoopGroup(3);
 
-        clientMap = new ConcurrentHashMap<>();
+        connectorMap = new ConcurrentHashMap<>();
         for (InetSocketAddress addr : parseAddresses(servers)) {
             getOrCreateHttpClient(addr);
         }
 
         requestCache = CacheBuilder.newBuilder()
-                .concurrencyLevel(16)
+                .concurrencyLevel(8)
                 .expireAfterAccess(30, TimeUnit.SECONDS)
                 .build(new CacheLoader<Pair<String, Integer>, HttpRequest>() {
                     @Override
@@ -297,19 +329,42 @@ public class TansClientBootstrap {
                         return request;
                     }
                 });
+
+        keyLeaderCache = CacheBuilder.newBuilder()
+                .concurrencyLevel(8)
+                .expireAfterAccess(Duration.ofMinutes(10))
+                .build(new CacheLoader<String, InetSocketAddress>() {
+                    @Override
+                    public InetSocketAddress load(String key) throws Exception {
+                        int randInt = (int) (Math.random() * 10000);
+                        Iterator<InetSocketAddress> it = connectorMap.keySet().iterator();
+                        int k = randInt % connectorMap.size();
+                        InetSocketAddress result = it.next();
+                        for (int i = 0; i < k; i++) {
+                            result = it.next();
+                        }
+                        return result;
+                    }
+                });
     }
 
     public TansClient getClient() {
-        HttpClient client = selectServer("");
-        return new PooledTansClient(client);
+        return new PooledTansClient(this::selectServer);
     }
 
     public void close() {
+        this.closed = true;
         this.worker.shutdownGracefully();
     }
 
-    private HttpClient selectServer(String key) {
-        return this.clientMap.values().iterator().next();
+    private HttpConnector selectServer(String key) {
+        try {
+            InetSocketAddress addr = keyLeaderCache.get(key);
+            return connectorMap.get(addr);
+        }
+        catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private List<InetSocketAddress> parseAddresses(String servers) {
@@ -317,19 +372,29 @@ public class TansClientBootstrap {
         String[] sx = servers.split(";");
         for (String s : sx) {
             String[] ax = s.split(":");
-            String host = ax[0];
-            int port = Integer.parseInt(ax[1]);
-            builder.add(InetSocketAddress.createUnresolved(host, port));
+            if (ax == null || ax.length != 2) {
+                throw new IllegalArgumentException(s + " is not a valid server address like 'address:port'");
+            }
+
+            int port = 0;
+            try {
+                port = Integer.parseInt(ax[1]);
+            }
+            catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid port number in '" + s + "'");
+            }
+
+            builder.add(InetSocketAddress.createUnresolved(ax[0], port));
         }
         return builder.build();
     }
 
-    private HttpClient getOrCreateHttpClient(InetSocketAddress address) {
-        return clientMap.compute(address, (k, c) -> {
+    private HttpConnector getOrCreateHttpClient(InetSocketAddress address) {
+        return connectorMap.compute(address, (k, c) -> {
             if (c != null) {
                 return c;
             }
-            return new HttpClient(this.worker, k.getHostName(), k.getPort());
+            return new HttpConnector(this.worker, k.getHostName(), k.getPort());
         });
     }
 

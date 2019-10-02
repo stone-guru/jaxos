@@ -35,7 +35,7 @@ public class Acceptor {
 
     public Event.PrepareResponse prepare(Event.PrepareRequest request) {
         if (logger.isTraceEnabled()) {
-            logger.trace("On prepare {} ", request);
+            logger.trace("S{}: On prepare {} ", context.squadId(), request);
         }
 
         long last0 = this.learner.lastChosenInstanceId(this.context.squadId());
@@ -43,8 +43,8 @@ public class Acceptor {
         long last = handleAcceptedNotifyLostMaybe(last0, request.instanceId(), request.lastChosenBallot());
 
         if (request.instanceId() <= last) {
-            logger.debug("PrepareResponse: historic prepare(instance id = {}), while my instance id is {} ",
-                    request.instanceId(), last);
+            logger.debug("S{}: PrepareResponse: historic prepare(instance id = {}), while my instance id is {} ",
+                    context.squadId(), request.instanceId(), last);
             InstanceValue p = this.config.getLogger().loadPromise(this.context.squadId(), request.instanceId());
             int proposal = (p == null) ? Integer.MAX_VALUE : p.proposal;
             ByteString value = (p == null) ? ByteString.EMPTY : p.value;
@@ -56,7 +56,9 @@ public class Acceptor {
                     .build();
         }
         else if (request.instanceId() > last + 1) {
-            logger.warn("PrepareResponse: future instance id in prepare(instance id = {}), request instance id = {}", last, request.instanceId());
+            logger.warn("S{}: PrepareResponse: future instance id in prepare(instance id = {}), request instance id = {}",
+                    context.squadId(), last, request.instanceId());
+
             return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
                     .setResult(Event.RESULT_STANDBY)
                     .setMaxProposal(0)
@@ -71,6 +73,11 @@ public class Acceptor {
                 this.maxBallot = request.ballot();
                 success = true;
                 this.config.getLogger().savePromise(this.context.squadId(), request.instanceId(), request.ballot(), this.acceptedValue);
+            }
+
+            if (!success && logger.isDebugEnabled()) {
+                logger.debug("S{}: Reject prepare {} ballot = {} while my max ballot = {}",
+                        context.squadId(), request.instanceId(), request.ballot(), this.maxBallot);
             }
 
             return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
@@ -90,27 +97,39 @@ public class Acceptor {
         long last = handleAcceptedNotifyLostMaybe(last0, request.instanceId(), request.lastChosenBallot());
 
         if (request.instanceId() <= last) {
-            logger.debug("AcceptResponse: historical in accept(instance id = {}), while my instance id is {} ",
-                    request.instanceId(), last);
+            if (logger.isDebugEnabled()) {
+                logger.debug("S{}: AcceptResponse: historical in accept(instance id = {}), while my instance id is {} ",
+                        context.squadId(), request.instanceId(), last);
+            }
             return buildAcceptResponse(request, Integer.MAX_VALUE, Event.RESULT_REJECT);
         }
         else if (request.instanceId() > last + 1) {
             if (acceptedInstanceId == 0 || acceptedInstanceId == request.instanceId()) {
                 acceptValueOptional(request);
             }
-            logger.debug("AcceptResponse: future in accept(instance id = {}), request instance id = {}", last, request.instanceId());
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("S{}: AcceptResponse: future in accept(instance id = {}), request instance id = {}",
+                        context.squadId(), last, request.instanceId());
+            }
+
             return buildAcceptResponse(request, 0, Event.RESULT_STANDBY);
         }
         else { // request.instanceId == last
             this.acceptedInstanceId = request.instanceId();
             if (request.ballot() < this.maxBallot) {
-                logger.debug("Reject accept ballot = {}, while my maxBallot={}", request.ballot(), this.maxBallot);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("S{}: Reject accept {}  ballot = {}, while my maxBallot={}",
+                            context.squadId(), request.instanceId(), request.ballot(), this.maxBallot);
+                }
                 return buildAcceptResponse(request, this.maxBallot, Event.RESULT_REJECT);
             }
             else {
                 acceptValueOptional(request);
-                logger.trace("Accept new value sender = {}, instance = {}, ballot = {}, value = BX[{}]",
-                        request.senderId(), request.instanceId(), acceptedBallot, acceptedValue.size());
+                if (logger.isTraceEnabled()) {
+                    logger.trace("S{}: Accept new value sender = {}, instance = {}, ballot = {}, value = BX[{}]",
+                            context.squadId(), request.senderId(), request.instanceId(), acceptedBallot, acceptedValue.size());
+                }
                 context.setPrepareSuccessRecord(request.senderId(), request.ballot());
                 return buildAcceptResponse(request, this.maxBallot, Event.RESULT_SUCCESS);
             }
@@ -134,7 +153,9 @@ public class Acceptor {
     private long handleAcceptedNotifyLostMaybe(long lastInstanceId, long requestInstanceId, int lastChosenBallot) {
         if (requestInstanceId == lastInstanceId + 2) {
             if (this.acceptedBallot > 0 && lastChosenBallot == this.acceptedBallot) {
-                logger.info("success handle notify lost, when handle prepare({}), mine is {}", requestInstanceId, lastInstanceId);
+                logger.info("S{}: success handle notify lost, when handle prepare({}), mine is {}",
+                        context.squadId(), requestInstanceId, lastInstanceId);
+
                 chose(lastInstanceId, lastChosenBallot);
                 return lastInstanceId + 1;
             }
@@ -144,21 +165,29 @@ public class Acceptor {
 
     public void onChosenNotify(Event.ChosenNotify notify) {
         if (logger.isTraceEnabled()) {
-            logger.trace("NOTIFY: receive chose notify {}, value = {}", notify, valueToString(this.acceptedValue));
+            logger.trace("S{}: NOTIFY receive chose notify {}, value = {}",
+                    context.squadId(), notify, valueToString(this.acceptedValue));
         }
+
         long last = this.learner.lastChosenInstanceId(this.context.squadId());
         if (notify.instanceId() == last + 1) {
             chose(notify.instanceId(), notify.ballot());
         }
         else if (notify.instanceId() <= last + 1) {
-            logger.debug("NOTIFY: late notify message of chose notify({}), while my last instance id is {} ", notify.instanceId(), last);
+            logger.debug("S{}: NOTIFY late notify message of chose notify({}), while my last instance id is {} ",
+                    context.squadId(), notify.instanceId(), last);
         }
         else if (notify.instanceId() == this.acceptedInstanceId && notify.ballot() == this.acceptedBallot) {
-            logger.trace("NOTIFY: future notify message of chose notify({}), cache it ", notify.instanceId());
+            if (logger.isTraceEnabled()) {
+                logger.trace("S{}: NOTIFY future notify message of chose notify({}) mine is {}, cache it ",
+                        context.squadId(), notify.instanceId(), last);
+            }
+
             learner.cacheChosenValue(context.squadId(), notify.instanceId(), this.acceptedBallot, this.acceptedValue);
         }
         else {
-            logger.warn("NOTIFY: future notify message of chose notify({}), mine is {} ", notify.instanceId(), last);
+            logger.warn("S{}: NOTIFY: future notify message of chose notify({}), mine is {} ",
+                    context.squadId(), notify.instanceId(), last);
         }
     }
 

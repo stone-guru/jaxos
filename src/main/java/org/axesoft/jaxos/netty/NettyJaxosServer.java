@@ -47,7 +47,7 @@ public class NettyJaxosServer {
 
     public void startup() {
         EventLoopGroup boss = new NioEventLoopGroup(1);
-        EventLoopGroup worker = new NioEventLoopGroup(4);
+        EventLoopGroup worker = new NioEventLoopGroup(16);
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap()
                     .group(boss, worker)
@@ -118,7 +118,7 @@ public class NettyJaxosServer {
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);
+            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER.retainedDuplicate());
         }
 
         @Override

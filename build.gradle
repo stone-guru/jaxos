@@ -66,4 +66,17 @@ dependencies {
 // Define the main class for the application
 mainClassName = 'org.axesoft.tans.server.ServerApp'
 applicationDefaultJvmArgs = ['-server', '-Xmx512m', '-XX:+UseG1GC',
-                             '-XX:MaxGCPauseMillis=5']//'-Xlog:gc*']
+                             '-XX:MaxGCPauseMillis=5',
+                             '-XX:ParallelGCThreads=3',
+                             '-Xlog:gc*']
+
+//applicationDefaultJvmArgs = ['-server', '-Xmx1g', '-Xms1g',
+//                             '-XX:+UnlockExperimentalVMOptions',
+//                             '-XX:+UseZGC',
+//                             '-Xlog:gc*']
+
+//applicationDefaultJvmArgs = ['-server', '-Xmx1g', '-Xms1g',
+//                             '-XX:+UseConcMarkSweepGC',
+//                             '-XX:+CMSParallelRemarkEnabled',
+//                             '-XX:PermSize=256m',
+//                             '-Xlog:gc*']

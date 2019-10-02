@@ -16,4 +16,9 @@ public class KeyLong {
     public long value(){
         return this.value;
     }
+
+    @Override
+    public String toString() {
+        return "KeyLong{'" + key + '\'' + value + '}';
+    }
 }

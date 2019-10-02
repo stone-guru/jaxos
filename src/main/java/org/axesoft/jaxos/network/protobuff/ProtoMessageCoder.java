@@ -58,7 +58,8 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         ByteString body;
         switch (event.code()) {
             case HEART_BEAT:
-            case HEART_BEAT_RESPONSE: {
+            case HEART_BEAT_RESPONSE:
+            case CHOSEN_QUERY: {
                 body = ByteString.EMPTY;
                 break;
             }
@@ -88,10 +89,6 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
             }
             case LEARN_RESPONSE: {
                 body = encodeBody((Event.LearnResponse) event);
-                break;
-            }
-            case CHOSEN_QUERY: {
-                body = ByteString.EMPTY;
                 break;
             }
             case CHOSEN_QUERY_RESPONSE: {
@@ -147,6 +144,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setMaxProposal(resp.maxBallot())
                 .setAcceptedProposal(resp.acceptedBallot())
                 .setAcceptedValue(resp.acceptedValue())
+                .setValueProposer(resp.valueProposer())
                 .setChosenInstanceId(resp.chosenInstanceId())
                 .build()
                 .toByteString();
@@ -160,6 +158,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setRound(req.round())
                 .setProposal(req.ballot())
                 .setValue(req.value())
+                .setValueProposer(req.valueProposer())
                 .setLastChosenProposal(req.lastChosenBallot())
                 .build()
                 .toByteString();
@@ -282,6 +281,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         return new Event.PrepareResponse.Builder(dataGram.getSender(), res.getSquadId(), res.getInstanceId(), res.getRound())
                 .setResult(res.getResult())
                 .setAccepted(res.getAcceptedProposal(), res.getAcceptedValue())
+                .setValueProposer(res.getValueProposer())
                 .setMaxProposal(res.getMaxProposal())
                 .setChosenInstanceId(res.getChosenInstanceId())
                 .build();
@@ -291,7 +291,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         PaxosMessage.AcceptReq req = PaxosMessage.AcceptReq.parseFrom(dataGram.getBody());
         return new Event.AcceptRequest(dataGram.getSender(), req.getSquadId(),
                 req.getInstanceId(), req.getRound(),
-                req.getProposal(), req.getValue(),
+                req.getProposal(), req.getValue(), req.getValueProposer(),
                 req.getLastChosenProposal());
     }
 
