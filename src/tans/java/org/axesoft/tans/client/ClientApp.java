@@ -22,9 +22,9 @@ public class ClientApp {
 
     public static void main2(String[] args) throws Exception {
         int n = 1500;
-        int k = 4;
+        int k = 20;
 
-        int p = 8;
+        int p = 1;
 
         final CountDownLatch startLatch = new CountDownLatch(1);
         final CountDownLatch endLatch = new CountDownLatch(p);
@@ -75,7 +75,7 @@ public class ClientApp {
             for (int m = 0; m < k; m++) {
                 for (int i = 0; i < n; i++) {
                     count++;
-                    String key = "object-id-" + (i % 60);
+                    String key = "object-id-" + (i % 100);
                     Future<LongRange> future = client.acquire(key, 1);
                     LongRange r = future.get();
                     checker.accept(key, r.low(), r.high());

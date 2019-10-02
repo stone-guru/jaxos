@@ -227,12 +227,14 @@ public class Squad implements EventDispatcher {
         double successRate = this.metrics.successRate();
         double conflictRate = this.metrics.conflictRate();
         double otherRate = metrics.otherRate();
-        long delta = this.metrics.proposeDelta();
+        long proposalDelta = this.metrics.proposeDelta();
+        long acceptDelta = this.metrics.acceptDelta();
+
         Pair<Double, Double> elapsed = this.metrics.compute(current);
 
-        String msg = String.format("ID=%d, PT=%d, PE=%.3f, S=%.2f, C=%.2f, O=%.2f, AE=%.3f (%.0f s), TT=%d, SR=%.3f, LI=%d",
-                this.context.squadId(), delta, elapsed.getLeft(),
-                successRate, conflictRate, otherRate, elapsed.getRight(), seconds,
+        String msg = String.format("ID=%d, PT=%d, PE=%.3f, S=%.2f, C=%.2f, O=%.2f, AE=%.3f, AT=%d (%.0f s), TT=%d, SR=%.3f, LI=%d",
+                this.context.squadId(), proposalDelta, elapsed.getLeft(),
+                successRate, conflictRate, otherRate, elapsed.getRight(), acceptDelta, seconds,
                 this.metrics.proposeTimes(), this.metrics.totalSuccessRate(), this.acceptor.lastChosenInstanceId());
         logger.info(msg);
     }

@@ -50,7 +50,7 @@ public class StateMachineRunner implements Learner {
     @Override
     public synchronized boolean learnValue(int squadId, long instanceId, int proposal, ByteString value) {
         if(instanceId != this.lastChosen(squadId).instanceId + 1){
-            logger.warn("Learned value new instance {}, mine is {}", instanceId, this.lastChosen(squadId).instanceId);
+            logger.warn("Learning ignore given instance {}, mine is {}", instanceId, this.lastChosen(squadId).instanceId);
             return false;
         }
         innerLearn(squadId, instanceId, proposal, value);
@@ -73,7 +73,7 @@ public class StateMachineRunner implements Learner {
         }
         catch (Exception e) {
             //FIXME let outer class know and hold the whole jaxos system
-            throw new RuntimeException(e);
+            throw e;
         }
     }
 
