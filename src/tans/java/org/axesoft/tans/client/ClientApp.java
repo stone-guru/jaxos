@@ -22,9 +22,9 @@ public class ClientApp {
 
     public static void main2(String[] args) throws Exception {
         int n = 1500;
-        int k = 20;
+        int k = 10;
 
-        int p = 1;
+        int p = 30;
 
         final CountDownLatch startLatch = new CountDownLatch(1);
         final CountDownLatch endLatch = new CountDownLatch(p);

@@ -186,7 +186,6 @@ public class Proposer {
                     if (logger.isDebugEnabled()) {
                         logger.debug("S{} I{} Other proposer help finish ", context.squadId(), this.instanceId);
                     }
-
                     endAs(null);
                 }
                 else {
@@ -256,7 +255,7 @@ public class Proposer {
                 endAs(new ProposalConflictException(msg));
             }
         }
-        else if (this.acceptActor.isChosenByOther()) {
+        else if (this.acceptActor.isInstanceChosen()) {
             endAs(new ProposalConflictException("Chosen by other at accept"));
         }
         else if (this.round >= 100) {
@@ -434,7 +433,7 @@ public class Proposer {
         private boolean someoneReject = true;
         private IntBitSet repliedNodes = new IntBitSet();
         private int acceptedCount = 0;
-        private boolean chosenByOther;
+        private boolean instanceChosen;
         private int votedCount = 0;
 
 
@@ -446,7 +445,7 @@ public class Proposer {
             this.someoneReject = false;
             this.repliedNodes.clear();
             this.acceptedCount = 0;
-            this.chosenByOther = false;
+            this.instanceChosen = false;
             this.votedCount = 0;
 
             if (logger.isDebugEnabled()) {
@@ -479,7 +478,7 @@ public class Proposer {
             }
 
             if (response.maxBallot() == Integer.MAX_VALUE) {
-                this.chosenByOther = true;
+                this.instanceChosen = true;
             }
 
             if (response.maxBallot() > this.maxProposal) {
@@ -495,8 +494,8 @@ public class Proposer {
             return this.repliedNodes.count() == settings.peerCount();
         }
 
-        boolean isChosenByOther() {
-            return this.chosenByOther;
+        boolean isInstanceChosen() {
+            return this.instanceChosen;
         }
 
         int votedCount() {

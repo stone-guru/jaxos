@@ -70,7 +70,7 @@ public class Squad implements EventDispatcher {
             Event.BallotEvent ballotRequest = (Event.BallotEvent) request;
             Event.BallotEvent result = processBallotEvent(ballotRequest);
             long last = this.lastChosenInstanceId();
-            if (last < ballotRequest.chosenInstanceId() - 1 && !learning) {
+            if (last < ballotRequest.chosenInstanceId() && !learning) {
                 startLearn(ballotRequest.senderId(), last, ballotRequest.chosenInstanceId());
             }
             return result;
