@@ -45,7 +45,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
     public NettyCommunicatorFactory(JaxosSettings config, EventWorkerPool eventWorkerPool) {
         this.config = config;
-        this.coder = new ProtoMessageCoder(config);
+        this.coder = new ProtoMessageCoder();
         this.eventWorkerPool = eventWorkerPool;
     }
 

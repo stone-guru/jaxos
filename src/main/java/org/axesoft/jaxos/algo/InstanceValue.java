@@ -12,13 +12,13 @@ public class InstanceValue implements Serializable {
     public int squadId;
     public long instanceId;
     public int proposal;
-    public ByteString value;
+    public Event.BallotValue value;
 
     public InstanceValue() {
-        this(0, 0, 0, ByteString.EMPTY);
+        this(0, 0, 0, Event.BallotValue.EMPTY);
     }
 
-    public InstanceValue(int squadId, long instanceId, int proposal, ByteString value) {
+    public InstanceValue(int squadId, long instanceId, int proposal, Event.BallotValue value) {
         this.squadId = squadId;
         this.instanceId = instanceId;
         this.proposal = proposal;
@@ -37,7 +37,7 @@ public class InstanceValue implements Serializable {
         return this.proposal;
     }
 
-    public ByteString value(){
+    public Event.BallotValue value(){
         return this.value;
     }
 
@@ -47,7 +47,7 @@ public class InstanceValue implements Serializable {
                 "squadId=" + squadId +
                 ", instanceId=" + instanceId +
                 ", proposal=" + proposal +
-                ", value=B[" + value.size() + "]" +
+                ", value=" + value +
                 '}';
     }
 }

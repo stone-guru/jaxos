@@ -92,6 +92,10 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
     @Override
     public ListenableFuture<Void> propose(int squadId, long instanceId, ByteString v) {
+        return propose(squadId, instanceId, new Event.BallotValue(Event.ValueType.APPLICATION, v));
+    }
+
+    public ListenableFuture<Void> propose(int squadId, long instanceId, Event.BallotValue v) {
         if (!this.isRunning()) {
             throw new IllegalStateException(SERVICE_NAME + " is not running");
         }
@@ -140,9 +144,44 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         return this.timerExecutor;
     }
 
+    private void runForLeader() {
+        int mySquadCount = 0;
+        int responsibility = this.squads.length / this.settings.peerCount();
+        if (responsibility == 0) {
+            responsibility = 1;
+        }
+        int extra = this.squads.length - (responsibility * this.settings.peerCount()) > 0 ? 1 : 0;
+
+        for (Squad squad : squads) {
+            SquadContext context = squad.context();
+            if (context.isLeader()) {
+                mySquadCount++;
+                if (System.currentTimeMillis() - context.lastSuccessAccept().timestampMillis() > this.settings.leaderLeaseSeconds() * 500) {
+                    ListenableFuture<Void> future = this.propose(context.squadId(), squad.lastChosenInstanceId() + 1, Event.BallotValue.EMPTY);
+
+                }
+            }
+        }
+
+        if (mySquadCount >= responsibility + extra) {
+            return;
+        }
+
+
+    }
+
     private void saveCheckPoint() {
         for (Squad squad : this.squads) {
-            squad.saveCheckPoint();
+            try {
+                squad.saveCheckPoint();
+            }
+            catch (Exception e) {
+                if (e.getCause() instanceof InterruptedException) {
+                    logger.info("Save checkpoint S{} interrupted", squad.id());
+                    return;
+                }
+                logger.error("Save checkpoint S{} error", squad.id());
+            }
         }
     }
 

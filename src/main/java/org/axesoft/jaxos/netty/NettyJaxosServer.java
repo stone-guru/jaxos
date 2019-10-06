@@ -41,7 +41,7 @@ public class NettyJaxosServer {
 
     public NettyJaxosServer(JaxosSettings settings, EventWorkerPool workerPool) {
         this.settings = settings;
-        this.messageCoder = new ProtoMessageCoder(this.settings);
+        this.messageCoder = new ProtoMessageCoder();
         this.workerPool = workerPool;
     }
 

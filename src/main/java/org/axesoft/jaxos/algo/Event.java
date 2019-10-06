@@ -84,6 +84,7 @@ public abstract class Event {
         }
     }
 
+
     public static abstract class BallotEvent extends Event {
         private int squadId;
         private long instanceId;
@@ -117,6 +118,41 @@ public abstract class Event {
                     ", squadId=" + squadId +
                     ", instanceId=" + instanceId +
                     ", round=" + round;
+        }
+    }
+
+    public enum ValueType {
+        NOTHING, APPLICATION, NOOP
+    }
+
+    public static class BallotValue {
+        public static final BallotValue EMPTY = new BallotValue(ValueType.NOTHING, ByteString.EMPTY);
+
+        public static final BallotValue NOOP = new BallotValue(ValueType.NOOP, ByteString.EMPTY);
+
+        public static final BallotValue appValue(ByteString v){
+            return new BallotValue(ValueType.APPLICATION, v);
+        }
+
+        private ValueType type;
+        private ByteString content;
+
+        public BallotValue(ValueType type, ByteString content) {
+            this.type = type;
+            this.content = content;
+        }
+
+        public ValueType type() {
+            return this.type;
+        }
+
+        public ByteString content() {
+            return this.content;
+        }
+
+        @Override
+        public String toString() {
+            return "BallotValue{" + type + ", b[" + content.size() + "]}";
         }
     }
 
@@ -163,9 +199,10 @@ public abstract class Event {
         private int result;
         private int maxBallot;
         private int acceptedBallot;
-        private ByteString acceptedValue;
+        private BallotValue acceptedValue;
         private int valueProposer;
         private long chosenInstanceId;
+
 
         public static class Builder {
             private PrepareResponse resp;
@@ -184,7 +221,7 @@ public abstract class Event {
                 return this;
             }
 
-            public Builder setAccepted(int proposal, ByteString value) {
+            public Builder setAccepted(int proposal, BallotValue value) {
                 resp.acceptedBallot = proposal;
                 resp.acceptedValue = checkNotNull(value);
                 return this;
@@ -226,7 +263,7 @@ public abstract class Event {
             return this.acceptedBallot;
         }
 
-        public ByteString acceptedValue() {
+        public BallotValue acceptedValue() {
             return this.acceptedValue;
         }
 
@@ -245,7 +282,7 @@ public abstract class Event {
                     ", result =" + result +
                     ", maxBallot=" + maxBallot +
                     ", acceptedBallot=" + acceptedBallot +
-                    ", acceptedValue=B[" + acceptedValue.size() + "]" +
+                    ", acceptedValue=" + acceptedValue +
                     ", valueProposer=" + valueProposer +
                     ", chosenInstanceId=" + chosenInstanceId +
                     '}';
@@ -255,15 +292,47 @@ public abstract class Event {
     public static class AcceptRequest extends BallotEvent {
         private int ballot;
         private int lastChosenBallot;
-        private ByteString value;
+        private BallotValue value;
         private int valueProposer;
 
-        public AcceptRequest(int sender, int squadId, long instanceId, int round, int ballot, ByteString value, int valueProposer, int lastChosenBallot) {
+        public static Builder newBuilder(int sender, int squadId, long instanceId, int round) {
+            return new Builder(sender, squadId, instanceId, round);
+        }
+
+        public static class Builder {
+            private AcceptRequest req;
+
+            public Builder(int sender, int squadId, long instanceId, int round) {
+                req = new AcceptRequest(sender, squadId, instanceId, round);
+            }
+
+            public Builder setBallot(int ballot) {
+                req.ballot = ballot;
+                return this;
+            }
+
+            public Builder setValue(BallotValue value) {
+                req.value = value;
+                return this;
+            }
+
+            public Builder setValueProposer(int valueProposer) {
+                req.valueProposer = valueProposer;
+                return this;
+            }
+
+            public Builder setLastChosenBallot(int lastChosenBallot) {
+                req.lastChosenBallot = lastChosenBallot;
+                return this;
+            }
+
+            public AcceptRequest build() {
+                return this.req;
+            }
+        }
+
+        private AcceptRequest(int sender, int squadId, long instanceId, int round) {
             super(sender, squadId, instanceId, round);
-            this.ballot = ballot;
-            this.value = checkNotNull(value);
-            this.valueProposer = valueProposer;
-            this.lastChosenBallot = lastChosenBallot;
         }
 
         @Override
@@ -275,7 +344,7 @@ public abstract class Event {
             return this.ballot;
         }
 
-        public ByteString value() {
+        public BallotValue value() {
             return this.value;
         }
 
@@ -297,7 +366,7 @@ public abstract class Event {
             return "AcceptRequest{" + super.toString() +
                     ", ballot=" + ballot +
                     ", valueProposer=" + valueProposer +
-                    ", value=B[" + value.size() + "]" +
+                    ", value=" + value +
                     ", lastChosenBallot=" + lastChosenBallot +
                     '}';
         }

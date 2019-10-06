@@ -3,6 +3,7 @@ package org.axesoft.jaxos;
 import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.time.StopWatch;
 import org.axesoft.jaxos.algo.AcceptorLogger;
+import org.axesoft.jaxos.algo.Event;
 import org.axesoft.jaxos.algo.InstanceValue;
 import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
 import org.junit.AfterClass;
@@ -39,7 +40,7 @@ public class AcceptorLoggerTest {
         final int n = 100;
         StopWatch w = StopWatch.createStarted();
         for(int i = 0; i < n; i++) {
-            logger.savePromise(1, 1000 + i, 1 + i, ByteString.copyFromUtf8("Hello" + i));
+            logger.savePromise(1, 1000 + i, 1 + i, Event.BallotValue.appValue(ByteString.copyFromUtf8("Hello" + i)));
         }
 
         w.stop();;
@@ -52,6 +53,6 @@ public class AcceptorLoggerTest {
         assertEquals(1, p.squadId);
         assertEquals(1000 + n - 1, p.instanceId);
         assertEquals(n, p.proposal);
-        assertEquals("Hello" + (n - 1), p.value.toStringUtf8());
+        assertEquals("Hello" + (n - 1), p.value.content().toStringUtf8());
     }
 }

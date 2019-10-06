@@ -17,7 +17,7 @@ enum Code {
   ACCEPTED_NOTIFY = 7;
   ACCEPTED_ACK = 8;
 
-  NOOP=10;
+  //NOOP=10;
 
   LEARN_REQ = 11;
   LEARN_RES = 12;
@@ -41,6 +41,18 @@ message PrepareReq {
   int32 lastChosenProposal = 5;
 }
 
+enum ValueType {
+  NOTHING = 0;
+  APPLICATION = 1;
+  NOOP = 2;
+  
+}
+
+message BallotValue {
+  ValueType type = 1;
+  bytes content = 2;
+}
+
 message PrepareRes {
   int32 squadId = 1;
   int64 instanceId = 2;
@@ -48,7 +60,7 @@ message PrepareRes {
   int32 result = 4;
   int32 maxProposal = 5;
   int32 acceptedProposal = 6;
-  bytes acceptedValue = 7;
+  BallotValue acceptedValue = 7;
   int32 valueProposer = 8;
   int64 chosenInstanceId = 9;
 }
@@ -58,7 +70,7 @@ message AcceptReq {
   int64 instanceId = 2;
   int32 round = 3;
   int32 proposal = 4;
-  bytes value = 5;
+  BallotValue value = 5;
   int32 valueProposer = 6;
   int32 lastChosenProposal = 7;
 }
@@ -102,7 +114,7 @@ message InstanceValue {
   int32 squadId = 1;
   int64 instanceId = 2;
   int32 proposal = 3;
-  bytes value = 4;
+  BallotValue value = 4;
 }
 
 message ChosenQueryRes {

@@ -59,11 +59,11 @@ public class SquadContext {
         return this.jaxosMetrics;
     }
 
-    public void setPrepareSuccessRecord(int serverId, int proposal){
+    public void setAcceptSuccessRecord(int serverId, int proposal){
         this.lastSuccessRequestRecord = new SuccessRequestRecord(serverId, System.currentTimeMillis(), proposal);
     }
 
-    public SuccessRequestRecord lastSuccessPrepare() {
+    public SuccessRequestRecord lastSuccessAccept() {
         return this.lastSuccessRequestRecord;
     }
 

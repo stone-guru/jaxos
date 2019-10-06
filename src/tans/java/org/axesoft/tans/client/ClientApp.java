@@ -3,6 +3,8 @@
  */
 package org.axesoft.tans.client;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import io.netty.util.concurrent.Future;
 import org.apache.commons.lang3.time.StopWatch;
 import org.axesoft.jaxos.base.LongRange;
@@ -13,18 +15,28 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ClientApp {
 
-    private static final String SERVERS = "localhost:8081;localhost:8082;localhost:8083";
+    public static class Args {
+        @Parameter(names = {"-s"}, description = "server addresses in syntax of 'addr1:port1;addr2:port2'")
+        private String servers = "localhost:8081;localhost:8082;localhost:8083";
 
-    //private static final String SERVERS="localhost:8081";
-    public static void main(String[] args) throws Exception {
-        main2(args);
+        @Parameter(names = {"-c"}, description = "Num of clients")
+        private Integer clientNumber = 1;
+
+        @Parameter(names = {"-k"}, description = "How many round of 1000")
+        private Integer round = 1;
     }
 
-    public static void main2(String[] args) throws Exception {
-        int n = 1500;
-        int k = 10;
+    public static void main(String[] args) throws Exception {
+        Args arg = new Args();
 
-        int p = 30;
+        JCommander.newBuilder()
+                .addObject(arg)
+                .build()
+                .parse(args);
+
+        int n = 1000;
+
+        int p = arg.clientNumber;
 
         final CountDownLatch startLatch = new CountDownLatch(1);
         final CountDownLatch endLatch = new CountDownLatch(p);
@@ -37,7 +49,7 @@ public class ClientApp {
         for (int j = 0; j < p; j++) {
             new Thread(() -> {
                 try {
-                    run(k, n, startLatch, checker, millis, times);
+                    run(arg.servers, arg.round, n, startLatch, checker, millis, times);
                 }
                 catch (Exception e) {
                     System.out.println("Exec end with " + e.getMessage());
@@ -61,8 +73,10 @@ public class ClientApp {
         checker.printCheckResult();
     }
 
-    public static void run(int k, int n, CountDownLatch startLatch, ResultChecker checker, AtomicLong millis, AtomicLong times) throws Exception {
-        TansClientBootstrap cb = new TansClientBootstrap(SERVERS);
+    public static void run(String servers, int k, int n,
+                           CountDownLatch startLatch, ResultChecker checker,
+                           AtomicLong millis, AtomicLong times) throws Exception {
+        TansClientBootstrap cb = new TansClientBootstrap(servers);
         final TansClient client = cb.getClient();
         final int printInterval = 200 + (int) (Math.random() * 100);
         Thread.sleep(1000);
@@ -76,7 +90,7 @@ public class ClientApp {
                 for (int i = 0; i < n; i++) {
                     count++;
                     String key = "object-id-" + (i % 100);
-                    Future<LongRange> future = client.acquire(key, 1);
+                    Future<LongRange> future = client.acquire(key, 1 + (i % 10));
                     LongRange r = future.get();
                     checker.accept(key, r.low(), r.high());
                     if (count % printInterval == 0) {

@@ -3,9 +3,13 @@ package org.axesoft.jaxos.logger;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.axesoft.jaxos.algo.AcceptorLogger;
+import org.axesoft.jaxos.algo.Event;
 import org.axesoft.jaxos.algo.InstanceValue;
 import org.axesoft.jaxos.algo.CheckPoint;
+import org.axesoft.jaxos.network.protobuff.PaxosMessage;
+import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
 import org.iq80.leveldb.*;
 import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.slf4j.Logger;
@@ -22,6 +26,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
 
     private DB db;
     private String path;
+    private ProtoMessageCoder messageCoder;
 
     public LevelDbAcceptorLogger(String path) {
         this.path = path;
@@ -32,9 +37,12 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
 
         try {
             db = Iq80DBFactory.factory.open(new File(path), options);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        this.messageCoder = new ProtoMessageCoder();
     }
 
     private void tryCreateDir(String path) {
@@ -52,7 +60,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     }
 
     @Override
-    public void savePromise(int squadId, long instanceId, int proposal, ByteString value) {
+    public void savePromise(int squadId, long instanceId, int proposal, Event.BallotValue value) {
         InstanceValue instanceValue = new InstanceValue();
         instanceValue.squadId = squadId;
         instanceValue.instanceId = instanceId;
@@ -73,12 +81,12 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     public InstanceValue loadLastPromise(int squadId) {
         byte[] last = keyOfSquadLast(squadId);
         byte[] idx = db.get(last);
-        if(idx == null){
+        if (idx == null) {
             return null;
         }
 
         byte[] bx = db.get(idx);
-        if(bx == null){
+        if (bx == null) {
             return null;
         }
 
@@ -90,7 +98,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         byte[] key = keyOfInstanceId(squadId, instanceId);
         byte[] bx = db.get(key);
 
-        if(bx != null){
+        if (bx != null) {
             return toEntity(bx);
         }
         return null;
@@ -110,7 +118,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         byte[] key = keyOfCheckPoint(squadId);
         byte[] data = db.get(key);
 
-        if(data == null) {
+        if (data == null) {
             return null;
         }
         return toCheckPoint(data);
@@ -120,12 +128,13 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     public void close() {
         try {
             this.db.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             logger.error("Error when close db in " + this.path);
         }
     }
 
-    public byte[] toByteArray(CheckPoint checkPoint){
+    public byte[] toByteArray(CheckPoint checkPoint) {
         ByteArrayOutputStream bs = new ByteArrayOutputStream();
         DataOutputStream os = new DataOutputStream(bs);
         try {
@@ -142,7 +151,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         return bs.toByteArray();
     }
 
-    public CheckPoint toCheckPoint(byte[] bytes){
+    public CheckPoint toCheckPoint(byte[] bytes) {
         DataInputStream is = new DataInputStream(new ByteArrayInputStream(bytes));
         try {
             int squadId = is.readInt();
@@ -158,42 +167,30 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     }
 
     public InstanceValue toEntity(byte[] bytes) {
-        DataInputStream is = new DataInputStream(new ByteArrayInputStream(bytes));
-        InstanceValue p = new InstanceValue();
+        PaxosMessage.InstanceValue i = null;
         try {
-            p.squadId = is.readInt();
-            p.instanceId = is.readLong();
-            p.proposal = is.readInt();
-
-            int size = is.readInt();
-            byte[] bx = new byte[size];
-            is.read(bx);
-            p.value = ByteString.copyFrom(bx);
-
-            return p;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            i = PaxosMessage.InstanceValue.parseFrom(bytes);
         }
-    }
-
-
-    public byte[] toByteArray(InstanceValue p) {
-        ByteArrayOutputStream bs = new ByteArrayOutputStream();
-        DataOutputStream os = new DataOutputStream(bs);
-        try {
-            os.writeInt(p.squadId);
-            os.writeLong(p.instanceId);
-            os.writeInt(p.proposal);
-            os.writeInt(p.value.size());
-            os.write(p.value.toByteArray());
-        } catch (IOException e) {
+        catch (InvalidProtocolBufferException e) {
             throw new RuntimeException(e);
         }
 
-        return bs.toByteArray();
+        Event.BallotValue v = messageCoder.decodeValue(i.getValue());
+        return new InstanceValue(i.getSquadId(), i.getInstanceId(), i.getProposal(), v);
     }
 
-    private byte[] keyOfInstanceId(int squadId, long i){
+
+    public byte[] toByteArray(InstanceValue v) {
+        return PaxosMessage.InstanceValue.newBuilder()
+                .setSquadId(v.squadId())
+                .setInstanceId(v.instanceId())
+                .setProposal(v.proposal())
+                .setValue(messageCoder.encodeValue(v.value()))
+                .build()
+                .toByteArray();
+    }
+
+    private byte[] keyOfInstanceId(int squadId, long i) {
         byte[] key = new byte[13];
         key[0] = CATEGORY_PROMISE;
         System.arraycopy(Ints.toByteArray(squadId), 0, key, 1, 4);
@@ -201,14 +198,14 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         return key;
     }
 
-    private byte[] keyOfSquadLast(int squadId){
+    private byte[] keyOfSquadLast(int squadId) {
         byte[] key = new byte[5];
         key[0] = CATEGORY_SQUAD_LAST;
         System.arraycopy(Ints.toByteArray(squadId), 0, key, 1, 4);
         return key;
     }
 
-    private byte[] keyOfCheckPoint(int squadId){
+    private byte[] keyOfCheckPoint(int squadId) {
         byte[] key = new byte[5];
         key[0] = CATEGORY_SQUAD_CHECKPOINT;
         System.arraycopy(Ints.toByteArray(squadId), 0, key, 1, 4);

@@ -25,7 +25,7 @@ public interface Learner {
 
     long lastChosenInstanceId(int squadId);
 
-    boolean learnValue(int squadId, long instanceId, int proposal, ByteString value);
+    boolean learnValue(int squadId, long instanceId, int proposal, Event.BallotValue value);
 
-    void cacheChosenValue(int squadId, long instanceId, int proposal, ByteString value);
+    void cacheChosenValue(int squadId, long instanceId, int proposal, Event.BallotValue value);
 }

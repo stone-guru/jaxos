@@ -20,7 +20,7 @@ public class Acceptor {
     private long acceptedInstanceId;
     private int maxBallot;
     private int acceptedBallot;
-    private ByteString acceptedValue;
+    private Event.BallotValue acceptedValue;
 
     public Acceptor(JaxosSettings settings, Configuration config, SquadContext context, Learner learner) {
         this.settings = settings;
@@ -30,7 +30,7 @@ public class Acceptor {
 
         this.maxBallot = 0;
         this.acceptedBallot = 0;
-        this.acceptedValue = ByteString.EMPTY;
+        this.acceptedValue = Event.BallotValue.EMPTY;
     }
 
     public Event.PrepareResponse prepare(Event.PrepareRequest request) {
@@ -47,7 +47,7 @@ public class Acceptor {
                     context.squadId(), request.instanceId(), last);
             InstanceValue p = this.config.getLogger().loadPromise(this.context.squadId(), request.instanceId());
             int proposal = (p == null) ? Integer.MAX_VALUE : p.proposal;
-            ByteString value = (p == null) ? ByteString.EMPTY : p.value;
+            Event.BallotValue value = (p == null) ? Event.BallotValue.EMPTY : p.value;
             return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
                     .setResult(Event.RESULT_REJECT)
                     .setMaxProposal(Integer.MAX_VALUE)
@@ -62,7 +62,7 @@ public class Acceptor {
             return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
                     .setResult(Event.RESULT_STANDBY)
                     .setMaxProposal(0)
-                    .setAccepted(0, ByteString.EMPTY)
+                    .setAccepted(0, Event.BallotValue.EMPTY)
                     .setChosenInstanceId(last)
                     .build();
         }
@@ -127,10 +127,10 @@ public class Acceptor {
             else {
                 acceptValueOptional(request);
                 if (logger.isTraceEnabled()) {
-                    logger.trace("S{}: Accept new value sender = {}, instance = {}, ballot = {}, value = BX[{}]",
-                            context.squadId(), request.senderId(), request.instanceId(), acceptedBallot, acceptedValue.size());
+                    logger.trace("S{}: Accept new value sender = {}, instance = {}, ballot = {}, value = {}",
+                            context.squadId(), request.senderId(), request.instanceId(), acceptedBallot, acceptedValue);
                 }
-                context.setPrepareSuccessRecord(request.senderId(), request.ballot());
+                context.setAcceptSuccessRecord(request.senderId(), request.ballot());
                 return buildAcceptResponse(request, this.maxBallot, Event.RESULT_SUCCESS);
             }
         }
@@ -166,7 +166,7 @@ public class Acceptor {
     public void onChosenNotify(Event.ChosenNotify notify) {
         if (logger.isTraceEnabled()) {
             logger.trace("S{}: NOTIFY receive chose notify {}, value = {}",
-                    context.squadId(), notify, valueToString(this.acceptedValue));
+                    context.squadId(), notify, this.acceptedValue);
         }
 
         long last = this.learner.lastChosenInstanceId(this.context.squadId());
@@ -196,7 +196,7 @@ public class Acceptor {
 
         // for multi paxos, prepare once and accept many, keep maxBallot unchanged
         this.acceptedBallot = 0;
-        this.acceptedValue = ByteString.EMPTY;
+        this.acceptedValue = Event.BallotValue.EMPTY;
     }
 
     private String valueToString(ByteString value) {

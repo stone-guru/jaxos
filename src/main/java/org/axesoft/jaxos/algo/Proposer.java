@@ -37,7 +37,7 @@ public class Proposer {
     private AcceptActor acceptActor;
     private Timeout acceptTimeout;
 
-    private ByteString proposeValue;
+    private Event.BallotValue proposeValue;
     private long instanceId = 0;
     private int messageMark = 0;
     private int round = 0;
@@ -56,7 +56,7 @@ public class Proposer {
         this.resultFutureRef = new AtomicReference<>(null);
     }
 
-    public ListenableFuture<Void> propose(long instanceId, ByteString value, SettableFuture<Void> resultFuture) {
+    public ListenableFuture<Void> propose(long instanceId, Event.BallotValue value, SettableFuture<Void> resultFuture) {
         if (!resultFutureRef.compareAndSet(null, resultFuture)) {
             resultFuture.setException(new ConcurrentModificationException("Previous propose not end"));
             return resultFuture;
@@ -74,10 +74,10 @@ public class Proposer {
             startPrepare(proposalNumHolder.getProposal0());
         }
         else if (context.isOtherLeaderActive()) {
-            return endAs(new RedirectException(context.lastSuccessPrepare().serverId()));
+            return endAs(new RedirectException(context.lastSuccessAccept().serverId()));
         }
         else if (context.isLeader()) {
-            startAccept(this.proposeValue, context.lastSuccessPrepare().proposal(), settings.serverId());
+            startAccept(this.proposeValue, context.lastSuccessAccept().proposal(), settings.serverId());
         }
         else {
             startPrepare(proposalNumHolder.getProposal0());
@@ -178,7 +178,7 @@ public class Proposer {
 
         PrepareResult v = this.prepareActor.getResult();
         if (this.prepareActor.isAccepted()) {
-            startAccept(v.content, this.prepareActor.myProposal(), v.proposer);
+            startAccept(v.content,  this.prepareActor.myProposal(), v.proposer);
         }
         else {
             if (this.prepareActor.totalMaxProposal == Integer.MAX_VALUE) {
@@ -198,7 +198,7 @@ public class Proposer {
         }
     }
 
-    private void startAccept(ByteString value, int proposal, int proposer) {
+    private void startAccept(Event.BallotValue value, int proposal, int proposer) {
         Learner.LastChosen chosen = this.learner.lastChosen(this.context.squadId());
         if (instanceId != chosen.instanceId + 1) {
             String msg = String.format("when accept instance %d.%d while last chosen is %d",
@@ -301,12 +301,12 @@ public class Proposer {
 
     private class PrepareActor {
         private int proposal;
-        private ByteString value;
+        private Event.BallotValue value;
         private int chosenProposal;
 
         private int totalMaxProposal = 0;
         private int maxAcceptedProposal = 0;
-        private ByteString acceptedValue = ByteString.EMPTY;
+        private Event.BallotValue acceptedValue;
         private final IntBitSet repliedNodes = new IntBitSet();
         private int valueProposer = 0;
 
@@ -318,11 +318,11 @@ public class Proposer {
         public PrepareActor() {
         }
 
-        public void startNewRound(ByteString value, int proposal, int chosenProposal) {
+        public void startNewRound(Event.BallotValue value, int proposal, int chosenProposal) {
             //reset accumulated values
             this.totalMaxProposal = 0;
             this.maxAcceptedProposal = 0;
-            this.acceptedValue = ByteString.EMPTY;
+            this.acceptedValue = null;
             this.repliedNodes.clear();
 
             //init values for this round
@@ -425,7 +425,7 @@ public class Proposer {
     }
 
     private class AcceptActor {
-        private ByteString sentValue;
+        private Event.BallotValue sentValue;
         private int proposal;
         private int proposer;
 
@@ -437,7 +437,7 @@ public class Proposer {
         private int votedCount = 0;
 
 
-        public void startAccept(ByteString value, int proposal, int proposer, int lastChosenProposal) {
+        public void startAccept(Event.BallotValue value, int proposal, int proposer, int lastChosenProposal) {
             this.proposal = proposal;
             this.sentValue = value;
             this.proposer = proposer;
@@ -452,9 +452,13 @@ public class Proposer {
                 logger.debug("S{}: Start accept instance {} with proposal  {} ", context.squadId(), Proposer.this.instanceId, proposal);
             }
 
-            Event.AcceptRequest request = new Event.AcceptRequest(
-                    Proposer.this.settings.serverId(), Proposer.this.context.squadId(), Proposer.this.instanceId, Proposer.this.messageMark,
-                    proposal, value, this.proposer, lastChosenProposal);
+            Event.AcceptRequest request = Event.AcceptRequest.newBuilder(Proposer.this.settings.serverId(),
+                    Proposer.this.context.squadId(), Proposer.this.instanceId, Proposer.this.messageMark)
+                    .setBallot(proposal)
+                    .setValue(value)
+                    .setValueProposer(this.proposer)
+                    .setLastChosenBallot(lastChosenProposal)
+                    .build();
             Proposer.this.config.getCommunicator().broadcast(request);
         }
 
@@ -502,7 +506,7 @@ public class Proposer {
             return this.votedCount;
         }
 
-        ByteString sentValue() {
+        Event.BallotValue sentValue() {
             return this.sentValue;
         }
 
@@ -520,17 +524,17 @@ public class Proposer {
 
 
     private static class PrepareResult {
-        public static final PrepareResult NONE = new PrepareResult(0, ByteString.EMPTY, 0);
+        //public static final PrepareResult NOTHING = new PrepareResult(0, ByteString.EMPTY, 0);
 
-        public static PrepareResult of(int proposal, ByteString content, int proposer) {
+        public static PrepareResult of(int proposal, Event.BallotValue content, int proposer) {
             return new PrepareResult(proposal, content, proposer);
         }
 
         final int ballot;
-        final ByteString content;
+        final Event.BallotValue content;
         final int proposer;
 
-        public PrepareResult(int ballot, ByteString content, int proposer) {
+        public PrepareResult(int ballot, Event.BallotValue content, int proposer) {
             this.ballot = ballot;
             this.content = content;
             this.proposer = proposer;

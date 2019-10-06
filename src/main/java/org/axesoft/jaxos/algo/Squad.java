@@ -2,7 +2,6 @@ package org.axesoft.jaxos.algo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
-import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -37,14 +36,22 @@ public class Squad implements EventDispatcher {
         this.learning = false;
     }
 
+    public int id(){
+        return this.context.squadId();
+    }
+
+    public SquadContext context(){
+        return this.context;
+    }
+
     /**
      * @param v value to be proposed
      * @throws InterruptedException
      */
-    public ListenableFuture<Void> propose(long instanceId, ByteString v, SettableFuture<Void> resultFuture) {
+    public ListenableFuture<Void> propose(long instanceId, Event.BallotValue v, SettableFuture<Void> resultFuture) {
         attachMetricsListener(resultFuture);
 
-        SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessPrepare();
+        SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessAccept();
         //logger.info("last request is {}, current is {}", lastRequestInfo, new Date());
 
         if (this.context.isOtherLeaderActive() && !this.settings.ignoreLeader()) {
@@ -58,6 +65,11 @@ public class Squad implements EventDispatcher {
         }
 
         return resultFuture;
+    }
+
+    public ListenableFuture<Void> runForLeader(SettableFuture<Void> resultFuture){
+        long last = this.stateMachineRunner.lastChosenInstanceId(context.squadId());
+        return propose(last + 1, Event.BallotValue.NOOP, resultFuture);
     }
 
     @Override

@@ -48,7 +48,7 @@ public class StateMachineRunner implements Learner {
     }
 
     @Override
-    public synchronized boolean learnValue(int squadId, long instanceId, int proposal, ByteString value) {
+    public synchronized boolean learnValue(int squadId, long instanceId, int proposal, Event.BallotValue value) {
         if(instanceId != this.lastChosen(squadId).instanceId + 1){
             logger.warn("Learning ignore given instance {}, mine is {}", instanceId, this.lastChosen(squadId).instanceId);
             return false;
@@ -66,10 +66,10 @@ public class StateMachineRunner implements Learner {
         return true;
     }
 
-    private void innerLearn(int squadId, long instanceId, int proposal, ByteString value) {
+    private void innerLearn(int squadId, long instanceId, int proposal, Event.BallotValue value) {
         try {
             this.lastChosenMap.put(squadId, new LastChosen(squadId, instanceId, proposal));
-            this.machine.consume(squadId, instanceId, value);
+            this.machine.consume(squadId, instanceId, value.content());
         }
         catch (Exception e) {
             //FIXME let outer class know and hold the whole jaxos system
@@ -78,7 +78,7 @@ public class StateMachineRunner implements Learner {
     }
 
     @Override
-    public synchronized void cacheChosenValue(int squadId, long instanceId, int proposal, ByteString value) {
+    public synchronized void cacheChosenValue(int squadId, long instanceId, int proposal, Event.BallotValue value) {
         this.cachedBallots.put(instanceId, new InstanceValue(squadId, instanceId, proposal, value));
     }
 }
