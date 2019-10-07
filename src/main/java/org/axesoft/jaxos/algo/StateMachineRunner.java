@@ -69,7 +69,11 @@ public class StateMachineRunner implements Learner {
     private void innerLearn(int squadId, long instanceId, int proposal, Event.BallotValue value) {
         try {
             this.lastChosenMap.put(squadId, new LastChosen(squadId, instanceId, proposal));
-            this.machine.consume(squadId, instanceId, value.content());
+            if(value.type() == Event.ValueType.APPLICATION) {
+                this.machine.consume(squadId, instanceId, value.content());
+            } else {
+                this.machine.consume(squadId, instanceId, ByteString.EMPTY);
+            }
         }
         catch (Exception e) {
             //FIXME let outer class know and hold the whole jaxos system

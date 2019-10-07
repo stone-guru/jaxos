@@ -9,6 +9,7 @@ import com.google.protobuf.ByteString;
 import io.netty.util.Timeout;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.algo.*;
+import org.axesoft.jaxos.logger.FileAcceptorLogger;
 import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
 import org.axesoft.jaxos.algo.EventWorkerPool;
 import org.axesoft.jaxos.netty.NettyCommunicatorFactory;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +49,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         this.settings = settings;
         this.stateMachine = stateMachine;
         this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory());
+        //this.acceptorLogger = new FileAcceptorLogger(this.settings.dbDirectory(), settings.partitionNumber());
 
         this.configuration = new Configuration() {
             @Override
@@ -137,6 +140,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
         this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, 10, 60 * settings.checkPointMinutes(), TimeUnit.SECONDS);
         this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
+        this.timerExecutor.scheduleAtFixedRate(this::runForLeader, 3, 1, TimeUnit.SECONDS);
         this.node.startup();
     }
 
@@ -152,22 +156,43 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         }
         int extra = this.squads.length - (responsibility * this.settings.peerCount()) > 0 ? 1 : 0;
 
-        for (Squad squad : squads) {
-            SquadContext context = squad.context();
+        for (int i = 0; i < this.squads.length; i++) {
+            SquadContext context = squads[i].context();
             if (context.isLeader()) {
                 mySquadCount++;
-                if (System.currentTimeMillis() - context.lastSuccessAccept().timestampMillis() > this.settings.leaderLeaseSeconds() * 500) {
-                    ListenableFuture<Void> future = this.propose(context.squadId(), squad.lastChosenInstanceId() + 1, Event.BallotValue.EMPTY);
-
+                if (System.currentTimeMillis() - context.lastSuccessAccept().timestampMillis() >= this.settings.leaderLeaseSeconds() * 500) {
+                    proposeForLeader(i);
                 }
             }
         }
 
-        if (mySquadCount >= responsibility + extra) {
-            return;
+        int j = 0;
+        while (mySquadCount < responsibility + extra && j < this.squads.length) {
+            if (!squads[j].context().isOtherLeaderActive()) {
+                proposeForLeader(j);
+                mySquadCount++;
+            }
+            j++;
         }
+    }
 
-
+    private void proposeForLeader(int squadId) {
+        final ListenableFuture<Void> future = this.propose(squadId, squads[squadId].lastChosenInstanceId() + 1, Event.BallotValue.EMPTY);
+        future.addListener(() -> {
+            try {
+                future.get();
+                if (logger.isTraceEnabled()) {
+                    logger.trace("S{} Emphasis leader again", squadId);
+                }
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+            catch (ExecutionException e) {
+                logger.debug("S{} Failed to be leader", squadId);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private void saveCheckPoint() {

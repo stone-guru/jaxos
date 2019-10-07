@@ -118,7 +118,7 @@ public class JaxosSettings {
             config.serverId = this.serverId;
             config.peerMap = this.peerBuilder.build();
             config.ignoreLeader = this.ignoreLeader;
-            config.leaderLeaseSeconds = 5 * 60;
+            config.leaderLeaseSeconds = 8;
             config.dbDirectory = this.dbDirectory;
             config.valueVerboser = this.valueVerboser;
             config.wholeProposalTimeoutMillis = this.wholeProposalTimeoutMillis;

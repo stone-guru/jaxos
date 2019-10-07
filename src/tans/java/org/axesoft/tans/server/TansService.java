@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -57,7 +58,7 @@ public class TansService implements StateMachine {
 
     @Override
     public void consume(int squadId, long instanceId, ByteString proposal) {
-        List<TansNumber> nx = fromProposal(proposal);
+        List<TansNumber> nx = proposal.isEmpty()? Collections.emptyList() : fromProposal(proposal);
         if (logger.isTraceEnabled()) {
             logger.trace("TANS state machine consumer {} event from instance {}.{}", nx.size(), squadId, instanceId);
         }

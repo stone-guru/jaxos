@@ -30,6 +30,7 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -125,17 +126,40 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         }
 
         private void connect(JaxosSettings.Peer peer) {
-            ChannelFuture future = bootstrap.connect(new InetSocketAddress(peer.address(), peer.port()));
+            ChannelFuture future = null;
+            try {
+                future = bootstrap.connect(new InetSocketAddress(peer.address(), peer.port()));
+            }
+            catch (Exception e) {
+                if (e instanceof RejectedExecutionException) {
+                    logger.info("Abandon connecting due to bootstrap closed: {}", e.getMessage());
+
+                }
+                else {
+                    logger.error("call connect fail", e);
+                    if(!worker.isShuttingDown()) {
+                        worker.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
+                    }
+                }
+                return;
+            }
+
             future.addListener(f -> {
                 if (!f.isSuccess()) {
+                    if (f.cause() instanceof RejectedExecutionException) {
+                        logger.info("Abandon connecting due to bootstrap closed: {}", f.cause().getMessage());
+                        return;
+                    }
                     if (logLimiter.tryAcquire()) {
                         logger.error("Unable to connect to {} ", peer);
                     }
-                    worker.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
+                    if(!worker.isShuttingDown()) {
+                        worker.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
+                    }
                 }
                 else {
                     logger.info("Connected to {}", peer);
-                    Channel c = future.channel();
+                    Channel c = ((ChannelFuture) f).channel();
 
                     channels.add(c);
                     channelPeerMap.put(c.id(), peer);
@@ -151,7 +175,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         @Override
         public void broadcast(Event event) {
-            if(logger.isTraceEnabled()) {
+            if (logger.isTraceEnabled()) {
                 logger.trace("Broadcast {} ", event);
             }
             sendByChannels(event);
@@ -160,13 +184,13 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         @Override
         public void broadcastOthers(Event event) {
-            if(logger.isTraceEnabled()) {
+            if (logger.isTraceEnabled()) {
                 logger.trace("Broadcast to others {} ", event);
             }
             sendByChannels(event);
         }
 
-        private void sendByChannels(Event event){
+        private void sendByChannels(Event event) {
             PaxosMessage.DataGram dataGram = coder.encode(event);
             channels.writeAndFlush(dataGram);
         }

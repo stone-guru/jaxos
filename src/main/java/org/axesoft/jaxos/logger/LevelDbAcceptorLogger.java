@@ -34,7 +34,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         tryCreateDir(path);
 
         Options options = new Options().createIfMissing(true);
-
+        options.cacheSize();
         try {
             db = Iq80DBFactory.factory.open(new File(path), options);
         }

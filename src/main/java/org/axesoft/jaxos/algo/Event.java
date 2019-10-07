@@ -122,7 +122,30 @@ public abstract class Event {
     }
 
     public enum ValueType {
-        NOTHING, APPLICATION, NOOP
+        NOTHING(0), APPLICATION(1), NOOP(2);
+
+        private int code;
+
+        ValueType(int code) {
+            this.code = code;
+        }
+
+        public int code() {
+            return this.code;
+        }
+
+        public static ValueType fromCode(int code) {
+            switch (code) {
+                case 0:
+                    return NOTHING;
+                case 1:
+                    return APPLICATION;
+                case 2:
+                    return NOOP;
+                default:
+                    throw new IllegalArgumentException("Unknown code " + code);
+            }
+        }
     }
 
     public static class BallotValue {
@@ -130,7 +153,7 @@ public abstract class Event {
 
         public static final BallotValue NOOP = new BallotValue(ValueType.NOOP, ByteString.EMPTY);
 
-        public static final BallotValue appValue(ByteString v){
+        public static final BallotValue appValue(ByteString v) {
             return new BallotValue(ValueType.APPLICATION, v);
         }
 

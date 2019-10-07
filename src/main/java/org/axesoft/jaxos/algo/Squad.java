@@ -67,11 +67,6 @@ public class Squad implements EventDispatcher {
         return resultFuture;
     }
 
-    public ListenableFuture<Void> runForLeader(SettableFuture<Void> resultFuture){
-        long last = this.stateMachineRunner.lastChosenInstanceId(context.squadId());
-        return propose(last + 1, Event.BallotValue.NOOP, resultFuture);
-    }
-
     @Override
     public Event processEvent(Event request) {
 //        if (logger.isTraceEnabled()) {
@@ -244,10 +239,12 @@ public class Squad implements EventDispatcher {
 
         Pair<Double, Double> elapsed = this.metrics.compute(current);
 
-        String msg = String.format("ID=%d, PT=%d, PE=%.3f, S=%.2f, C=%.2f, O=%.2f, AE=%.3f, AT=%d (%.0f s), TT=%d, SR=%.3f, LI=%d",
-                this.context.squadId(), proposalDelta, elapsed.getLeft(),
+        String msg = String.format("S %d, L=%d, PT=%d, PE=%.3f, S=%.2f, C=%.2f, O=%.2f, AE=%.3f, AT=%d (%.0f s), TT=%d, SR=%.3f, LI=%d",
+                this.context.squadId(), context.lastSuccessAccept().serverId(),
+                proposalDelta, elapsed.getLeft(),
                 successRate, conflictRate, otherRate, elapsed.getRight(), acceptDelta, seconds,
-                this.metrics.proposeTimes(), this.metrics.totalSuccessRate(), this.acceptor.lastChosenInstanceId());
+                this.metrics.proposeTimes(), this.metrics.totalSuccessRate(), this.acceptor.lastChosenInstanceId()
+        );
         logger.info(msg);
     }
 
@@ -273,7 +270,7 @@ public class Squad implements EventDispatcher {
             return;
         }
 
-        if (p0.instanceId == checkPoint.instanceId()) {
+        if (checkPoint != null && p0.instanceId == checkPoint.instanceId()) {
             this.stateMachineRunner.learnLastChosen(p0.squadId, p0.instanceId, p0.proposal);
         }
         else {

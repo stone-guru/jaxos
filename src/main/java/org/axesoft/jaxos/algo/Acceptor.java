@@ -130,7 +130,7 @@ public class Acceptor {
                     logger.trace("S{}: Accept new value sender = {}, instance = {}, ballot = {}, value = {}",
                             context.squadId(), request.senderId(), request.instanceId(), acceptedBallot, acceptedValue);
                 }
-                context.setAcceptSuccessRecord(request.senderId(), request.ballot());
+
                 return buildAcceptResponse(request, this.maxBallot, Event.RESULT_SUCCESS);
             }
         }
@@ -172,6 +172,7 @@ public class Acceptor {
         long last = this.learner.lastChosenInstanceId(this.context.squadId());
         if (notify.instanceId() == last + 1) {
             chose(notify.instanceId(), notify.ballot());
+            context.setAcceptSuccessRecord(notify.senderId(), notify.ballot());
         }
         else if (notify.instanceId() <= last + 1) {
             logger.debug("S{}: NOTIFY late notify message of chose notify({}), while my last instance id is {} ",
