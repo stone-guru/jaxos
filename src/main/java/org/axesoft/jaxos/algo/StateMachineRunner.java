@@ -8,19 +8,22 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class StateMachineRunner implements Learner {
     private static Logger logger = LoggerFactory.getLogger(StateMachineRunner.class);
 
+    private int squadId;
     private StateMachine machine;
-    private Map<Integer, LastChosen> lastChosenMap;
+    private LastChosen lastChosen;
     private Map<Long, InstanceValue> cachedBallots;
 
-    public StateMachineRunner(StateMachine machine) {
+    public StateMachineRunner(int squadId, StateMachine machine) {
+        this.squadId = squadId;
         this.machine = checkNotNull(machine);
-        this.lastChosenMap = new HashMap<>();
         this.cachedBallots = new HashMap<>();
+        this.lastChosen = new LastChosen(squadId, 0, 0);
     }
 
     public StateMachine machine() {
@@ -29,17 +32,15 @@ public class StateMachineRunner implements Learner {
 
     @Override
     public synchronized void learnLastChosen(int squadId, long instanceId, int proposal) {
-        this.lastChosenMap.put(squadId, new LastChosen(squadId, instanceId, proposal));
+        checkArgument(squadId == this.squadId, "given squad id %d unequal to mine %d", squadId, this.squadId);
+        this.lastChosen = new LastChosen(squadId, instanceId, proposal);
         machine.learnLastChosenVersion(squadId, instanceId);
     }
 
     @Override
     public synchronized LastChosen lastChosen(int squadId) {
-        LastChosen c = this.lastChosenMap.get(squadId);
-        if (c == null) {
-            return new LastChosen(squadId, 0, 0);
-        }
-        return c;
+        checkArgument(squadId == this.squadId, "given squad id %d unequal to mine %d", squadId, this.squadId);
+        return this.lastChosen;
     }
 
     @Override
@@ -49,7 +50,7 @@ public class StateMachineRunner implements Learner {
 
     @Override
     public synchronized boolean learnValue(int squadId, long instanceId, int proposal, Event.BallotValue value) {
-        if(instanceId != this.lastChosen(squadId).instanceId + 1){
+        if (instanceId != this.lastChosen(squadId).instanceId + 1) {
             logger.warn("Learning ignore given instance {}, mine is {}", instanceId, this.lastChosen(squadId).instanceId);
             return false;
         }
@@ -68,10 +69,11 @@ public class StateMachineRunner implements Learner {
 
     private void innerLearn(int squadId, long instanceId, int proposal, Event.BallotValue value) {
         try {
-            this.lastChosenMap.put(squadId, new LastChosen(squadId, instanceId, proposal));
-            if(value.type() == Event.ValueType.APPLICATION) {
+            this.lastChosen = new LastChosen(squadId, instanceId, proposal);
+            if (value.type() == Event.ValueType.APPLICATION) {
                 this.machine.consume(squadId, instanceId, value.content());
-            } else {
+            }
+            else {
                 this.machine.consume(squadId, instanceId, ByteString.EMPTY);
             }
         }

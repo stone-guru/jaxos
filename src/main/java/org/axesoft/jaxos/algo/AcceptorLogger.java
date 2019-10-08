@@ -13,5 +13,7 @@ public interface AcceptorLogger {
 
     CheckPoint loadLastCheckPoint(int squadId);
 
+    void sync();
+
     void close();
 }

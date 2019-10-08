@@ -11,11 +11,15 @@ import org.axesoft.jaxos.algo.CheckPoint;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
 import org.iq80.leveldb.*;
-import org.iq80.leveldb.impl.Iq80DBFactory;
+//import org.iq80.leveldb.impl.Iq80DBFactory;
+import static org.fusesource.leveldbjni.JniDBFactory.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicStampedReference;
 
 public class LevelDbAcceptorLogger implements AcceptorLogger {
     private static final Logger logger = LoggerFactory.getLogger(LevelDbAcceptorLogger.class);
@@ -27,22 +31,31 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     private DB db;
     private String path;
     private ProtoMessageCoder messageCoder;
+    private AtomicStampedReference<Long> persistTimestamp;
+    private AtomicStampedReference<Long> syncTimestamp;
 
     public LevelDbAcceptorLogger(String path) {
         this.path = path;
 
         tryCreateDir(path);
 
-        Options options = new Options().createIfMissing(true);
-        options.cacheSize();
+        Options options = new Options()
+                .createIfMissing(true)
+                .compressionType(CompressionType.NONE)
+                .cacheSize(32 * 1048576);
+
         try {
-            db = Iq80DBFactory.factory.open(new File(path), options);
+            db = factory.open(new File(path), options);
         }
         catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         this.messageCoder = new ProtoMessageCoder();
+
+        long cur = System.currentTimeMillis();
+        persistTimestamp = new AtomicStampedReference<>(cur, 0);
+        syncTimestamp = new AtomicStampedReference<>(cur, 0);
     }
 
     private void tryCreateDir(String path) {
@@ -66,15 +79,50 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         instanceValue.instanceId = instanceId;
         instanceValue.proposal = proposal;
         instanceValue.value = value;
-
         byte[] data = toByteArray(instanceValue);
-        WriteOptions writeOptions = new WriteOptions().sync(true);
+
+        long current = System.currentTimeMillis();
+        recordSaveTimestamp(current);
+        boolean shouldSync = computeShouldSync(current);
+        WriteOptions writeOptions = new WriteOptions().sync(shouldSync);
 
         WriteBatch writeBatch = db.createWriteBatch();
         byte[] promiseKey = keyOfInstanceId(squadId, instanceId);
         writeBatch.put(promiseKey, data);
         writeBatch.put(keyOfSquadLast(squadId), promiseKey);
         db.write(writeBatch, writeOptions);
+    }
+
+    private void recordSaveTimestamp(long t) {
+        for (; ; ) {
+            int stamp = persistTimestamp.getStamp();
+            Long t0 = persistTimestamp.getReference();
+
+            if (persistTimestamp.compareAndSet(t0, Math.max(t0, t), stamp, stamp + 1)) {
+                return;
+            }
+        }
+    }
+
+    private boolean computeShouldSync(long current) {
+        int pt = persistTimestamp.getStamp();
+        int st = syncTimestamp.getStamp();
+        Long t0 = syncTimestamp.getReference();
+        //logger.trace("PT={}, ST={}, T0={}, CUR={}", pt, st, t0, current);
+
+        if (st >= pt) {
+            return false;
+        }
+
+        if (current - t0 < 1000) {
+            return false;
+        }
+
+        boolean ret = syncTimestamp.compareAndSet(t0, current, st, pt);
+        if (ret) {
+            logger.trace("should do sync");
+        }
+        return ret;
     }
 
     @Override
@@ -122,6 +170,17 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
             return null;
         }
         return toCheckPoint(data);
+    }
+
+    @Override
+    public void sync() {
+        if (!computeShouldSync(System.currentTimeMillis())) {
+            return;
+        }
+
+        WriteOptions writeOptions = new WriteOptions().sync(true);
+        WriteBatch writeBatch = db.createWriteBatch();
+        db.write(writeBatch, writeOptions);
     }
 
     @Override

@@ -55,9 +55,10 @@ dependencies {
     implementation group: 'ch.qos.logback', name: 'logback-core', version: '1.2.3'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
-    implementation group: 'org.iq80.leveldb', name: 'leveldb', version: '0.12'
-    implementation group: 'org.iq80.leveldb', name: 'leveldb-api', version: '0.12'
+    //implementation group: 'org.iq80.leveldb', name: 'leveldb', version: '0.12'
+    //implementation group: 'org.iq80.leveldb', name: 'leveldb-api', version: '0.12'
     implementation group: 'org.pcollections', name: 'pcollections', version: '2.1.2'
+    implementation group: 'org.fusesource.leveldbjni', name: 'leveldbjni-all', version: '1.8'
     // Use JUnit test framework
     testImplementation 'junit:junit:4.10'
 }
