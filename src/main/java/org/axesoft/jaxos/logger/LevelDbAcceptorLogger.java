@@ -5,21 +5,20 @@ import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.axesoft.jaxos.algo.AcceptorLogger;
+import org.axesoft.jaxos.algo.CheckPoint;
 import org.axesoft.jaxos.algo.Event;
 import org.axesoft.jaxos.algo.InstanceValue;
-import org.axesoft.jaxos.algo.CheckPoint;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
 import org.iq80.leveldb.*;
-//import org.iq80.leveldb.impl.Iq80DBFactory;
-import static org.fusesource.leveldbjni.JniDBFactory.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicStampedReference;
+
+import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 public class LevelDbAcceptorLogger implements AcceptorLogger {
     private static final Logger logger = LoggerFactory.getLogger(LevelDbAcceptorLogger.class);
@@ -33,8 +32,9 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     private ProtoMessageCoder messageCoder;
     private AtomicStampedReference<Long> persistTimestamp;
     private AtomicStampedReference<Long> syncTimestamp;
+    private Duration syncInterval;
 
-    public LevelDbAcceptorLogger(String path) {
+    public LevelDbAcceptorLogger(String path, Duration syncInterval) {
         this.path = path;
 
         tryCreateDir(path);
@@ -52,6 +52,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         }
 
         this.messageCoder = new ProtoMessageCoder();
+        this.syncInterval = syncInterval;
 
         long cur = System.currentTimeMillis();
         persistTimestamp = new AtomicStampedReference<>(cur, 0);
@@ -114,7 +115,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
             return false;
         }
 
-        if (current - t0 < 1000) {
+        if (current - t0 < syncInterval.toMillis()) {
             return false;
         }
 

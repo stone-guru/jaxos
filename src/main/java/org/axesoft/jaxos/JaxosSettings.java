@@ -3,7 +3,10 @@ package org.axesoft.jaxos;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 
+import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -59,6 +62,8 @@ public class JaxosSettings {
         private long acceptTimeoutMillis =  150;
         private int partitionNumber = 1;
         private int checkPointMinutes = 1;
+        private Duration syncInterval = Duration.ofMillis(1000);
+
         private Function<ByteString, String> valueVerboser;
 
         private ImmutableMap.Builder<Integer, Peer> peerBuilder = ImmutableMap.<Integer, Peer>builder();
@@ -126,6 +131,7 @@ public class JaxosSettings {
             config.acceptTimeoutMillis = this.acceptTimeoutMillis;
             config.partitionNumber = this.partitionNumber;
             config.checkPointMinutes = this.checkPointMinutes;
+            config.syncInterval = this.syncInterval;
             return config;
         }
     }
@@ -140,6 +146,7 @@ public class JaxosSettings {
     private long acceptTimeoutMillis;
     private int partitionNumber;
     private int checkPointMinutes;
+    private Duration syncInterval;
 
     private Function<ByteString, String> valueVerboser;
 
@@ -204,6 +211,10 @@ public class JaxosSettings {
 
     public Function<ByteString, String> valueVerboser(){
         return this.valueVerboser;
+    }
+
+    public Duration syncInterval (){
+        return this.syncInterval;
     }
 
     @Override

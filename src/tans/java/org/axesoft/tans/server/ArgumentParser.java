@@ -32,7 +32,7 @@ public class ArgumentParser {
         private String dbDirectory;
 
         @Parameter(names = {"-p"}, description = "Partition number")
-        private Integer partitionNumber = 1;
+        private Integer partitionNumber = 0;
 
         @Parameter(names = {"-m"}, description = "Interval in seconds of print metrics")
         private Integer printMetricsInterval = 30;

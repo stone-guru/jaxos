@@ -48,8 +48,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     public JaxosService(JaxosSettings settings, StateMachine stateMachine) {
         this.settings = checkNotNull(settings, "settings is null");
         this.stateMachine = stateMachine;
-        this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory());
-        //this.acceptorLogger = new FileAcceptorLogger(this.settings.dbDirectory(), settings.partitionNumber());
+        this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval());
 
         this.configuration = new Configuration() {
             @Override
@@ -141,7 +140,8 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         //this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, 10, 60 * settings.checkPointMinutes(), TimeUnit.SECONDS);
         //this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
         //this.timerExecutor.scheduleAtFixedRate(this::runForLeader, 3, 1, TimeUnit.SECONDS);
-        this.timerExecutor.scheduleAtFixedRate(new RunnableWithLog(logger, () -> this.acceptorLogger.sync()), 2000, 500, TimeUnit.MILLISECONDS);
+        this.timerExecutor.scheduleAtFixedRate(new RunnableWithLog(logger, () -> this.acceptorLogger.sync()),
+                1000, settings.syncInterval().toMillis()/2, TimeUnit.MILLISECONDS);
         this.node.startup();
     }
 
@@ -312,6 +312,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         @Override
         public void running() {
             logger.info("{} {} started at port {}", SERVICE_NAME, settings.serverId(), settings.self().port());
+            logger.info("Using {} ", settings);
         }
 
         @Override
