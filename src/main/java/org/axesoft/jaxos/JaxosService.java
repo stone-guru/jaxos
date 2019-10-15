@@ -49,7 +49,6 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         this.settings = settings;
         this.stateMachine = stateMachine;
         this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory());
-        //this.acceptorLogger = new FileAcceptorLogger(this.settings.dbDirectory(), settings.partitionNumber());
 
         this.configuration = new Configuration() {
             @Override

@@ -43,7 +43,7 @@ public class AcceptorLoggerTest {
             logger.savePromise(1, 1000 + i, 1 + i, Event.BallotValue.appValue(ByteString.copyFromUtf8("Hello" + i)));
         }
 
-        w.stop();;
+        w.stop();
         double seconds = w.getTime(TimeUnit.MILLISECONDS)/1000.0;
         System.out.println(String.format("Insert %d records in %.2f s, OPS = %.2f", n, seconds, ((double)n)/seconds));
 
