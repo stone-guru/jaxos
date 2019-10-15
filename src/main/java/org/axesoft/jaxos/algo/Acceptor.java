@@ -170,7 +170,7 @@ public class Acceptor {
         }
 
         long last = this.learner.lastChosenInstanceId(this.context.squadId());
-        if (notify.instanceId() == last + 1) {
+        if (notify.instanceId() == last + 1 && notify.ballot() == this.acceptedBallot) {
             chose(notify.instanceId(), notify.ballot());
             context.setAcceptSuccessRecord(notify.senderId(), notify.ballot());
         }
@@ -184,7 +184,7 @@ public class Acceptor {
                         context.squadId(), notify.instanceId(), last);
             }
 
-            learner.cacheChosenValue(context.squadId(), notify.instanceId(), this.acceptedBallot, this.acceptedValue);
+            //learner.cacheChosenValue(context.squadId(), notify.instanceId(), this.acceptedBallot, this.acceptedValue);
         }
         else {
             logger.warn("S{}: NOTIFY: future notify message of chose notify({}), mine is {} ",

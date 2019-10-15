@@ -29,18 +29,18 @@ public class Squad implements EventDispatcher {
         this.configuration = configuration;
         this.context = new SquadContext(squadId, this.settings);
         this.metrics = new SquadMetrics();
-        this.stateMachineRunner = new StateMachineRunner(machine);
+        this.stateMachineRunner = new StateMachineRunner(squadId, machine);
         this.proposer = new Proposer(this.settings, configuration, this.context, (Learner) stateMachineRunner);
         this.acceptor = new Acceptor(this.settings, configuration, this.context, (Learner) stateMachineRunner);
 
         this.learning = false;
     }
 
-    public int id(){
+    public int id() {
         return this.context.squadId();
     }
 
-    public SquadContext context(){
+    public SquadContext context() {
         return this.context;
     }
 
@@ -52,7 +52,6 @@ public class Squad implements EventDispatcher {
         attachMetricsListener(resultFuture);
 
         SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessAccept();
-        //logger.info("last request is {}, current is {}", lastRequestInfo, new Date());
 
         if (this.context.isOtherLeaderActive() && !this.settings.ignoreLeader()) {
             if (logger.isDebugEnabled()) {
@@ -69,10 +68,6 @@ public class Squad implements EventDispatcher {
 
     @Override
     public Event processEvent(Event request) {
-//        if (logger.isTraceEnabled()) {
-//            logger.trace("Process event {}", request);
-//        }
-
         if (request instanceof Event.BallotEvent) {
             Event.BallotEvent ballotRequest = (Event.BallotEvent) request;
             Event.BallotEvent result = processBallotEvent(ballotRequest);
@@ -136,6 +131,7 @@ public class Squad implements EventDispatcher {
             case LEARN_RESPONSE: {
                 this.onLearnResponse((Event.LearnResponse) event);
                 this.learning = false;
+                return null;
             }
             default: {
                 throw new UnsupportedOperationException(event.code().toString());
@@ -266,22 +262,20 @@ public class Squad implements EventDispatcher {
         }
 
         InstanceValue p0 = this.configuration.getLogger().loadLastPromise(context.squadId());
-        if (p0 == null) {
-            return;
-        }
-
-        if (checkPoint != null && p0.instanceId == checkPoint.instanceId()) {
-            this.stateMachineRunner.learnLastChosen(p0.squadId, p0.instanceId, p0.proposal);
-        }
-        else {
-            for (long i = lastInstanceId + 1; i <= p0.instanceId; i++) {
-                InstanceValue p = this.configuration.getLogger().loadPromise(context.squadId(), i);
-                if (p == null) {
-                    logger.error("Promise(" + i + ") not found in DB");
-                    break;
+        if (p0 != null) {
+            if (checkPoint != null && p0.instanceId == checkPoint.instanceId()) {
+                this.stateMachineRunner.learnLastChosen(p0.squadId, p0.instanceId, p0.proposal);
+            }
+            else {
+                for (long i = lastInstanceId + 1; i <= p0.instanceId; i++) {
+                    InstanceValue p = this.configuration.getLogger().loadPromise(context.squadId(), i);
+                    if (p == null) {
+                        logger.error("Promise(" + i + ") not found in DB");
+                        break;
+                    }
+                    lastInstanceId = p.instanceId;
+                    this.stateMachineRunner.learnValue(p.squadId, i, p.proposal, p.value);
                 }
-                lastInstanceId = p.instanceId;
-                this.stateMachineRunner.learnValue(p.squadId, i, p.proposal, p.value);
             }
         }
         logger.info("Squad {} restored to instance {}", context.squadId(), lastInstanceId);

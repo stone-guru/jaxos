@@ -9,7 +9,6 @@ import com.google.protobuf.ByteString;
 import io.netty.util.Timeout;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.algo.*;
-import org.axesoft.jaxos.logger.FileAcceptorLogger;
 import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
 import org.axesoft.jaxos.algo.EventWorkerPool;
 import org.axesoft.jaxos.netty.NettyCommunicatorFactory;
@@ -25,6 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class JaxosService extends AbstractExecutionThreadService implements Proponent {
     public static final String SERVICE_NAME = "Jaxos service";
@@ -46,9 +46,9 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     private Configuration configuration;
 
     public JaxosService(JaxosSettings settings, StateMachine stateMachine) {
-        this.settings = settings;
+        this.settings = checkNotNull(settings, "settings is null");
         this.stateMachine = stateMachine;
-        this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory());
+        this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval());
 
         this.configuration = new Configuration() {
             @Override
@@ -72,7 +72,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             }
         };
 
-
+        checkArgument(settings.partitionNumber() >= 0, "Invalid partition number %d", settings.partitionNumber());
         this.squads = new Squad[settings.partitionNumber()];
         for (int i = 0; i < settings.partitionNumber(); i++) {
             final int n = i;
@@ -139,7 +139,9 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
         this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, 10, 60 * settings.checkPointMinutes(), TimeUnit.SECONDS);
         this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
-        this.timerExecutor.scheduleAtFixedRate(this::runForLeader, 3, 1, TimeUnit.SECONDS);
+        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, 3, 1, TimeUnit.SECONDS);
+        this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync()),
+                1000, settings.syncInterval().toMillis()/2, TimeUnit.MILLISECONDS);
         this.node.startup();
     }
 
@@ -226,7 +228,9 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
                 case CHOSEN_QUERY_RESPONSE: {
                     onChosenQueryResponse((Event.ChosenQueryResponse) event);
                     if (this.chosenQueryResponseCount == settings.peerCount() - 1) {
-                        chosenQueryTimeout.cancel();
+                        if(chosenQueryTimeout != null) {
+                            chosenQueryTimeout.cancel();
+                        }
                         endChosenQueryResponse();
                     }
                     return null;
@@ -310,6 +314,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         @Override
         public void running() {
             logger.info("{} {} started at port {}", SERVICE_NAME, settings.serverId(), settings.self().port());
+            logger.info("Using {} ", settings);
         }
 
         @Override

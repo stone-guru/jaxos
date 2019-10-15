@@ -390,12 +390,6 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             int otherLeaderId = -1;
             try {
                 rx = tansService.acquire(squadId, requests);
-
-                if (logger.isTraceEnabled()) {
-                    for (LongRange r : rx) {
-                        logger.trace("Acquire result [{},{}]", r.low(), r.high());
-                    }
-                }
             }
             catch (RedirectException e) {
                 otherLeaderId = e.getServerId();
@@ -423,9 +417,12 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                         LongRange r = rx.get(i);
                         String content = task.keyLong.key() + "," + r.low() + "," + r.high();
                         response = createResponse(OK, content);
+                        if(logger.isTraceEnabled()) {
+                            logger.trace("S{} write response {},{},{},{}", squadId,
+                                    task.keyLong().key(), task.keyLong().value(), r.low(), r.high());
+                        }
                     }
 
-                    logger.trace("write response ");
                     writeResponse(task.ctx, task.keepAlive, response);
                 }
             }

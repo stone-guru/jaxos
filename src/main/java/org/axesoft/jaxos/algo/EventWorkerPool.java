@@ -2,6 +2,8 @@ package org.axesoft.jaxos.algo;
 
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,6 +16,7 @@ import java.util.function.Supplier;
  * @sine 2019/9/17.
  */
 public class EventWorkerPool implements EventTimer {
+    private static Logger logger = LoggerFactory.getLogger(EventWorkerPool.class);
 
     private ExecutorService[] ballotExecutors;
     private ExecutorService learnerExecutor;
@@ -43,13 +46,14 @@ public class EventWorkerPool implements EventTimer {
 
     public void queueBallotTask(int squadId, Runnable r) {
         int n = squadId % ballotExecutors.length;
-        this.ballotExecutors[n].submit(r);
+        this.ballotExecutors[n].submit(new RunnableWithLog(squadId, logger, r));
     }
 
-    public void queueInstanceTask(Runnable r){
-        this.learnerExecutor.submit(r);
+
+    public void queueInstanceTask(Runnable r) {
+        this.learnerExecutor.submit(new RunnableWithLog(logger, r));
     }
-    
+
     public void submitEventToSelf(Event event) {
         this.submitEvent(event, this::submitEventToSelf);
     }
@@ -68,12 +72,13 @@ public class EventWorkerPool implements EventTimer {
             throw new UnsupportedOperationException(event.getClass().getName());
         }
 
-        executor.submit(() -> {
-            Event result = this.eventDispatcherSupplier.get().processEvent(event);
-            if (result != null) {
-                resultConsumer.accept(result);
-            }
-        });
+        executor.submit(new RunnableWithLog(event.squadId(), logger,
+                () -> {
+                    Event result = this.eventDispatcherSupplier.get().processEvent(event);
+                    if (result != null) {
+                        resultConsumer.accept(result);
+                    }
+                }));
     }
 
     public void directCallSelf(Event event) {
@@ -85,7 +90,7 @@ public class EventWorkerPool implements EventTimer {
         return timer.newTimeout((t) -> this.submitEventToSelf(timeoutEvent), delay, timeUnit);
     }
 
-    public ExecutorService learnerExecutor(){
+    public ExecutorService learnerExecutor() {
         return this.learnerExecutor;
     }
 
