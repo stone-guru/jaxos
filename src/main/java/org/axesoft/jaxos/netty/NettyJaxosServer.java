@@ -130,13 +130,13 @@ public class NettyJaxosServer {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object obj) throws Exception {
             super.userEventTriggered(ctx, obj);
-            if (obj instanceof IdleStateEvent) {
-                IdleStateEvent event = (IdleStateEvent) obj;
-                if (event.state() == IdleState.READER_IDLE || event.state() == IdleState.ALL_IDLE) {
-                    logger.warn("connection from {} idle, close it", channelPeerMap.get(ctx.channel().id()));
-                    ctx.channel().close();
-                }
-            }
+//            if (obj instanceof IdleStateEvent) {
+//                IdleStateEvent event = (IdleStateEvent) obj;
+//                if (event.state() == IdleState.READER_IDLE || event.state() == IdleState.ALL_IDLE) {
+//                    logger.warn("connection from {} idle, close it", channelPeerMap.get(ctx.channel().id()));
+//                    ctx.channel().close();
+//                }
+//            }
         }
     }
 

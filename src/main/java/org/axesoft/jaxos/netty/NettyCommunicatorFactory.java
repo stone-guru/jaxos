@@ -1,5 +1,6 @@
 package org.axesoft.jaxos.netty;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.RateLimiter;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -27,8 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -39,9 +39,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class NettyCommunicatorFactory implements CommunicatorFactory {
     private static Logger logger = LoggerFactory.getLogger(NettyCommunicatorFactory.class);
+
     private JaxosSettings config;
     private ProtoMessageCoder coder;
-    private ChannelGroupCommunicator communicator;
+    private Communicator communicator;
     private EventWorkerPool eventWorkerPool;
 
     public NettyCommunicatorFactory(JaxosSettings config, EventWorkerPool eventWorkerPool) {
@@ -53,39 +54,79 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
     @Override
     public Communicator createCommunicator() {
         EventLoopGroup worker = new NioEventLoopGroup();
-        try {
-            Bootstrap bootstrap = new Bootstrap()
-                    .group(worker)
-                    .channel(NioSocketChannel.class)
-                    .option(ChannelOption.TCP_NODELAY, true)
-                    .option(ChannelOption.SO_KEEPALIVE, true)
-                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                    .option(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT)
-                    .handler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel socketChannel) throws Exception {
-                            ChannelPipeline pipeline = socketChannel.pipeline();
-                            pipeline.addLast(new LoggingHandler(LogLevel.DEBUG))
-                                    .addLast(new ProtobufVarint32FrameDecoder())
-                                    .addLast(new ProtobufDecoder(PaxosMessage.DataGram.getDefaultInstance()))
-                                    .addLast(new ProtobufVarint32LengthFieldPrepender())
-                                    .addLast(new ProtobufEncoder())
-                                    //.addLast(new JaxosOutboundHandler())
-                                    .addLast(new JaxosClientHandler());
-                        }
-                    });
 
-            this.communicator = new ChannelGroupCommunicator(worker, bootstrap);
-            this.communicator.start();
-            return this.communicator;
+        ImmutableList.Builder<Communicator> builder = ImmutableList.builder();
+        for(int i = 0; i < Math.min(3, this.config.partitionNumber()); i++) {
+            ChannelGroupCommunicator c = new ChannelGroupCommunicator(worker);
+            c.start();
+            builder.add(c);
         }
-        catch (Exception e) {
-            throw new RuntimeException(e);
+
+        this.communicator = new CompositeCommunicator(builder.build());
+        return this.communicator;
+    }
+
+    private class CompositeCommunicator implements Communicator {
+        Communicator[] communicators;
+
+        public CompositeCommunicator(List<Communicator> communicators) {
+            this.communicators = communicators.toArray(new Communicator[communicators.size()]);
         }
+
+        @Override
+        public boolean available() {
+            return selectCommunicator(0).isPresent();
+        }
+
+        @Override
+        public void broadcast(Event msg) {
+            selectCommunicator(msg.squadId()).ifPresent(c -> c.broadcast(msg));
+        }
+
+        @Override
+        public void broadcastOthers(Event msg) {
+            selectCommunicator(msg.squadId()).ifPresent(c -> broadcastOthers(msg));
+        }
+
+        @Override
+        public void selfFirstBroadcast(Event msg) {
+            selectCommunicator(msg.squadId()).ifPresent(c -> c.selfFirstBroadcast(msg));
+        }
+
+        @Override
+        public void send(Event event, int serverId) {
+            selectCommunicator(event.squadId()).ifPresent(c -> c.send(event, serverId));
+        }
+
+        @Override
+        public void close() {
+            for (Communicator c : communicators) {
+                try {
+                    c.close();
+                }
+                catch (Exception e) {
+                    logger.error("error when close communicator", e);
+                }
+            }
+        }
+
+        private Optional<Communicator> selectCommunicator(int squadId) {
+            int i0 = (squadId + communicators.length) % communicators.length;
+            int i = i0;
+            do {
+                if (communicators[i].available()) {
+                    return Optional.of(communicators[i]);
+                }
+                else {
+                    i = (i + 1) % communicators.length;
+                }
+            } while (i != i0);
+            return Optional.empty();
+        }
+
     }
 
     private class ChannelGroupCommunicator implements Communicator {
-        private static final long HEART_BEAT_INTERVAL_SEC = 2;
         private ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         private Bootstrap bootstrap;
         private EventLoopGroup worker;
@@ -94,17 +135,36 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         private Map<ChannelId, JaxosSettings.Peer> channelPeerMap = new ConcurrentHashMap<>();
         private Map<Integer, ChannelId> channelIdMap = new ConcurrentHashMap<>();
 
-        private PaxosMessage.DataGram heartBeatDataGram = coder.encode(new Event.HeartBeatRequest(config.serverId()));
+        public ChannelGroupCommunicator(EventLoopGroup worker) {
+            Bootstrap bootstrap;
+            try {
+                bootstrap = new Bootstrap()
+                        .group(worker)
+                        .channel(NioSocketChannel.class)
+                        .option(ChannelOption.TCP_NODELAY, true)
+                        .option(ChannelOption.SO_KEEPALIVE, true)
+                        .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                        .option(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT)
+                        .handler(new ChannelInitializer<SocketChannel>() {
+                            @Override
+                            protected void initChannel(SocketChannel socketChannel) throws Exception {
+                                ChannelPipeline pipeline = socketChannel.pipeline();
+                                pipeline.addLast(new LoggingHandler(LogLevel.DEBUG))
+                                        .addLast(new ProtobufVarint32FrameDecoder())
+                                        .addLast(new ProtobufDecoder(PaxosMessage.DataGram.getDefaultInstance()))
+                                        .addLast(new ProtobufVarint32LengthFieldPrepender())
+                                        .addLast(new ProtobufEncoder())
+                                        //.addLast(new JaxosOutboundHandler())
+                                        .addLast(new JaxosClientHandler(ChannelGroupCommunicator.this));
+                            }
+                        });
 
-        public ChannelGroupCommunicator(EventLoopGroup worker, Bootstrap bootstrap) {
+            }
+            catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             this.worker = worker;
             this.bootstrap = bootstrap;
-
-            this.worker.scheduleWithFixedDelay(() -> {
-                        //logger.info("send heart beat");
-                        channels.writeAndFlush(heartBeatDataGram);
-                    },
-                    HEART_BEAT_INTERVAL_SEC, HEART_BEAT_INTERVAL_SEC, TimeUnit.SECONDS);
         }
 
         public void start() {
@@ -137,7 +197,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                 }
                 else {
                     logger.error("call connect fail", e);
-                    if(!worker.isShuttingDown()) {
+                    if (!worker.isShuttingDown()) {
                         worker.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
                     }
                 }
@@ -153,7 +213,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                     if (logLimiter.tryAcquire()) {
                         logger.error("Unable to connect to {} ", peer);
                     }
-                    if(!worker.isShuttingDown()) {
+                    if (!worker.isShuttingDown()) {
                         worker.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
                     }
                 }
@@ -246,6 +306,12 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
     }
 
     private class JaxosClientHandler extends ChannelInboundHandlerAdapter {
+        private ChannelGroupCommunicator communicator;
+
+        public JaxosClientHandler(ChannelGroupCommunicator communicator) {
+            this.communicator = communicator;
+        }
+
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             communicator.channelInactive(ctx);

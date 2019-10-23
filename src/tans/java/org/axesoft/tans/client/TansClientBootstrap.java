@@ -41,15 +41,8 @@ import java.util.function.Function;
  * @sine 2019/9/29.
  */
 public class TansClientBootstrap {
-    private final static int MAX_CONNECTION_COUNT = 20;
-    private final static int MAX_CONNECTION_IDLE_SECONDS = 30;
-
     private final static AttributeKey<InetSocketAddress> ATTR_ADDRESS = AttributeKey.newInstance("ADDRESS");
     private final static AttributeKey<HttpConnector> ATTR_CONNECTOR = AttributeKey.newInstance("HTTP_CLIENT");
-    private final static AttributeKey<Long> USED_TIMESTAMP = AttributeKey.newInstance("USED_TIMESTAMP");
-    private final static AttributeKey<CountDownLatch> LATCH = AttributeKey.newInstance("LATCH");
-    private final static AttributeKey<LongRange> RESULT = AttributeKey.newInstance("RESULT");
-
     private final static String TANS_HANDLER_NAME = "tansHandler";
 
     private static final Logger logger = LoggerFactory.getLogger(TansClientBootstrap.class);
@@ -164,6 +157,7 @@ public class TansClientBootstrap {
                         String s = firstLine(body);
                         String[] rx = s.split(",");
                         r = new LongRange(Long.parseLong(rx[1]), Long.parseLong(rx[2]));
+                        logger.info("Got result {}", r);
                     }
                     catch (Exception e) {
                         promises.poll().setFailure(e);

@@ -24,9 +24,14 @@ public class ClientApp {
 
         @Parameter(names = {"-k"}, description = "How many round of 1000")
         private Integer round = 1;
+
+        @Parameter(names = {"-e"}, description = "Print every result or not")
+        private Boolean printEveryResult = false;
     }
 
     public static void main(String[] args) throws Exception {
+        System.setProperty("node-id", "client");
+
         Args arg = new Args();
 
         JCommander.newBuilder()
@@ -49,7 +54,7 @@ public class ClientApp {
         for (int j = 0; j < p; j++) {
             new Thread(() -> {
                 try {
-                    run(arg.servers, arg.round, n, startLatch, checker, millis, times);
+                    run(arg.servers, arg.round, n, arg.printEveryResult, startLatch, checker, millis, times);
                 }
                 catch (Exception e) {
                     System.out.println("Exec end with " + e.getMessage());
@@ -73,12 +78,12 @@ public class ClientApp {
         checker.printCheckResult();
     }
 
-    public static void run(String servers, int k, int n,
+    public static void run(String servers, int k, int n, boolean printEveryResult,
                            CountDownLatch startLatch, ResultChecker checker,
                            AtomicLong millis, AtomicLong times) throws Exception {
         TansClientBootstrap cb = new TansClientBootstrap(servers);
         final TansClient client = cb.getClient();
-        final int printInterval = 200 + (int) (Math.random() * 100);
+        final int printInterval =  200 + (int) (Math.random() * 100);
         Thread.sleep(1000);
 
         startLatch.await();
@@ -93,7 +98,7 @@ public class ClientApp {
                     Future<LongRange> future = client.acquire(key, 1 + (i % 10));
                     LongRange r = future.get();
                     checker.accept(key, r.low(), r.high());
-                    if (count % printInterval == 0) {
+                    if (count % printInterval == 0 || printEveryResult) {
                         System.out.println(String.format("[%s], %d, %s, %s", Thread.currentThread().getName(), count, key, r.toString()));
                     }
                 }
