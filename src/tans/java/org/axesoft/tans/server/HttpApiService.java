@@ -64,14 +64,14 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
     private Derivator taskCounter;
     private Derivator requestCounter;
-    private SlideCounter requestSlideCounter;
+    private SlideWindowMetric requestSlideCounter;
 
     public HttpApiService(TansConfig config, TansService tansService) {
         this.tansService = tansService;
         this.config = config;
         this.taskCounter = new Derivator();
         this.requestCounter = new Derivator();
-        this.requestSlideCounter = new SlideCounter(1, SlideCounter.StatMethod.STAT_SUM, 1);
+        this.requestSlideCounter = new SlideWindowMetric(1, SlideWindowMetric.StatisticMethod.STATSUM, 1);
 
         super.addListener(new Listener() {
             @Override
@@ -173,7 +173,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
         logger.info("More {} req, run {} times, req max {}/sec, avg {}/sec, proposal {}/sec, max waiting {}",
                 requestDelta.getLeft().intValue(), taskDelta.getLeft().intValue(),
-                requestSlideCounter.getMaximal(0), String.format("%.1f", requestDelta.getRight()),
+                requestSlideCounter.getMax(0), String.format("%.1f", requestDelta.getRight()),
                 String.format("%.1f", taskDelta.getRight()), w);
     }
 
@@ -356,7 +356,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                 logger.trace("S{} RequestQueue accept request {} {} {}", squadId, key, v, keepAlive);
             }
             HttpApiService.this.requestCounter.inc();
-            HttpApiService.this.requestSlideCounter.recordAtNow(1);
+            HttpApiService.this.requestSlideCounter.recordForPresent(1);
 
             this.tasks.add(new TansRequest(key, v, keepAlive, ctx));
             if (this.tasks.size() == 1) {
@@ -475,7 +475,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
     private static class TansExecutor {
         private ThreadPoolExecutor threadPool;
         private ListeningExecutorService executor;
-        private SlideCounter waitingTaskCounter;
+        private SlideWindowMetric waitingTaskCounter;
         private AtomicInteger execTimes;
 
         private TansExecutor(int i) {
@@ -489,14 +489,14 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                         return thread;
                     });
             this.executor = MoreExecutors.listeningDecorator(this.threadPool);
-            this.waitingTaskCounter = new SlideCounter(1, SlideCounter.StatMethod.STAT_MAX, 1);
+            this.waitingTaskCounter = new SlideWindowMetric(1, SlideWindowMetric.StatisticMethod.STATMAX, 1);
             this.execTimes = new AtomicInteger(0);
         }
 
         private <T> ListenableFuture<T> submit(Callable<T> task) {
             ListenableFuture<T> f = this.executor.submit(task);
             this.execTimes.incrementAndGet();
-            this.waitingTaskCounter.recordAtNow(this.threadPool.getQueue().size());
+            this.waitingTaskCounter.recordForPresent(this.threadPool.getQueue().size());
             return f;
         }
 
@@ -505,7 +505,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
 
         private int lastMinuteWaitingSize() {
-            return this.waitingTaskCounter.getMaximal(0);
+            return this.waitingTaskCounter.getMax(0);
         }
     }
 }
