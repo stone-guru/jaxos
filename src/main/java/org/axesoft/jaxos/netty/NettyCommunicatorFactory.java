@@ -16,6 +16,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.axesoft.jaxos.algo.Event;
 import org.axesoft.jaxos.algo.EventWorkerPool;
@@ -38,6 +39,8 @@ import java.util.concurrent.TimeUnit;
  * @sine 2019/8/24.
  */
 public class NettyCommunicatorFactory implements CommunicatorFactory {
+    private final static AttributeKey<JaxosSettings.Peer> ATTR_PEER = AttributeKey.newInstance("PEER");qi
+
     private static Logger logger = LoggerFactory.getLogger(NettyCommunicatorFactory.class);
 
     private JaxosSettings config;
@@ -123,7 +126,6 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             } while (i != i0);
             return Optional.empty();
         }
-
     }
 
     private class ChannelGroupCommunicator implements Communicator {
@@ -220,7 +222,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                 else {
                     logger.info("Connected to {}", peer);
                     Channel c = ((ChannelFuture) f).channel();
-
+                    c.attr(ATTR_PEER).set(peer);
                     channels.add(c);
                     channelPeerMap.put(c.id(), peer);
                     channelIdMap.put(peer.id(), c.id());

@@ -13,7 +13,6 @@ import java.util.function.IntBinaryOperator;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class SlideWindowMetric {
-
     private final int unitSeconds;
     private final int minutes;
     private final int prefMaxSize;
