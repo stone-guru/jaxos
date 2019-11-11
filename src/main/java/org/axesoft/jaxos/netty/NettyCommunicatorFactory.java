@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  * @sine 2019/8/24.
  */
 public class NettyCommunicatorFactory implements CommunicatorFactory {
-    private final static AttributeKey<JaxosSettings.Peer> ATTR_PEER = AttributeKey.newInstance("PEER");qi
+    private final static AttributeKey<JaxosSettings.Peer> ATTR_PEER = AttributeKey.newInstance("PEER");
 
     private static Logger logger = LoggerFactory.getLogger(NettyCommunicatorFactory.class);
 
@@ -165,6 +165,12 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             catch (Exception e) {
                 throw new RuntimeException(e);
             }
+            this.worker = worker;
+            this.bootstrap = bootstrap;
+        }
+
+
+        public ChannelGroupCommunicator(EventLoopGroup worker, Bootstrap bootstrap) {
             this.worker = worker;
             this.bootstrap = bootstrap;
         }
