@@ -157,7 +157,7 @@ public class TansClientBootstrap {
                         String s = firstLine(body);
                         String[] rx = s.split(",");
                         r = new LongRange(Long.parseLong(rx[1]), Long.parseLong(rx[2]));
-                        logger.info("Got result {}", r);
+                        logger.debug("Got result {}", r);
                     }
                     catch (Exception e) {
                         promises.poll().setFailure(e);
@@ -171,7 +171,7 @@ public class TansClientBootstrap {
                 }
                 else {
                     if (response.status().code() == 409 && times < 3) {
-                        logger.info("Retry send request {}", times);
+                        logger.debug("Retry send request {}", times);
                         ctx.writeAndFlush(request);
                         return;
                     }

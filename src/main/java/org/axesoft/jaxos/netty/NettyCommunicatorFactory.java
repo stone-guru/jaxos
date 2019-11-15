@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -45,7 +46,6 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
     private JaxosSettings config;
     private ProtoMessageCoder coder;
-    private Communicator communicator;
     private EventWorkerPool eventWorkerPool;
 
     public NettyCommunicatorFactory(JaxosSettings config, EventWorkerPool eventWorkerPool) {
@@ -59,18 +59,17 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         EventLoopGroup worker = new NioEventLoopGroup();
 
         ImmutableList.Builder<Communicator> builder = ImmutableList.builder();
-        for(int i = 0; i < Math.min(3, this.config.partitionNumber()); i++) {
+        for(int i = 0; i < Math.min(1, this.config.partitionNumber()); i++) {
             ChannelGroupCommunicator c = new ChannelGroupCommunicator(worker);
             c.start();
             builder.add(c);
         }
 
-        this.communicator = new CompositeCommunicator(builder.build());
-        return this.communicator;
+        return new CompositeCommunicator(builder.build());
     }
 
     private class CompositeCommunicator implements Communicator {
-        Communicator[] communicators;
+        private Communicator[] communicators;
 
         public CompositeCommunicator(List<Communicator> communicators) {
             this.communicators = communicators.toArray(new Communicator[communicators.size()]);
@@ -132,10 +131,9 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         private ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         private Bootstrap bootstrap;
         private EventLoopGroup worker;
-        private RateLimiter logLimiter = RateLimiter.create(1.0 / 15);
 
-        private Map<ChannelId, JaxosSettings.Peer> channelPeerMap = new ConcurrentHashMap<>();
         private Map<Integer, ChannelId> channelIdMap = new ConcurrentHashMap<>();
+        private ConcurrentMap<Integer, RateLimiter>  rateLimiterMap = new ConcurrentHashMap<>();
 
         public ChannelGroupCommunicator(EventLoopGroup worker) {
             Bootstrap bootstrap;
@@ -169,27 +167,11 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             this.bootstrap = bootstrap;
         }
 
-
-        public ChannelGroupCommunicator(EventLoopGroup worker, Bootstrap bootstrap) {
-            this.worker = worker;
-            this.bootstrap = bootstrap;
-        }
-
         public void start() {
             for (JaxosSettings.Peer peer : config.peerMap().values()) {
                 if (peer.id() != config.serverId()) {
                     connect(peer);
                 }
-            }
-        }
-
-        private void connect(ChannelId channelId) {
-            JaxosSettings.Peer peer = channelPeerMap.remove(channelId);
-            if (peer == null) {
-                logger.error("Peer for channel {} is not recorded", channelId);
-            }
-            else {
-                connect(peer);
             }
         }
 
@@ -206,7 +188,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                 else {
                     logger.error("call connect fail", e);
                     if (!worker.isShuttingDown()) {
-                        worker.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
+                        worker.schedule(() -> connect(peer), 1, TimeUnit.SECONDS);
                     }
                 }
                 return;
@@ -218,7 +200,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                         logger.info("Abandon connecting due to bootstrap closed: {}", f.cause().getMessage());
                         return;
                     }
-                    if (logLimiter.tryAcquire()) {
+                    if (rateLimiterForPeer(peer.id()).tryAcquire()) {
                         logger.error("Unable to connect to {} ", peer);
                     }
                     if (!worker.isShuttingDown()) {
@@ -230,7 +212,6 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                     Channel c = ((ChannelFuture) f).channel();
                     c.attr(ATTR_PEER).set(peer);
                     channels.add(c);
-                    channelPeerMap.put(c.id(), peer);
                     channelIdMap.put(peer.id(), c.id());
                 }
             });
@@ -286,16 +267,17 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             Channel c = ctx.channel();
+            channels.remove(c);
 
-            channels.remove(ctx.channel());
-            JaxosSettings.Peer p = channelPeerMap.get(c.id());
+            JaxosSettings.Peer peer = c.attr(ATTR_PEER).get();
+            logger.warn("Disconnected from a server {}", peer);
 
-            logger.error("Disconnected from a server {}", p);
-            if (p != null) {
-                channelIdMap.remove(p.id());
+            if (peer != null) {
+                channelIdMap.remove(peer.id());
+                connect(peer);
+            } else {
+                logger.error("No bind peer on channel");
             }
-
-            connect(c.id());
         }
 
         @Override
@@ -310,6 +292,10 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             catch (Exception e) {
                 logger.error("error when do communicator.close()", e);
             }
+        }
+
+        private RateLimiter rateLimiterForPeer(int peerId){
+            return rateLimiterMap.computeIfAbsent(peerId, id -> RateLimiter.create(1.0 / 15));
         }
     }
 
@@ -346,14 +332,13 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                 }
             }
             else {
-                logger.error("Unknown received object {}", Objects.toString(msg));
+                logger.error("Unknown received object {}", msg);
             }
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
             logger.error("error ", cause);
-            //cause.printStackTrace();
             ctx.close();
         }
     }

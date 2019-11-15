@@ -19,7 +19,7 @@ import static junit.framework.Assert.assertNotNull;
 
 
 public class AcceptorLoggerTest {
-    final static String DB_DIR = "/home/bison/tmp/jaxosdb";
+    final static String DB_DIR = "/tmp/jaxosdb";
     static AcceptorLogger logger;
 
     @BeforeClass

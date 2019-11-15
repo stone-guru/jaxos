@@ -69,8 +69,8 @@ applicationDefaultJvmArgs = ['-server', '-Xmx1g', '-XX:+UseG1GC',
                              '-XX:MaxGCPauseMillis=10',
                              //'-XX:ParallelGCThreads=3',
                              '-XX:+AlwaysPreTouch',
-                             '-XX:InitiatingHeapOccupancyPercent=60',
-                             '-Xlog:gc*']
+                             '-XX:InitiatingHeapOccupancyPercent=60']
+//                             '-Xlog:gc*']
 
 
 //applicationDefaultJvmArgs = ['-server', '-Xmx1g', '-Xms1g',
