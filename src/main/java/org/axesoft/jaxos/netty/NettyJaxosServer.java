@@ -34,15 +34,17 @@ public class NettyJaxosServer {
     private static Logger logger = LoggerFactory.getLogger(NettyJaxosServer.class);
 
     private JaxosSettings settings;
-    private Map<ChannelId, JaxosSettings.Peer> channelPeerMap = new ConcurrentHashMap<>();
     private MessageCoder<PaxosMessage.DataGram> messageCoder;
     private Channel serverChannel;
     private EventWorkerPool workerPool;
+    private JaxosChannelHandler jaxosChannelHandler;
 
     public NettyJaxosServer(JaxosSettings settings, EventWorkerPool workerPool) {
         this.settings = settings;
         this.messageCoder = new ProtoMessageCoder();
         this.workerPool = workerPool;
+
+        this.jaxosChannelHandler = new JaxosChannelHandler();
     }
 
     public void startup() {
@@ -65,7 +67,7 @@ public class NettyJaxosServer {
                             .addLast(new ProtobufDecoder(PaxosMessage.DataGram.getDefaultInstance()))
                             .addLast(new ProtobufVarint32LengthFieldPrepender())
                             .addLast(new ProtobufEncoder())
-                            .addLast(new JaxosChannelHandler());
+                            .addLast(NettyJaxosServer.this.jaxosChannelHandler);
                 }
             });
             ChannelFuture channelFuture = serverBootstrap.bind(settings.self().port()).sync();
@@ -90,7 +92,7 @@ public class NettyJaxosServer {
         this.serverChannel.close();
     }
 
-
+    @ChannelHandler.Sharable
     public class JaxosChannelHandler extends ChannelInboundHandlerAdapter {
         private final PaxosMessage.DataGram heartBeatResponse = messageCoder.encode(new Event.HeartBeatResponse(settings.serverId()));
 
@@ -130,13 +132,6 @@ public class NettyJaxosServer {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object obj) throws Exception {
             super.userEventTriggered(ctx, obj);
-//            if (obj instanceof IdleStateEvent) {
-//                IdleStateEvent event = (IdleStateEvent) obj;
-//                if (event.state() == IdleState.READER_IDLE || event.state() == IdleState.ALL_IDLE) {
-//                    logger.warn("connection from {} idle, close it", channelPeerMap.get(ctx.channel().id()));
-//                    ctx.channel().close();
-//                }
-//            }
         }
     }
 

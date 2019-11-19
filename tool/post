@@ -1,13 +1,20 @@
 #!/bin/bash
-n=1
+SERVER="10.135.72.251"
+
+n=1000000
 if [ -n "$2" ]; then
     n="$2"
 fi
-URL="http://localhost:808$1"
+
+URL="http://$SERVER:808$1/acquire?key=girl.id"
 
 i=0;
 while [ $i -lt $n ]; do
-    #echo $i
-    curl  $URL -X POST 
+    for url in `cat urls`; do
+       date
+       ab -n 1000 -c 10 -k -l "$url"
+    done
+    echo "================"
     let i=i+1
+    sleep 300 
 done

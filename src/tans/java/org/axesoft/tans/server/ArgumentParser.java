@@ -86,7 +86,6 @@ public class ArgumentParser {
             throw new IllegalArgumentException("parameter \"-d\" dbDirectory not set");
         }
 
-
         if (this.properties == null) {
             this.properties = new Properties();
             try {
@@ -149,6 +148,8 @@ public class ArgumentParser {
             }
             else if (k.equals("checkPoint.minutes")){
                 builder.setCheckPointMinutes(Integer.parseInt(s));
+            } else {
+                System.err.println("Unknown config item: " + k);
             }
         }
 

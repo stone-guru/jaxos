@@ -52,7 +52,6 @@ public class TansClientBootstrap {
         private final int port;
 
         private Bootstrap bootstrap;
-        private ChannelPool channelPool;
         private volatile Channel channel = null;
 
         private HttpConnector(NioEventLoopGroup worker, String host, int port) {
@@ -61,6 +60,7 @@ public class TansClientBootstrap {
             this.bootstrap = new Bootstrap();
             this.bootstrap.group(worker)
                     .channel(NioSocketChannel.class)
+                    .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .remoteAddress(host, port)
                     .handler(new ChannelInitializer<>() {
@@ -99,10 +99,6 @@ public class TansClientBootstrap {
         private Channel getChannel() {
             return this.channel;
         }
-
-        private void returnChannel(Channel channel) {
-            //this.channelPool.release(channel);
-        }
     }
 
     private class TansClientHandler extends SimpleChannelInboundHandler<HttpObject> {
@@ -134,7 +130,6 @@ public class TansClientBootstrap {
                 logger.info("Channel to {}:{} closed", client.host, client.port);
             }
         }
-
 
         @Override
         public synchronized void channelRead0(ChannelHandlerContext ctx, HttpObject msg) {
@@ -302,7 +297,7 @@ public class TansClientBootstrap {
     private volatile boolean closed = false;
 
     public TansClientBootstrap(String servers) {
-        worker = new NioEventLoopGroup(3);
+        worker = new NioEventLoopGroup(8);
 
         connectorMap = new ConcurrentHashMap<>();
         for (InetSocketAddress addr : parseAddresses(servers)) {

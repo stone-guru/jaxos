@@ -44,6 +44,7 @@ public class ClientApp {
         int p = arg.clientNumber;
 
         final CountDownLatch startLatch = new CountDownLatch(1);
+
         final CountDownLatch endLatch = new CountDownLatch(p);
 
         final AtomicLong millis = new AtomicLong(0);
@@ -65,10 +66,15 @@ public class ClientApp {
             }, "Worker-" + j).start();
         }
 
+        Thread.sleep(5000);
+        System.out.println("Start " + new Date());
         startLatch.countDown();
+
         StopWatch watch = StopWatch.createStarted();
 
         endLatch.await();
+        System.out.println("End " + new Date());
+
         watch.stop();
         double sec = watch.getTime(TimeUnit.MILLISECONDS) / 1000.0;
 
