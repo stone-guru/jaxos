@@ -11,10 +11,10 @@
 * TODO add single learn request&response			    :learner:
 * TODO add range learn request&response				    :learner:
 * DONE add general state machine			       :statemachine:
-* NEXT save checkpoint					       :statemachine:
+* DONE save checkpoint					       :statemachine:
 * DONE add log reload							:log:
 * DONE optimize the thread model				       :base:
-* DONE NEXT support timeout by TimeWheel			    :network:
+* DONE  support timeout by TimeWheel			    :network:
 * DONE set a fixed gradle version					:dev:
 * DONE use settings file for peers' address			       :base:
 * DONE connect to other peers lazily  
@@ -35,7 +35,5 @@ are by netty
 * DONE TANS service handle HTTP request in async way		    :network:
 * DONE Add metrics for acceptor					  :algorithm:
 * DONE process rate of TANS service should in each seconds	    :network:
-* related infors
-** Quorum algo(NWR)
-* token
-
+* Issues
+** TODO [#C] Netty print ERROR message [[file:caselog/netty-error.log][logs]]
