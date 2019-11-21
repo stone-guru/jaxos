@@ -16,4 +16,6 @@ public interface AcceptorLogger {
     void sync();
 
     void close();
+
+    void printMetrics(long currentMillis);
 }

@@ -1,10 +1,11 @@
 package org.axesoft.jaxos.algo;
 
 /**
- * @author gaoyuan
+ * A integrated interface providing implementation of basic components to be shared by Acceptor, Proposer, etc
+ *
  * @sine 2019/9/28.
  */
-public interface Configuration {
+public interface Components {
     Communicator getCommunicator();
 
     AcceptorLogger getLogger();

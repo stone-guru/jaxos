@@ -43,14 +43,14 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     private Platoon platoon;
 
     private ScheduledExecutorService timerExecutor;
-    private Configuration configuration;
+    private Components components;
 
     public JaxosService(JaxosSettings settings, StateMachine stateMachine) {
         this.settings = checkNotNull(settings, "settings is null");
         this.stateMachine = stateMachine;
         this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval());
 
-        this.configuration = new Configuration() {
+        this.components = new Components() {
             @Override
             public Communicator getCommunicator() {
                 return JaxosService.this.communicator;
@@ -76,7 +76,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         this.squads = new Squad[settings.partitionNumber()];
         for (int i = 0; i < settings.partitionNumber(); i++) {
             final int n = i;
-            this.squads[i] = new Squad(n, settings, this.configuration, stateMachine);
+            this.squads[i] = new Squad(n, settings, this.components, stateMachine);
             this.squads[i].restoreFromDB(); //FIXME it can run in parallel
         }
 
@@ -117,16 +117,27 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         for (Squad squad : this.squads) {
             squad.computeAndPrintMetrics(current);
         }
+        this.components.getLogger().printMetrics(current);
     }
 
     @Override
     protected void triggerShutdown() {
-        this.timerExecutor.shutdownNow();
-        this.communicator.close();
-        this.node.shutdown();
-        this.stateMachine.close();
-        this.acceptorLogger.close();
-        this.eventWorkerPool.shutdown();
+        ImmutableList<Runnable> closeActions = ImmutableList.of(
+                this.timerExecutor::shutdownNow,
+                this.communicator::close,
+                this.node::shutdown,
+                this.stateMachine::close,
+                this.acceptorLogger::close,
+                this.eventWorkerPool::shutdown);
+
+        for (Runnable r : closeActions) {
+            try {
+                r.run();
+            }
+            catch (Exception e) {
+                logger.error("Error when shutdown", e);
+            }
+        }
     }
 
     @Override
@@ -141,7 +152,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
         this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, 3, 1, TimeUnit.SECONDS);
         this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync()),
-                1000, settings.syncInterval().toMillis()/2, TimeUnit.MILLISECONDS);
+                1000, settings.syncInterval().toMillis() / 2, TimeUnit.MILLISECONDS);
         this.node.startup();
     }
 
@@ -228,7 +239,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
                 case CHOSEN_QUERY_RESPONSE: {
                     onChosenQueryResponse((Event.ChosenQueryResponse) event);
                     if (this.chosenQueryResponseCount == settings.peerCount() - 1) {
-                        if(chosenQueryTimeout != null) {
+                        if (chosenQueryTimeout != null) {
                             chosenQueryTimeout.cancel();
                         }
                         endChosenQueryResponse();
@@ -276,8 +287,8 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
                 return;
             }
 
-            configuration.getCommunicator().broadcastOthers(new Event.ChosenQuery(settings.serverId()));
-            this.chosenQueryTimeout = configuration.getEventTimer().createTimeout(100, TimeUnit.MILLISECONDS,
+            components.getCommunicator().broadcastOthers(new Event.ChosenQuery(settings.serverId()));
+            this.chosenQueryTimeout = components.getEventTimer().createTimeout(100, TimeUnit.MILLISECONDS,
                     new Event.ChosenQueryTimeout(settings.serverId()));
         }
 
@@ -304,7 +315,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
                 Pair<Integer, Long> p = Pair.of(squadId, instanceId);
                 Event.ChosenQueryResponse response = new Event.ChosenQueryResponse(serverId, ImmutableList.of(p));
-                configuration.getWorkerPool().queueInstanceTask(() ->
+                components.getWorkerPool().queueInstanceTask(() ->
                         JaxosService.this.squads[squadId].processEvent(response));
             }
         }

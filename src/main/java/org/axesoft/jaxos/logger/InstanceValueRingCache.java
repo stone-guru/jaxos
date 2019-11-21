@@ -9,7 +9,6 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * @author gaoyuan
  * @sine 2019/10/15.
  */
 public class InstanceValueRingCache {

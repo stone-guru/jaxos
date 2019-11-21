@@ -3,7 +3,9 @@ package org.axesoft.jaxos.base;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * @author gaoyuan
+ * A times and speed recorder as a velocity measure instrument. There is only one input method {@link #record(long)}, which
+ * accept a duration in nano second for one time.
+ *
  * @sine 2019/9/22.
  */
 public class Velometer {
@@ -12,9 +14,9 @@ public class Velometer {
 
     private volatile long lastTimestamp;
     private volatile long lastTimes = 0;
-    private long lastNanos = 0;
+    private volatile long lastNanos = 0;
 
-    public Velometer(){
+    public Velometer() {
         this(System.currentTimeMillis());
     }
 
@@ -36,7 +38,7 @@ public class Velometer {
         long n1 = totalNanos.get();
 
         double td = (t1 - lastTimes);
-        double nd = (n1 - lastNanos)/1e+6;//nano to milli seconds
+        double nd = (n1 - lastNanos) / 1e+6;//nano to milli seconds
         double r = nd / td;
 
         this.lastTimes = t1;
@@ -45,11 +47,11 @@ public class Velometer {
         return r;
     }
 
-    public long times(){
+    public long times() {
         return times.get();
     }
 
-    public long timesDelta(){
+    public long timesDelta() {
         return times.get() - lastTimes;
     }
 

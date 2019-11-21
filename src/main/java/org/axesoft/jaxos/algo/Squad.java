@@ -9,7 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author gaoyuan
+ * A Squad is a composition of Proposer and Acceptor, and works as a individual paxos server.
+ *
  * @sine 2019/8/25.
  */
 public class Squad implements EventDispatcher {
@@ -21,17 +22,17 @@ public class Squad implements EventDispatcher {
     private SquadMetrics metrics;
     private JaxosSettings settings;
     private StateMachineRunner stateMachineRunner;
-    private Configuration configuration;
+    private Components components;
     private volatile boolean learning;
 
-    public Squad(int squadId, JaxosSettings settings, Configuration configuration, StateMachine machine) {
+    public Squad(int squadId, JaxosSettings settings, Components components, StateMachine machine) {
         this.settings = settings;
-        this.configuration = configuration;
+        this.components = components;
         this.context = new SquadContext(squadId, this.settings);
         this.metrics = new SquadMetrics();
         this.stateMachineRunner = new StateMachineRunner(squadId, machine);
-        this.proposer = new Proposer(this.settings, configuration, this.context, (Learner) stateMachineRunner);
-        this.acceptor = new Acceptor(this.settings, configuration, this.context, (Learner) stateMachineRunner);
+        this.proposer = new Proposer(this.settings, components, this.context, (Learner) stateMachineRunner);
+        this.acceptor = new Acceptor(this.settings, components, this.context, (Learner) stateMachineRunner);
 
         this.learning = false;
     }
@@ -182,9 +183,9 @@ public class Squad implements EventDispatcher {
     }
 
     private void startLearn(int senderId, long myLast, long otherLast) {
-        this.configuration.getWorkerPool().queueInstanceTask(() -> {
+        this.components.getWorkerPool().queueInstanceTask(() -> {
             Event.Learn learn = new Event.Learn(settings.serverId(), context.squadId(), myLast + 1, otherLast);
-            this.configuration.getCommunicator().send(learn, senderId);
+            this.components.getCommunicator().send(learn, senderId);
             logger.info("Sent learn request {}", learn);
         });
     }
@@ -194,7 +195,7 @@ public class Squad implements EventDispatcher {
         ImmutableList.Builder<InstanceValue> builder = ImmutableList.builder();
 
         for (long id = request.lowInstanceId(); id <= request.highInstanceId(); id++) {
-            InstanceValue p = this.configuration.getLogger().loadPromise(context.squadId(), id);
+            InstanceValue p = this.components.getLogger().loadPromise(context.squadId(), id);
             if (p == null) {
                 logger.warn("{} lack instance {} of squad {}", settings.serverId(), id, context.squadId());
                 break;
@@ -215,7 +216,7 @@ public class Squad implements EventDispatcher {
 
         for (InstanceValue i : response.instances()) {
             long instanceId = i.instanceId();
-            this.configuration.getLogger().savePromise(response.squadId(), instanceId, i.proposal(), i.value());
+            this.components.getLogger().savePromise(response.squadId(), instanceId, i.proposal(), i.value());
             if (!this.stateMachineRunner.learnValue(response.squadId(), instanceId, i.proposal(), i.value())) {
                 if (instanceId > this.stateMachineRunner.lastChosenInstanceId(i.squadId())) {
                     logger.warn("Learned instance {} is not continued, cache it first", instanceId);
@@ -246,13 +247,13 @@ public class Squad implements EventDispatcher {
 
     public void saveCheckPoint() {
         CheckPoint checkPoint = this.stateMachineRunner.machine().makeCheckPoint(context.squadId());
-        this.configuration.getLogger().saveCheckPoint(checkPoint);
+        this.components.getLogger().saveCheckPoint(checkPoint);
 
         logger.info("{} saved", checkPoint);
     }
 
     public void restoreFromDB() {
-        CheckPoint checkPoint = this.configuration.getLogger().loadLastCheckPoint(context.squadId());
+        CheckPoint checkPoint = this.components.getLogger().loadLastCheckPoint(context.squadId());
         long lastInstanceId = 0;
         if (checkPoint != null) {
             lastInstanceId = checkPoint.instanceId();
@@ -261,14 +262,14 @@ public class Squad implements EventDispatcher {
             logger.info("Restore to last {}", checkPoint);
         }
 
-        InstanceValue p0 = this.configuration.getLogger().loadLastPromise(context.squadId());
+        InstanceValue p0 = this.components.getLogger().loadLastPromise(context.squadId());
         if (p0 != null) {
             if (checkPoint != null && p0.instanceId == checkPoint.instanceId()) {
                 this.stateMachineRunner.learnLastChosen(p0.squadId, p0.instanceId, p0.proposal);
             }
             else {
                 for (long i = lastInstanceId + 1; i <= p0.instanceId; i++) {
-                    InstanceValue p = this.configuration.getLogger().loadPromise(context.squadId(), i);
+                    InstanceValue p = this.components.getLogger().loadPromise(context.squadId(), i);
                     if (p == null) {
                         logger.error("Promise(" + i + ") not found in DB");
                         break;

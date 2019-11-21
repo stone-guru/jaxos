@@ -59,7 +59,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         EventLoopGroup worker = new NioEventLoopGroup();
 
         ImmutableList.Builder<Communicator> builder = ImmutableList.builder();
-        for(int i = 0; i < Math.min(1, this.config.partitionNumber()); i++) {
+        for (int i = 0; i < Math.min(1, this.config.partitionNumber()); i++) {
             ChannelGroupCommunicator c = new ChannelGroupCommunicator(worker);
             c.start();
             builder.add(c);
@@ -133,7 +133,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         private EventLoopGroup worker;
 
         private Map<Integer, ChannelId> channelIdMap = new ConcurrentHashMap<>();
-        private ConcurrentMap<Integer, RateLimiter>  rateLimiterMap = new ConcurrentHashMap<>();
+        private ConcurrentMap<Integer, RateLimiter> rateLimiterMap = new ConcurrentHashMap<>();
 
         public ChannelGroupCommunicator(EventLoopGroup worker) {
             Bootstrap bootstrap;
@@ -176,7 +176,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         }
 
         private void connect(JaxosSettings.Peer peer) {
-            ChannelFuture future = null;
+            ChannelFuture future;
             try {
                 future = bootstrap.connect(new InetSocketAddress(peer.address(), peer.port()));
             }
@@ -275,7 +275,8 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             if (peer != null) {
                 channelIdMap.remove(peer.id());
                 connect(peer);
-            } else {
+            }
+            else {
                 logger.error("No bind peer on channel");
             }
         }
@@ -294,7 +295,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             }
         }
 
-        private RateLimiter rateLimiterForPeer(int peerId){
+        private RateLimiter rateLimiterForPeer(int peerId) {
             return rateLimiterMap.computeIfAbsent(peerId, id -> RateLimiter.create(1.0 / 15));
         }
     }

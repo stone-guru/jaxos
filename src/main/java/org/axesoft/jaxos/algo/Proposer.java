@@ -27,7 +27,7 @@ public class Proposer {
 
     private final JaxosSettings settings;
     private final SquadContext context;
-    private final Configuration config;
+    private final Components config;
     private final Learner learner;
     private final ProposalNumHolder proposalNumHolder;
 
@@ -44,7 +44,7 @@ public class Proposer {
     private Stage stage;
     private AtomicReference<SettableFuture<Void>> resultFutureRef;
 
-    public Proposer(JaxosSettings settings, Configuration config, SquadContext context, Learner learner) {
+    public Proposer(JaxosSettings settings, Components config, SquadContext context, Learner learner) {
         this.settings = settings;
         this.config = config;
         this.context = context;

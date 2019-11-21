@@ -17,8 +17,6 @@ public class SquadMetrics {
     private Velometer conflictVelometer = new Velometer();
     private Velometer successVelometer = new Velometer();
     private Velometer otherVelometer = new Velometer();
-    private volatile double currentProposeElapsed;
-    private volatile double currentAcceptElapsed;
 
     public void recordAccept(long nanos){
         acceptVelometer.record(nanos);
@@ -60,13 +58,13 @@ public class SquadMetrics {
     }
 
     public Pair<Double, Double> compute(long timestamp){
-        this.currentProposeElapsed = proposeVelometer.compute(timestamp);
-        this.currentAcceptElapsed = acceptVelometer.compute(timestamp);
+        double currentProposeElapsed = proposeVelometer.compute(timestamp);
+        double currentAcceptElapsed = acceptVelometer.compute(timestamp);
         this.conflictVelometer.compute(timestamp);
         this.successVelometer.compute(timestamp);
         this.otherVelometer.compute(timestamp);
 
-        return Pair.of(this.currentProposeElapsed, this.currentAcceptElapsed);
+        return Pair.of(currentProposeElapsed, currentAcceptElapsed);
     }
 
     public double totalSuccessRate(){

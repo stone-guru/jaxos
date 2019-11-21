@@ -15,14 +15,14 @@ public class Acceptor {
     private final SquadContext context;
     private final Learner learner;
     private final JaxosSettings settings;
-    private final Configuration config;
+    private final Components config;
 
     private long acceptedInstanceId;
     private int maxBallot;
     private int acceptedBallot;
     private Event.BallotValue acceptedValue;
 
-    public Acceptor(JaxosSettings settings, Configuration config, SquadContext context, Learner learner) {
+    public Acceptor(JaxosSettings settings, Components config, SquadContext context, Learner learner) {
         this.settings = settings;
         this.config = config;
         this.context = context;

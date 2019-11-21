@@ -1,39 +1,43 @@
 # Jaxos tasks
-* DONE Implement broadcast by netty.channelgroup		    :network:
-* DONE Adopt JCommand to parse the settings from args		       :base:
-* DONE client close network gracefully				    :network:
-* DONE use ProtoBuff.ByteString to store the general value	       :base:
-* DONE Proposal judge the majority				  :algorithm:
-* DONE implement basic multi-paxos.instance			  :algorithm:
+* DONE Implement broadcast by netty.channelgroup 					   :network:
+* DONE Adopt JCommand to parse the settings from args 					      :base:
+* DONE client close network gracefully 							   :network:
+* DONE use ProtoBuff.ByteString to store the general value 				      :base:
+* DONE Proposal judge the majority 							 :algorithm:
+* DONE implement basic multi-paxos.instance 						 :algorithm:
 ** DONE acceptor and adaptor use same instance context		  :algorithm:
-* DONE save proposal to localdb 					:log:
-* DONE add accepted message					    :network:
-* TODO add single learn request&response			    :learner:
-* TODO add range learn request&response				    :learner:
-* DONE add general state machine			       :statemachine:
-* DONE save checkpoint					       :statemachine:
-* DONE add log reload							:log:
-* DONE optimize the thread model				       :base:
-* DONE  support timeout by TimeWheel			    :network:
-* DONE set a fixed gradle version					:dev:
-* DONE use settings file for peers' address			       :base:
+* DONE save proposal to localdb 							       :log:
+* DONE add accepted message 								   :network:
+* DONE add single learn request&response 						   :learner:
+* DONE add range learn request&response 						   :learner:
+* DONE add general state machine 						      :statemachine:
+* DONE save checkpoint 								      :statemachine:
+* DONE add log reload 									       :log:
+* DONE optimize the thread model 							      :base:
+* DONE  support timeout by TimeWheel 							   :network:
+* DONE set a fixed gradle version 							       :dev:
+* DONE use settings file for peers' address 						      :base:
 * DONE connect to other peers lazily  
-* DONE use netty local chanel to unify the broachcast interface	    :network:
+* DONE use netty local chanel to unify the broachcast interface 			   :network:
   The notify message to local acceptor is by direct call, all others 
 are by netty
-* DONE Implment a distributed KV store based on berkely DB	:application:
-* DONE the ballot is not reset after one instance finished	       :base:
-* DONE close DB when application exit					:log:
-* DONE [#C] the proposer blocked at "executingSignal"		       :base:
-* DONE Implement a HTTP id service for each server 		       :base:
-* DONE implement a HTTP client on netty				    :network:
-* DONE Provide proposal BATCH strategy to improve the throughput  :algorithm:
-* TODO Ignore Exceptions from channel broken when shudown the server :network:
-* TODO A case of Chosen notify message lost making that server hang :network:
-* TODO Add full unit test case for algo package			  :algorithm:
-* TODO Add reject strategy for HTTP API server			    :network:
-* DONE TANS service handle HTTP request in async way		    :network:
-* DONE Add metrics for acceptor					  :algorithm:
-* DONE process rate of TANS service should in each seconds	    :network:
+* DONE Implment a distributed KV store based on berkely DB 			       :application:
+* DONE the ballot is not reset after one instance finished 				      :base:
+* DONE close DB when application exit 							       :log:
+* DONE [#C] the proposer blocked at "executingSignal" 					      :base:
+* DONE Implement a HTTP id service for each server 					      :base:
+* DONE implement a HTTP client on netty 						   :network:
+* DONE Provide proposal BATCH strategy to improve the throughput 			 :algorithm:
+* DONE Ignore Exceptions from channel broken when shudown the server 			   :network:
+* TODO A case of Chosen notify message lost making that server hang 			   :network:
+* TODO Add full unit test case for algo package 					 :algorithm:
+* DONE Add reject strategy for HTTP API server when not leader 				   :network:
+* DONE TANS service handle HTTP request in async way 					   :network:
+* DONE Add metrics for acceptor 							 :algorithm:
+* DONE metrics of process rate of TANS service should in each seconds 			   :network:
+* DONE Add metrics for logger 								       :log:
+* NEXT add ring cache to logger 							       :log:
+* NEXT delete logs after checkpoint created 						       :log:
+* TODO Improve the Velometer component, let compute return (t, elapsed) 		      :base:
 * Issues
 ** TODO [#C] Netty print ERROR message [[file:caselog/netty-error.log][logs]]
