@@ -15,6 +15,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
+ * The standard paxos proposer
+ *
  * @author gaoyuan
  * @sine 2019/8/24.
  */
@@ -42,6 +44,7 @@ public class Proposer {
     private int messageMark = 0;
     private int round = 0;
     private Stage stage;
+    private IntBitSet lastRepliedNodes = new IntBitSet();
     private AtomicReference<SettableFuture<Void>> resultFutureRef;
 
     public Proposer(JaxosSettings settings, Components config, SquadContext context, Learner learner) {
@@ -172,13 +175,15 @@ public class Proposer {
     }
 
     private void endPrepare() {
+        this.lastRepliedNodes.assign(this.prepareActor.repliedNodes);
+
         if (endWithMajorityCheck(this.prepareActor.votedCount(), "PREPARE " + instanceId)) {
             return;
         }
 
         PrepareResult v = this.prepareActor.getResult();
         if (this.prepareActor.isAccepted()) {
-            startAccept(v.content,  this.prepareActor.myProposal(), v.proposer);
+            startAccept(v.content, this.prepareActor.myProposal(), v.proposer);
         }
         else {
             if (this.prepareActor.totalMaxProposal == Integer.MAX_VALUE) {
@@ -241,6 +246,7 @@ public class Proposer {
             logger.trace("S{} Process End Accept({})", context.squadId(), this.instanceId);
         }
 
+        this.lastRepliedNodes.assign(this.acceptActor.repliedNodes);
         if (endWithMajorityCheck(this.acceptActor.votedCount(), "ACCEPT")) {
             return;
         }
@@ -377,7 +383,7 @@ public class Proposer {
         }
 
         private boolean isAllReplied() {
-            return repliedNodes.count() == settings.peerCount();
+            return repliedNodes.count() == settings.peerCount() || repliedNodes.equals(lastRepliedNodes);
         }
 
         private boolean isAccepted() {
@@ -495,7 +501,7 @@ public class Proposer {
         }
 
         boolean isAllReplied() {
-            return this.repliedNodes.count() == settings.peerCount();
+            return this.repliedNodes.count() == settings.peerCount() || this.repliedNodes.equals(lastRepliedNodes);
         }
 
         boolean isInstanceChosen() {

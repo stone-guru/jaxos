@@ -204,7 +204,8 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
 
     private ByteString encodeBody(Event.LearnResponse response) {
         PaxosMessage.LearnRes.Builder builder = PaxosMessage.LearnRes.newBuilder()
-                .setSquadId(response.squadId());
+                .setSquadId(response.squadId())
+                .setCheckPoint(ByteString.EMPTY);
 
         for (InstanceValue i : response.instances()) {
             builder.addInstanceValue(PaxosMessage.InstanceValue.newBuilder()
