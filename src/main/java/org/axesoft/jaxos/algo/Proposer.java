@@ -5,10 +5,10 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import io.netty.util.Timeout;
 import org.axesoft.jaxos.JaxosSettings;
-import org.axesoft.jaxos.base.IntBitSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.BitSet;
 import java.util.ConcurrentModificationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -44,7 +44,11 @@ public class Proposer {
     private int messageMark = 0;
     private int round = 0;
     private Stage stage;
-    private IntBitSet lastRepliedNodes = new IntBitSet();
+
+    private BitSet allNodeIds;
+    private BitSet failingNodeIds;
+    private int answerNodeCount;
+
     private AtomicReference<SettableFuture<Void>> resultFutureRef;
 
     public Proposer(JaxosSettings settings, Components config, SquadContext context, Learner learner) {
@@ -56,6 +60,13 @@ public class Proposer {
         this.stage = Stage.NONE;
         this.prepareActor = new PrepareActor();
         this.acceptActor = new AcceptActor();
+
+        this.failingNodeIds = new BitSet();
+        this.allNodeIds = new BitSet();
+        for(int id : this.settings.peerMap().keySet()){
+            this.allNodeIds.set(id);
+        }
+
         this.resultFutureRef = new AtomicReference<>(null);
     }
 
@@ -154,6 +165,8 @@ public class Proposer {
         if (logger.isTraceEnabled()) {
             logger.trace("RECEIVED {}", response);
         }
+        //As long as a server give back a response, it's no longer a failing node
+        this.failingNodeIds.clear(response.senderId());
 
         if (eventMatchRequest(response, Stage.PREPARING)) {
             this.prepareActor.onReply(response);
@@ -175,7 +188,7 @@ public class Proposer {
     }
 
     private void endPrepare() {
-        this.lastRepliedNodes.assign(this.prepareActor.repliedNodes);
+        recordAnswerNodes(this.prepareActor.repliedNodes);
 
         if (endWithMajorityCheck(this.prepareActor.votedCount(), "PREPARE " + instanceId)) {
             return;
@@ -203,6 +216,17 @@ public class Proposer {
         }
     }
 
+
+    private void recordAnswerNodes(BitSet answerNodes){
+        if(this.answerNodeCount != answerNodes.cardinality()){
+            logger.info("Answer node changed from {} to {}", this.answerNodeCount, answerNodes.cardinality());
+        }
+
+        this.answerNodeCount = answerNodes.cardinality();
+        this.failingNodeIds = (BitSet)this.allNodeIds.clone();
+        this.failingNodeIds.andNot(answerNodes);
+    }
+
     private void startAccept(Event.BallotValue value, int proposal, int proposer) {
         Learner.LastChosen chosen = this.learner.lastChosen(this.context.squadId());
         if (instanceId != chosen.instanceId + 1) {
@@ -222,6 +246,9 @@ public class Proposer {
         if (logger.isTraceEnabled()) {
             logger.trace("RECEIVED {}", response);
         }
+        
+        //As long as a server give back a response, it's no longer a failing node
+        this.failingNodeIds.clear(response.senderId());
 
         if (eventMatchRequest(response, Stage.ACCEPTING)) {
             this.acceptActor.onReply(response);
@@ -246,7 +273,8 @@ public class Proposer {
             logger.trace("S{} Process End Accept({})", context.squadId(), this.instanceId);
         }
 
-        this.lastRepliedNodes.assign(this.acceptActor.repliedNodes);
+        recordAnswerNodes(this.acceptActor.repliedNodes);
+
         if (endWithMajorityCheck(this.acceptActor.votedCount(), "ACCEPT")) {
             return;
         }
@@ -313,7 +341,7 @@ public class Proposer {
         private int totalMaxProposal = 0;
         private int maxAcceptedProposal = 0;
         private Event.BallotValue acceptedValue;
-        private final IntBitSet repliedNodes = new IntBitSet();
+        private final BitSet repliedNodes = new BitSet();
         private int valueProposer = 0;
 
         private boolean someOneReject = false;
@@ -349,7 +377,7 @@ public class Proposer {
             if (logger.isTraceEnabled()) {
                 logger.trace("S{}: On PREPARE reply {}", context.squadId(), response);
             }
-            repliedNodes.add(response.senderId());
+            repliedNodes.set(response.senderId());
 
             if (response.result() == Event.RESULT_STANDBY) {
                 if (logger.isDebugEnabled()) {
@@ -383,7 +411,7 @@ public class Proposer {
         }
 
         private boolean isAllReplied() {
-            return repliedNodes.count() == settings.peerCount() || repliedNodes.equals(lastRepliedNodes);
+            return repliedNodes.cardinality() >= settings.peerCount() - failingNodeIds.cardinality();
         }
 
         private boolean isAccepted() {
@@ -437,7 +465,7 @@ public class Proposer {
 
         private int maxProposal = 0;
         private boolean someoneReject = true;
-        private IntBitSet repliedNodes = new IntBitSet();
+        private BitSet repliedNodes = new BitSet();
         private int acceptedCount = 0;
         private boolean instanceChosen;
         private int votedCount = 0;
@@ -469,7 +497,7 @@ public class Proposer {
         }
 
         public void onReply(Event.AcceptResponse response) {
-            this.repliedNodes.add(response.senderId());
+            this.repliedNodes.set(response.senderId());
 
             if (response.result() == Event.RESULT_STANDBY) {
                 if (logger.isDebugEnabled()) {
@@ -501,7 +529,7 @@ public class Proposer {
         }
 
         boolean isAllReplied() {
-            return this.repliedNodes.count() == settings.peerCount() || this.repliedNodes.equals(lastRepliedNodes);
+            return this.repliedNodes.cardinality() >= settings.peerCount() - failingNodeIds.cardinality();
         }
 
         boolean isInstanceChosen() {
