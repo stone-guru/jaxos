@@ -70,7 +70,7 @@ public class Proposer {
         this.resultFutureRef = new AtomicReference<>(null);
     }
 
-    public ListenableFuture<Void> propose(long instanceId, Event.BallotValue value, SettableFuture<Void> resultFuture) {
+    public ListenableFuture<Void> propose(long instanceId, Event.BallotValue value, boolean ignoreLeader, SettableFuture<Void> resultFuture) {
         if (!resultFutureRef.compareAndSet(null, resultFuture)) {
             resultFuture.setException(new ConcurrentModificationException("Previous propose not end"));
             return resultFuture;
@@ -84,10 +84,10 @@ public class Proposer {
         this.proposeValue = value;
         this.round = 0;
 
-        if (settings.ignoreLeader()) {
+        if (settings.leaderless()) {
             startPrepare(proposalNumHolder.getProposal0());
         }
-        else if (context.isOtherLeaderActive()) {
+        else if (context.isOtherLeaderActive() && !ignoreLeader) {
             return endAs(new RedirectException(context.lastSuccessAccept().serverId()));
         }
         else if (context.isLeader()) {
@@ -219,7 +219,8 @@ public class Proposer {
 
     private void recordAnswerNodes(BitSet answerNodes){
         if(this.answerNodeCount != answerNodes.cardinality()){
-            logger.info("Answer node changed from {} to {}", this.answerNodeCount, answerNodes.cardinality());
+            logger.info("S {} Answer node changed from {} to {}",
+                    this.context.squadId(), this.answerNodeCount, answerNodes.cardinality());
         }
 
         this.answerNodeCount = answerNodes.cardinality();

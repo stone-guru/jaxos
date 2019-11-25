@@ -93,11 +93,11 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     }
 
     @Override
-    public ListenableFuture<Void> propose(int squadId, long instanceId, ByteString v) {
-        return propose(squadId, instanceId, new Event.BallotValue(Event.ValueType.APPLICATION, v));
+    public ListenableFuture<Void> propose(int squadId, long instanceId, ByteString v, boolean ignoreLeader) {
+        return propose(squadId, instanceId, new Event.BallotValue(Event.ValueType.APPLICATION, v), ignoreLeader);
     }
 
-    public ListenableFuture<Void> propose(int squadId, long instanceId, Event.BallotValue v) {
+    public ListenableFuture<Void> propose(int squadId, long instanceId, Event.BallotValue v, boolean ignoreLeader) {
         if (!this.isRunning()) {
             throw new IllegalStateException(SERVICE_NAME + " is not running");
         }
@@ -107,7 +107,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         SettableFuture<Void> resultFuture = SettableFuture.create();
 
         eventWorkerPool.queueBallotTask(squadId,
-                () -> this.squads[squadId].propose(instanceId, v, resultFuture));
+                () -> this.squads[squadId].propose(instanceId, v, ignoreLeader, resultFuture));
 
         return resultFuture;
     }
@@ -189,7 +189,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     }
 
     private void proposeForLeader(int squadId) {
-        final ListenableFuture<Void> future = this.propose(squadId, squads[squadId].lastChosenInstanceId() + 1, Event.BallotValue.EMPTY);
+        final ListenableFuture<Void> future = this.propose(squadId, squads[squadId].lastChosenInstanceId() + 1, Event.BallotValue.EMPTY, false);
         future.addListener(() -> {
             try {
                 future.get();

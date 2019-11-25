@@ -98,10 +98,11 @@ public class ClientApp {
         int count = 0;
         try {
             for (int m = 0; m < k; m++) {
+                boolean ignoreLeader = true; //k * 1.0 / m > Math.random();
                 for (int i = 0; i < n; i++) {
                     count++;
                     String key = "object-id-" + (i % 100);
-                    Future<LongRange> future = client.acquire(key, 1 + (i % 10));
+                    Future<LongRange> future = client.acquire(key, 1 + (i % 10), ignoreLeader);
                     LongRange r = future.get();
                     checker.accept(key, r.low(), r.high());
                     if (count % printInterval == 0 || printEveryResult) {

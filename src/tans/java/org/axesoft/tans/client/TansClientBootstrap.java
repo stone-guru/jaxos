@@ -47,6 +47,38 @@ public class TansClientBootstrap {
 
     private static final Logger logger = LoggerFactory.getLogger(TansClientBootstrap.class);
 
+    private static class AcquireRequest {
+        final String key;
+        final long n;
+        final boolean ignoreLeader;
+
+        public AcquireRequest(String key, long n, boolean ignoreLeader) {
+            this.key = key;
+            this.n = n;
+            this.ignoreLeader = ignoreLeader;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            AcquireRequest that = (AcquireRequest) o;
+
+            if (n != that.n) return false;
+            if (ignoreLeader != that.ignoreLeader) return false;
+            return key.equals(that.key);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = key.hashCode();
+            result = 31 * result + (int) (n ^ (n >>> 32));
+            result = 31 * result + (ignoreLeader ? 1 : 0);
+            return result;
+        }
+    }
+
     private class HttpConnector {
         private final String host;
         private final int port;
@@ -182,14 +214,14 @@ public class TansClientBootstrap {
         }
 
 
-        public synchronized io.netty.util.concurrent.Future<Either<String, LongRange>> acquire(String key, int n) {
+        public synchronized io.netty.util.concurrent.Future<Either<String, LongRange>> acquire(AcquireRequest req) {
             times = 0;
             if (this.promises == null) {
                 return this.ctx.executor().newFailedFuture(new IllegalStateException("Channel closed"));
             }
 
             try {
-                request = requestCache.get(Pair.of(key, n));
+                request = requestCache.get(req);
             }
             catch (ExecutionException e) {
                 return this.ctx.executor().newFailedFuture(e);
@@ -238,7 +270,7 @@ public class TansClientBootstrap {
         }
 
         @Override
-        public Future<LongRange> acquire(String key, int n) {
+        public Future<LongRange> acquire(String key, int n, boolean ignoreLeader) {
             HttpConnector connector = getConnector(key);
             if (connector == null) {
                 return new FailedFuture<>(worker.next(), new ConnectException("Can not get connection for " + key));
@@ -249,13 +281,13 @@ public class TansClientBootstrap {
             }
 
             final Promise<LongRange> promise = new DefaultPromise<>(worker.next());
-            acquire(key, n, c, promise);
+            acquire(new AcquireRequest(key, n, ignoreLeader), c, promise);
             return promise;
         }
 
-        private void acquire(String key, int n, Channel channel, Promise<LongRange> promise) {
+        private void acquire(AcquireRequest req, Channel channel, Promise<LongRange> promise) {
             TansClientHandler handler = (TansClientHandler) channel.pipeline().get(TANS_HANDLER_NAME);
-            handler.acquire(key, n).addListener(f -> {
+            handler.acquire(req).addListener(f -> {
                 if (f.isSuccess()) {
                     @SuppressWarnings("unchecked")
                     Either<String, LongRange> r = ((Future<Either<String, LongRange>>) f).get();
@@ -263,19 +295,19 @@ public class TansClientBootstrap {
                         promise.setSuccess(r.getRight());
                     }
                     else {
-                        HttpConnector c2 = redirect(key, r.getLeft());
-                        worker.submit(() -> acquire(key, n, c2.getChannel(), promise));
+                        HttpConnector c2 = redirect(req.key, r.getLeft());
+                        worker.submit(() -> acquire(req, c2.getChannel(), promise));
                     }
                 }
                 else {
                     String msg = f.cause().getMessage();
                     if (msg.contains("409")) {//conflict
                         logger.info("encounter CONFLICT retry after 100 ms");
-                        worker.schedule(() -> acquire(key, n, channel, promise), 100, TimeUnit.MILLISECONDS);
+                        worker.schedule(() -> acquire(req, channel, promise), 100, TimeUnit.MILLISECONDS);
                     }
                     else if (msg.contains("500")) {
                         logger.info("encounter INTERNAL error retry after 300 ms");
-                        worker.schedule(() -> acquire(key, n, channel, promise), 300, TimeUnit.MILLISECONDS);
+                        worker.schedule(() -> acquire(req, channel, promise), 300, TimeUnit.MILLISECONDS);
                     }
                     else {
                         promise.setFailure(f.cause());
@@ -292,7 +324,7 @@ public class TansClientBootstrap {
     private ConcurrentMap<InetSocketAddress, HttpConnector> connectorMap;
     private NioEventLoopGroup worker;
 
-    private LoadingCache<Pair<String, Integer>, HttpRequest> requestCache;
+    private LoadingCache<AcquireRequest, HttpRequest> requestCache;
     private LoadingCache<String, InetSocketAddress> keyLeaderCache;
     private volatile boolean closed = false;
 
@@ -307,11 +339,12 @@ public class TansClientBootstrap {
         requestCache = CacheBuilder.newBuilder()
                 .concurrencyLevel(8)
                 .expireAfterAccess(30, TimeUnit.SECONDS)
-                .build(new CacheLoader<Pair<String, Integer>, HttpRequest>() {
+                .build(new CacheLoader<AcquireRequest, HttpRequest>() {
                     @Override
-                    public HttpRequest load(Pair<String, Integer> req) throws Exception {
+                    public HttpRequest load(AcquireRequest req) throws Exception {
                         HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
-                                String.format("/acquire?key=%s&n=%d", req.getKey(), req.getValue()), Unpooled.EMPTY_BUFFER);
+                                String.format("/acquire?key=%s&n=%d&ignoreleader=%s", req.key, req.n, Boolean.toString(req.ignoreLeader)),
+                                Unpooled.EMPTY_BUFFER);
                         request.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
                         request.headers().set(HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.TEXT_PLAIN);
 

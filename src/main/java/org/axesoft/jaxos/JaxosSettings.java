@@ -4,9 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -122,7 +120,7 @@ public class JaxosSettings {
             JaxosSettings config = new JaxosSettings();
             config.serverId = this.serverId;
             config.peerMap = this.peerBuilder.build();
-            config.ignoreLeader = this.ignoreLeader;
+            config.leaderless = this.ignoreLeader;
             config.leaderLeaseSeconds = 8;
             config.dbDirectory = this.dbDirectory;
             config.valueVerboser = this.valueVerboser;
@@ -139,7 +137,7 @@ public class JaxosSettings {
     private Map<Integer, Peer> peerMap;
     private int serverId;
     private int leaderLeaseSeconds;
-    private boolean ignoreLeader;
+    private boolean leaderless;
     private String dbDirectory;
     private long wholeProposalTimeoutMillis;
     private long prepareTimeoutMillis;
@@ -177,8 +175,8 @@ public class JaxosSettings {
         return this.leaderLeaseSeconds;
     }
 
-    public boolean ignoreLeader(){
-        return this.ignoreLeader;
+    public boolean leaderless(){
+        return this.leaderless;
     }
 
     public String dbDirectory(){
@@ -223,7 +221,7 @@ public class JaxosSettings {
                 "peerMap=" + peerMap +
                 ", serverId=" + serverId +
                 ", leaderLeaseSeconds=" + leaderLeaseSeconds +
-                ", ignoreLeader=" + ignoreLeader +
+                ", ignoreLeader=" + leaderless +
                 ", dbDirectory='" + dbDirectory + '\'' +
                 ", wholeProposalTimeoutMillis=" + wholeProposalTimeoutMillis +
                 ", prepareTimeoutMillis=" + prepareTimeoutMillis +

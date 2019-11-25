@@ -28,6 +28,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TansService implements StateMachine {
     private static Logger logger = LoggerFactory.getLogger(TansService.class);
 
+    public static class AcquireRequest {
+
+    }
     private Supplier<Proponent> proponent;
     private TansConfig config;
 
@@ -84,7 +87,7 @@ public class TansService implements StateMachine {
         logger.info("TANS state machine closed");
     }
 
-    public List<LongRange> acquire(int squadId, List<KeyLong> requests) {
+    public List<LongRange> acquire(int squadId, List<KeyLong> requests, boolean ignoreLeader) {
         checkArgument(requests.size() > 0, "requests is empty");
 
         TansNumberProposal proposal;
@@ -93,7 +96,7 @@ public class TansService implements StateMachine {
         synchronized (machineLocks[squadId]) {
             proposal = this.numberMaps[squadId].createProposal(requests);
             ByteString bx = toProposal(proposal.numbers);
-            resulFuture = proponent.get().propose(squadId, proposal.instanceId, bx);
+            resulFuture = proponent.get().propose(squadId, proposal.instanceId, bx, ignoreLeader);
         }
 
         try {

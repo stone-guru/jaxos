@@ -5,6 +5,6 @@ import org.axesoft.jaxos.base.LongRange;
 
 
 public interface TansClient {
-    Future<LongRange> acquire(String key, int n);
+    Future<LongRange> acquire(String key, int n, boolean ignoreLeader);
     void close();
 }

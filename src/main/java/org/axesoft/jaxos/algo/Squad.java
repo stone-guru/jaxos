@@ -49,19 +49,19 @@ public class Squad implements EventDispatcher {
      * @param v value to be proposed
      * @throws InterruptedException
      */
-    public ListenableFuture<Void> propose(long instanceId, Event.BallotValue v, SettableFuture<Void> resultFuture) {
+    public ListenableFuture<Void> propose(long instanceId, Event.BallotValue v, boolean ignoreLeader, SettableFuture<Void> resultFuture) {
         attachMetricsListener(resultFuture);
 
         SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessAccept();
 
-        if (this.context.isOtherLeaderActive() && !this.settings.ignoreLeader()) {
+        if (this.context.isOtherLeaderActive() && !this.settings.leaderless() && !ignoreLeader) {
             if (logger.isDebugEnabled()) {
                 logger.debug("S{} I{} redirect to {}", context.squadId(), instanceId, lastSuccessRequestRecord.serverId());
             }
             resultFuture.setException(new RedirectException(lastSuccessRequestRecord.serverId()));
         }
         else {
-            proposer.propose(instanceId, v, resultFuture);
+            proposer.propose(instanceId, v, ignoreLeader, resultFuture);
         }
 
         return resultFuture;
