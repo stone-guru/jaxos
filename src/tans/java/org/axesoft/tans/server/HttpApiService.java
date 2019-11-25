@@ -40,10 +40,11 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
     private static final String SERVICE_NAME = "Take-A-Number System";
 
-    //The service URL is http://<host>:<port>/acquire?key=<keyname>[&n=<number>]
+    //The service URL is http://<host>:<port>/acquire?key=<keyname>[&n=<number>][&ignoreleader=true|false]
     private static final String ACQUIRE_PATH = "/acquire";
     private static final String KEY_ARG_NAME = "key";
     private static final String NUM_ARG_NAME = "n";
+    private static final String IGNORE_LEADER_ARG_NAME="ignoreleader";
 
     private static final String PARTITION_PATH = "/partition_number";
 
@@ -236,7 +237,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                 try {
                     final String rawUrl = getRawUri(request.uri());
                     if (ACQUIRE_PATH.equals(rawUrl)) {
-                        Either<String, Pair<String, Long>> either = parseRequest(request);
+                        Either<String, AcquireRequest> either = parseAcquireRequest(request, this.keepAlive, ctx);
                         if (!either.isRight()) {
                             writeResponse(ctx, keepAlive,
                                     new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST,
@@ -244,11 +245,9 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                             return;
                         }
 
-                        final String key = either.getRight().getKey();
-                        final long v = either.getRight().getValue();
-                        int i = tansService.squadIdOf(key);
-
-                        requestQueues[i].addRequest(key, v, this.keepAlive, ctx);
+                        AcquireRequest acquireRequest = either.getRight();
+                        int i = tansService.squadIdOf(acquireRequest.keyLong.key());
+                        requestQueues[i].addRequest(acquireRequest);
                     }
                     else if (PARTITION_PATH.equals(rawUrl)) {
                         String s = Integer.toString(config.jaxConfig().partitionNumber());
@@ -278,7 +277,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             }
         }
 
-        private Either<String, Pair<String, Long>> parseRequest(HttpRequest request) {
+        private Either<String, AcquireRequest> parseAcquireRequest(HttpRequest request, boolean keepAlive, ChannelHandlerContext ctx) {
             QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.uri());
             Map<String, List<String>> params = queryStringDecoder.parameters();
 
@@ -305,7 +304,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                 }
             }
 
-            return Either.right(Pair.of(key, n));
+            return Either.right(new AcquireRequest(key, n, keepAlive, ctx));
         }
 
         private void send100Continue(ChannelHandlerContext ctx) {
@@ -321,12 +320,12 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
     }
 
-    private static class TansRequest {
+    private static class AcquireRequest {
         KeyLong keyLong;
         boolean keepAlive;
         ChannelHandlerContext ctx;
 
-        public TansRequest(String key, long v, boolean keepAlive, ChannelHandlerContext ctx) {
+        public AcquireRequest(String key, long v, boolean keepAlive, ChannelHandlerContext ctx) {
             this.keyLong = new KeyLong(key, v);
             this.keepAlive = keepAlive;
             this.ctx = ctx;
@@ -342,7 +341,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         private final int waitingSize;
 
         private long t0;
-        private List<TansRequest> tasks;
+        private List<AcquireRequest> tasks;
 
         public RequestQueue(int squadId, int waitingSize) {
             this.squadId = squadId;
@@ -351,6 +350,22 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             this.tasks = new ArrayList<>(waitingSize);
         }
 
+        private synchronized void addRequest(AcquireRequest request){
+            if (logger.isTraceEnabled()) {
+                logger.trace("S{} RequestQueue accept request {}", squadId, request);
+            }
+            HttpApiService.this.requestCounter.inc();
+            HttpApiService.this.requestSlideCounter.recordForPresent(1);
+
+            this.tasks.add(request);
+            if (this.tasks.size() == 1) {
+                this.t0 = System.currentTimeMillis();
+            }
+
+            if (tasks.size() >= waitingSize) {
+                processRequests();
+            }
+        }
         private synchronized void addRequest(String key, long v, boolean keepAlive, ChannelHandlerContext ctx) {
             if (logger.isTraceEnabled()) {
                 logger.trace("S{} RequestQueue accept request {} {} {}", squadId, key, v, keepAlive);
@@ -358,7 +373,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             HttpApiService.this.requestCounter.inc();
             HttpApiService.this.requestSlideCounter.recordForPresent(1);
 
-            this.tasks.add(new TansRequest(key, v, keepAlive, ctx));
+            this.tasks.add(new AcquireRequest(key, v, keepAlive, ctx));
             if (this.tasks.size() == 1) {
                 this.t0 = System.currentTimeMillis();
             }
@@ -376,15 +391,15 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
 
         private void processRequests() {
-            final List<TansRequest> todo = ImmutableList.copyOf(this.tasks);
+            final List<AcquireRequest> todo = ImmutableList.copyOf(this.tasks);
             this.tasks.clear();
             this.t0 = 0;
 
             threadPool.submit(this.squadId, () -> process(todo));
         }
 
-        private void process(List<TansRequest> tasks) {
-            List<KeyLong> requests = Lists.transform(tasks, TansRequest::keyLong);
+        private void process(List<AcquireRequest> tasks) {
+            List<KeyLong> requests = Lists.transform(tasks, AcquireRequest::keyLong);
             List<LongRange> rx = null;
             FullHttpResponse errorResponse = null;
             int otherLeaderId = -1;
@@ -404,7 +419,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
             try {
                 for (int i = 0; i < requests.size(); i++) {
-                    TansRequest task = tasks.get(i);
+                    AcquireRequest task = tasks.get(i);
 
                     FullHttpResponse response;
                     if (errorResponse != null) {

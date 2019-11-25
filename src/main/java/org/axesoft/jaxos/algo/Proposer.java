@@ -246,7 +246,7 @@ public class Proposer {
         if (logger.isTraceEnabled()) {
             logger.trace("RECEIVED {}", response);
         }
-        
+
         //As long as a server give back a response, it's no longer a failing node
         this.failingNodeIds.clear(response.senderId());
 
