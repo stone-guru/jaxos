@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
+import org.axesoft.jaxos.algo.CheckPoint;
 import org.axesoft.jaxos.algo.Event;
 import org.axesoft.jaxos.algo.InstanceValue;
 import org.axesoft.jaxos.network.CodingException;
@@ -205,7 +206,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
     private ByteString encodeBody(Event.LearnResponse response) {
         PaxosMessage.LearnRes.Builder builder = PaxosMessage.LearnRes.newBuilder()
                 .setSquadId(response.squadId())
-                .setCheckPoint(ByteString.EMPTY);
+                .setCheckPoint(encodeCheckPoint(response.checkPoint()));
 
         for (InstanceValue i : response.instances()) {
             builder.addInstanceValue(PaxosMessage.InstanceValue.newBuilder()
@@ -216,6 +217,15 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         }
 
         return builder.build().toByteString();
+    }
+
+    public PaxosMessage.CheckPoint encodeCheckPoint(CheckPoint checkPoint){
+        PaxosMessage.CheckPoint.Builder builder = PaxosMessage.CheckPoint.newBuilder();
+        builder.setSquadId(checkPoint.squadId())
+                .setInstanceId(checkPoint.instanceId())
+                .setTimestamp(checkPoint.timestamp())
+                .setContent(checkPoint.content());
+        return builder.build();
     }
 
     private PaxosMessage.Code toProtoCode(Event.Code code) {
@@ -325,15 +335,14 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
 
     private Event decodeLearnResponse(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.LearnRes res = PaxosMessage.LearnRes.parseFrom(dataGram.getBody());
+        CheckPoint checkPoint = decodeCheckPoint(res.getCheckPoint());
 
         List<InstanceValue> ix = res.getInstanceValueList().stream()
                 .map(v -> new InstanceValue(v.getSquadId(), v.getInstanceId(), v.getProposal(), decodeValue(v.getValue())))
                 .collect(Collectors.toList());
 
-        return new Event.LearnResponse(dataGram.getSender(), res.getSquadId(), ix);
+        return new Event.LearnResponse(dataGram.getSender(), res.getSquadId(), ix, checkPoint);
     }
-
-
     public Event.BallotValue decodeValue(PaxosMessage.BallotValue value){
         Event.ValueType t = valueTypeDecodeMap.get(value.getType());
         if(t == null){
@@ -351,5 +360,10 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setType(t)
                 .setContent(value.content())
                 .build();
+    }
+
+    public CheckPoint decodeCheckPoint(PaxosMessage.CheckPoint checkPoint){
+        return new CheckPoint(checkPoint.getSquadId(), checkPoint.getInstanceId(),
+                checkPoint.getTimestamp(), checkPoint.getContent());
     }
 }

@@ -107,8 +107,8 @@ message LearnReq {
 
 message LearnRes {
   int32 squadId = 1;
-  bytes checkPoint = 3;
   repeated InstanceValue instanceValue = 2;
+  CheckPoint checkPoint = 3;
 }
 
 message InstanceValue {
@@ -126,3 +126,10 @@ message SquadChosen {
   int32 squadId = 1;
   int64 instanceId = 2;
 }
+
+message CheckPoint {
+  int32 squadId = 1;
+  int64 instanceId = 2;
+  int64 timestamp = 3;
+  bytes content = 4;
+}  

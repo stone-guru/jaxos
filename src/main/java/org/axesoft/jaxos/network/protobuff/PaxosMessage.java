@@ -8036,12 +8036,6 @@ public final class PaxosMessage {
     int getSquadId();
 
     /**
-     * <code>bytes checkPoint = 3;</code>
-     * @return The checkPoint.
-     */
-    com.google.protobuf.ByteString getCheckPoint();
-
-    /**
      * <code>repeated .org.axesoft.jaxos.network.protobuff.InstanceValue instanceValue = 2;</code>
      */
     java.util.List<org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue> 
@@ -8064,6 +8058,21 @@ public final class PaxosMessage {
      */
     org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValueOrBuilder getInstanceValueOrBuilder(
         int index);
+
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+     * @return Whether the checkPoint field is set.
+     */
+    boolean hasCheckPoint();
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+     * @return The checkPoint.
+     */
+    org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint getCheckPoint();
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+     */
+    org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPointOrBuilder getCheckPointOrBuilder();
   }
   /**
    * Protobuf type {@code org.axesoft.jaxos.network.protobuff.LearnRes}
@@ -8078,7 +8087,6 @@ public final class PaxosMessage {
       super(builder);
     }
     private LearnRes() {
-      checkPoint_ = com.google.protobuf.ByteString.EMPTY;
       instanceValue_ = java.util.Collections.emptyList();
     }
 
@@ -8128,8 +8136,16 @@ public final class PaxosMessage {
               break;
             }
             case 26: {
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.Builder subBuilder = null;
+              if (checkPoint_ != null) {
+                subBuilder = checkPoint_.toBuilder();
+              }
+              checkPoint_ = input.readMessage(org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(checkPoint_);
+                checkPoint_ = subBuilder.buildPartial();
+              }
 
-              checkPoint_ = input.readBytes();
               break;
             }
             default: {
@@ -8177,16 +8193,6 @@ public final class PaxosMessage {
       return squadId_;
     }
 
-    public static final int CHECKPOINT_FIELD_NUMBER = 3;
-    private com.google.protobuf.ByteString checkPoint_;
-    /**
-     * <code>bytes checkPoint = 3;</code>
-     * @return The checkPoint.
-     */
-    public com.google.protobuf.ByteString getCheckPoint() {
-      return checkPoint_;
-    }
-
     public static final int INSTANCEVALUE_FIELD_NUMBER = 2;
     private java.util.List<org.axesoft.jaxos.network.protobuff.PaxosMessage.InstanceValue> instanceValue_;
     /**
@@ -8222,6 +8228,29 @@ public final class PaxosMessage {
       return instanceValue_.get(index);
     }
 
+    public static final int CHECKPOINT_FIELD_NUMBER = 3;
+    private org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint checkPoint_;
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+     * @return Whether the checkPoint field is set.
+     */
+    public boolean hasCheckPoint() {
+      return checkPoint_ != null;
+    }
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+     * @return The checkPoint.
+     */
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint getCheckPoint() {
+      return checkPoint_ == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.getDefaultInstance() : checkPoint_;
+    }
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+     */
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPointOrBuilder getCheckPointOrBuilder() {
+      return getCheckPoint();
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -8242,8 +8271,8 @@ public final class PaxosMessage {
       for (int i = 0; i < instanceValue_.size(); i++) {
         output.writeMessage(2, instanceValue_.get(i));
       }
-      if (!checkPoint_.isEmpty()) {
-        output.writeBytes(3, checkPoint_);
+      if (checkPoint_ != null) {
+        output.writeMessage(3, getCheckPoint());
       }
       unknownFields.writeTo(output);
     }
@@ -8262,9 +8291,9 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, instanceValue_.get(i));
       }
-      if (!checkPoint_.isEmpty()) {
+      if (checkPoint_ != null) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(3, checkPoint_);
+          .computeMessageSize(3, getCheckPoint());
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -8283,10 +8312,13 @@ public final class PaxosMessage {
 
       if (getSquadId()
           != other.getSquadId()) return false;
-      if (!getCheckPoint()
-          .equals(other.getCheckPoint())) return false;
       if (!getInstanceValueList()
           .equals(other.getInstanceValueList())) return false;
+      if (hasCheckPoint() != other.hasCheckPoint()) return false;
+      if (hasCheckPoint()) {
+        if (!getCheckPoint()
+            .equals(other.getCheckPoint())) return false;
+      }
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -8300,11 +8332,13 @@ public final class PaxosMessage {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + SQUADID_FIELD_NUMBER;
       hash = (53 * hash) + getSquadId();
-      hash = (37 * hash) + CHECKPOINT_FIELD_NUMBER;
-      hash = (53 * hash) + getCheckPoint().hashCode();
       if (getInstanceValueCount() > 0) {
         hash = (37 * hash) + INSTANCEVALUE_FIELD_NUMBER;
         hash = (53 * hash) + getInstanceValueList().hashCode();
+      }
+      if (hasCheckPoint()) {
+        hash = (37 * hash) + CHECKPOINT_FIELD_NUMBER;
+        hash = (53 * hash) + getCheckPoint().hashCode();
       }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
@@ -8442,13 +8476,17 @@ public final class PaxosMessage {
         super.clear();
         squadId_ = 0;
 
-        checkPoint_ = com.google.protobuf.ByteString.EMPTY;
-
         if (instanceValueBuilder_ == null) {
           instanceValue_ = java.util.Collections.emptyList();
           bitField0_ = (bitField0_ & ~0x00000001);
         } else {
           instanceValueBuilder_.clear();
+        }
+        if (checkPointBuilder_ == null) {
+          checkPoint_ = null;
+        } else {
+          checkPoint_ = null;
+          checkPointBuilder_ = null;
         }
         return this;
       }
@@ -8478,7 +8516,6 @@ public final class PaxosMessage {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.LearnRes(this);
         int from_bitField0_ = bitField0_;
         result.squadId_ = squadId_;
-        result.checkPoint_ = checkPoint_;
         if (instanceValueBuilder_ == null) {
           if (((bitField0_ & 0x00000001) != 0)) {
             instanceValue_ = java.util.Collections.unmodifiableList(instanceValue_);
@@ -8487,6 +8524,11 @@ public final class PaxosMessage {
           result.instanceValue_ = instanceValue_;
         } else {
           result.instanceValue_ = instanceValueBuilder_.build();
+        }
+        if (checkPointBuilder_ == null) {
+          result.checkPoint_ = checkPoint_;
+        } else {
+          result.checkPoint_ = checkPointBuilder_.build();
         }
         onBuilt();
         return result;
@@ -8539,9 +8581,6 @@ public final class PaxosMessage {
         if (other.getSquadId() != 0) {
           setSquadId(other.getSquadId());
         }
-        if (other.getCheckPoint() != com.google.protobuf.ByteString.EMPTY) {
-          setCheckPoint(other.getCheckPoint());
-        }
         if (instanceValueBuilder_ == null) {
           if (!other.instanceValue_.isEmpty()) {
             if (instanceValue_.isEmpty()) {
@@ -8567,6 +8606,9 @@ public final class PaxosMessage {
               instanceValueBuilder_.addAllMessages(other.instanceValue_);
             }
           }
+        }
+        if (other.hasCheckPoint()) {
+          mergeCheckPoint(other.getCheckPoint());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -8624,39 +8666,6 @@ public final class PaxosMessage {
       public Builder clearSquadId() {
         
         squadId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private com.google.protobuf.ByteString checkPoint_ = com.google.protobuf.ByteString.EMPTY;
-      /**
-       * <code>bytes checkPoint = 3;</code>
-       * @return The checkPoint.
-       */
-      public com.google.protobuf.ByteString getCheckPoint() {
-        return checkPoint_;
-      }
-      /**
-       * <code>bytes checkPoint = 3;</code>
-       * @param value The checkPoint to set.
-       * @return This builder for chaining.
-       */
-      public Builder setCheckPoint(com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  
-        checkPoint_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>bytes checkPoint = 3;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearCheckPoint() {
-        
-        checkPoint_ = getDefaultInstance().getCheckPoint();
         onChanged();
         return this;
       }
@@ -8899,6 +8908,125 @@ public final class PaxosMessage {
           instanceValue_ = null;
         }
         return instanceValueBuilder_;
+      }
+
+      private org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint checkPoint_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint, org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPointOrBuilder> checkPointBuilder_;
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+       * @return Whether the checkPoint field is set.
+       */
+      public boolean hasCheckPoint() {
+        return checkPointBuilder_ != null || checkPoint_ != null;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+       * @return The checkPoint.
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint getCheckPoint() {
+        if (checkPointBuilder_ == null) {
+          return checkPoint_ == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.getDefaultInstance() : checkPoint_;
+        } else {
+          return checkPointBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+       */
+      public Builder setCheckPoint(org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint value) {
+        if (checkPointBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          checkPoint_ = value;
+          onChanged();
+        } else {
+          checkPointBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+       */
+      public Builder setCheckPoint(
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.Builder builderForValue) {
+        if (checkPointBuilder_ == null) {
+          checkPoint_ = builderForValue.build();
+          onChanged();
+        } else {
+          checkPointBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+       */
+      public Builder mergeCheckPoint(org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint value) {
+        if (checkPointBuilder_ == null) {
+          if (checkPoint_ != null) {
+            checkPoint_ =
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.newBuilder(checkPoint_).mergeFrom(value).buildPartial();
+          } else {
+            checkPoint_ = value;
+          }
+          onChanged();
+        } else {
+          checkPointBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+       */
+      public Builder clearCheckPoint() {
+        if (checkPointBuilder_ == null) {
+          checkPoint_ = null;
+          onChanged();
+        } else {
+          checkPoint_ = null;
+          checkPointBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.Builder getCheckPointBuilder() {
+        
+        onChanged();
+        return getCheckPointFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPointOrBuilder getCheckPointOrBuilder() {
+        if (checkPointBuilder_ != null) {
+          return checkPointBuilder_.getMessageOrBuilder();
+        } else {
+          return checkPoint_ == null ?
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.getDefaultInstance() : checkPoint_;
+        }
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.CheckPoint checkPoint = 3;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint, org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPointOrBuilder> 
+          getCheckPointFieldBuilder() {
+        if (checkPointBuilder_ == null) {
+          checkPointBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint, org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPointOrBuilder>(
+                  getCheckPoint(),
+                  getParentForChildren(),
+                  isClean());
+          checkPoint_ = null;
+        }
+        return checkPointBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -11119,6 +11247,702 @@ public final class PaxosMessage {
 
   }
 
+  public interface CheckPointOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:org.axesoft.jaxos.network.protobuff.CheckPoint)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int32 squadId = 1;</code>
+     * @return The squadId.
+     */
+    int getSquadId();
+
+    /**
+     * <code>int64 instanceId = 2;</code>
+     * @return The instanceId.
+     */
+    long getInstanceId();
+
+    /**
+     * <code>int64 timestamp = 3;</code>
+     * @return The timestamp.
+     */
+    long getTimestamp();
+
+    /**
+     * <code>bytes content = 4;</code>
+     * @return The content.
+     */
+    com.google.protobuf.ByteString getContent();
+  }
+  /**
+   * Protobuf type {@code org.axesoft.jaxos.network.protobuff.CheckPoint}
+   */
+  public  static final class CheckPoint extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.CheckPoint)
+      CheckPointOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use CheckPoint.newBuilder() to construct.
+    private CheckPoint(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private CheckPoint() {
+      content_ = com.google.protobuf.ByteString.EMPTY;
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new CheckPoint();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private CheckPoint(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              squadId_ = input.readInt32();
+              break;
+            }
+            case 16: {
+
+              instanceId_ = input.readInt64();
+              break;
+            }
+            case 24: {
+
+              timestamp_ = input.readInt64();
+              break;
+            }
+            case 34: {
+
+              content_ = input.readBytes();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.class, org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.Builder.class);
+    }
+
+    public static final int SQUADID_FIELD_NUMBER = 1;
+    private int squadId_;
+    /**
+     * <code>int32 squadId = 1;</code>
+     * @return The squadId.
+     */
+    public int getSquadId() {
+      return squadId_;
+    }
+
+    public static final int INSTANCEID_FIELD_NUMBER = 2;
+    private long instanceId_;
+    /**
+     * <code>int64 instanceId = 2;</code>
+     * @return The instanceId.
+     */
+    public long getInstanceId() {
+      return instanceId_;
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 3;
+    private long timestamp_;
+    /**
+     * <code>int64 timestamp = 3;</code>
+     * @return The timestamp.
+     */
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    public static final int CONTENT_FIELD_NUMBER = 4;
+    private com.google.protobuf.ByteString content_;
+    /**
+     * <code>bytes content = 4;</code>
+     * @return The content.
+     */
+    public com.google.protobuf.ByteString getContent() {
+      return content_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (squadId_ != 0) {
+        output.writeInt32(1, squadId_);
+      }
+      if (instanceId_ != 0L) {
+        output.writeInt64(2, instanceId_);
+      }
+      if (timestamp_ != 0L) {
+        output.writeInt64(3, timestamp_);
+      }
+      if (!content_.isEmpty()) {
+        output.writeBytes(4, content_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (squadId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(1, squadId_);
+      }
+      if (instanceId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(2, instanceId_);
+      }
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(3, timestamp_);
+      }
+      if (!content_.isEmpty()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(4, content_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint)) {
+        return super.equals(obj);
+      }
+      org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint) obj;
+
+      if (getSquadId()
+          != other.getSquadId()) return false;
+      if (getInstanceId()
+          != other.getInstanceId()) return false;
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (!getContent()
+          .equals(other.getContent())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SQUADID_FIELD_NUMBER;
+      hash = (53 * hash) + getSquadId();
+      hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getInstanceId());
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      hash = (37 * hash) + CONTENT_FIELD_NUMBER;
+      hash = (53 * hash) + getContent().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code org.axesoft.jaxos.network.protobuff.CheckPoint}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:org.axesoft.jaxos.network.protobuff.CheckPoint)
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPointOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.class, org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.Builder.class);
+      }
+
+      // Construct using org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        squadId_ = 0;
+
+        instanceId_ = 0L;
+
+        timestamp_ = 0L;
+
+        content_ = com.google.protobuf.ByteString.EMPTY;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_descriptor;
+      }
+
+      @java.lang.Override
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint getDefaultInstanceForType() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint build() {
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint buildPartial() {
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint(this);
+        result.squadId_ = squadId_;
+        result.instanceId_ = instanceId_;
+        result.timestamp_ = timestamp_;
+        result.content_ = content_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint) {
+          return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint other) {
+        if (other == org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint.getDefaultInstance()) return this;
+        if (other.getSquadId() != 0) {
+          setSquadId(other.getSquadId());
+        }
+        if (other.getInstanceId() != 0L) {
+          setInstanceId(other.getInstanceId());
+        }
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        if (other.getContent() != com.google.protobuf.ByteString.EMPTY) {
+          setContent(other.getContent());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private int squadId_ ;
+      /**
+       * <code>int32 squadId = 1;</code>
+       * @return The squadId.
+       */
+      public int getSquadId() {
+        return squadId_;
+      }
+      /**
+       * <code>int32 squadId = 1;</code>
+       * @param value The squadId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSquadId(int value) {
+        
+        squadId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 squadId = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSquadId() {
+        
+        squadId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private long instanceId_ ;
+      /**
+       * <code>int64 instanceId = 2;</code>
+       * @return The instanceId.
+       */
+      public long getInstanceId() {
+        return instanceId_;
+      }
+      /**
+       * <code>int64 instanceId = 2;</code>
+       * @param value The instanceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setInstanceId(long value) {
+        
+        instanceId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 instanceId = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearInstanceId() {
+        
+        instanceId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 3;</code>
+       * @return The timestamp.
+       */
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 3;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimestamp() {
+        
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString content_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>bytes content = 4;</code>
+       * @return The content.
+       */
+      public com.google.protobuf.ByteString getContent() {
+        return content_;
+      }
+      /**
+       * <code>bytes content = 4;</code>
+       * @param value The content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContent(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        content_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bytes content = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearContent() {
+        
+        content_ = getDefaultInstance().getContent();
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:org.axesoft.jaxos.network.protobuff.CheckPoint)
+    }
+
+    // @@protoc_insertion_point(class_scope:org.axesoft.jaxos.network.protobuff.CheckPoint)
+    private static final org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint();
+    }
+
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<CheckPoint>
+        PARSER = new com.google.protobuf.AbstractParser<CheckPoint>() {
+      @java.lang.Override
+      public CheckPoint parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new CheckPoint(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<CheckPoint> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<CheckPoint> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.CheckPoint getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_org_axesoft_jaxos_network_protobuff_DataGram_descriptor;
   private static final 
@@ -11189,6 +12013,11 @@ public final class PaxosMessage {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_org_axesoft_jaxos_network_protobuff_SquadChosen_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -11229,25 +12058,29 @@ public final class PaxosMessage {
       "ff.ChosenInstanceId\"=\n\020ChosenInstanceId\022" +
       "\017\n\007squadId\030\001 \001(\005\022\030\n\020chosenInstanceId\030\002 \001" +
       "(\003\"J\n\010LearnReq\022\017\n\007squadId\030\001 \001(\005\022\025\n\rlowIn" +
-      "stanceId\030\002 \001(\003\022\026\n\016highInstanceId\030\003 \001(\003\"z" +
-      "\n\010LearnRes\022\017\n\007squadId\030\001 \001(\005\022\022\n\ncheckPoin" +
-      "t\030\003 \001(\014\022I\n\rinstanceValue\030\002 \003(\01322.org.axe" +
-      "soft.jaxos.network.protobuff.InstanceVal" +
-      "ue\"\207\001\n\rInstanceValue\022\017\n\007squadId\030\001 \001(\005\022\022\n" +
-      "\ninstanceId\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\022?\n\005v" +
-      "alue\030\004 \001(\01320.org.axesoft.jaxos.network.p" +
-      "rotobuff.BallotValue\"R\n\016ChosenQueryRes\022@" +
-      "\n\006chosen\030\001 \003(\01320.org.axesoft.jaxos.netwo" +
-      "rk.protobuff.SquadChosen\"2\n\013SquadChosen\022" +
-      "\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003*\351\001\n" +
-      "\004Code\022\010\n\004NONE\020\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021\n\rHE" +
-      "ARTBEAT_RES\020\002\022\017\n\013PREPARE_REQ\020\003\022\017\n\013PREPAR" +
-      "E_RES\020\004\022\016\n\nACCEPT_REQ\020\005\022\016\n\nACCEPT_RES\020\006\022" +
-      "\023\n\017ACCEPTED_NOTIFY\020\007\022\020\n\014ACCEPTED_ACK\020\010\022\r" +
-      "\n\tLEARN_REQ\020\013\022\r\n\tLEARN_RES\020\014\022\024\n\020CHOSEN_Q" +
-      "UERY_REQ\020\r\022\024\n\020CHOSEN_QUERY_RES\020\016*3\n\tValu" +
-      "eType\022\013\n\007NOTHING\020\000\022\017\n\013APPLICATION\020\001\022\010\n\004N" +
-      "OOP\020\002B\016B\014PaxosMessageb\006proto3"
+      "stanceId\030\002 \001(\003\022\026\n\016highInstanceId\030\003 \001(\003\"\253" +
+      "\001\n\010LearnRes\022\017\n\007squadId\030\001 \001(\005\022I\n\rinstance" +
+      "Value\030\002 \003(\01322.org.axesoft.jaxos.network." +
+      "protobuff.InstanceValue\022C\n\ncheckPoint\030\003 " +
+      "\001(\0132/.org.axesoft.jaxos.network.protobuf" +
+      "f.CheckPoint\"\207\001\n\rInstanceValue\022\017\n\007squadI" +
+      "d\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\020\n\010proposal\030" +
+      "\003 \001(\005\022?\n\005value\030\004 \001(\01320.org.axesoft.jaxos" +
+      ".network.protobuff.BallotValue\"R\n\016Chosen" +
+      "QueryRes\022@\n\006chosen\030\001 \003(\01320.org.axesoft.j" +
+      "axos.network.protobuff.SquadChosen\"2\n\013Sq" +
+      "uadChosen\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId" +
+      "\030\002 \001(\003\"U\n\nCheckPoint\022\017\n\007squadId\030\001 \001(\005\022\022\n" +
+      "\ninstanceId\030\002 \001(\003\022\021\n\ttimestamp\030\003 \001(\003\022\017\n\007" +
+      "content\030\004 \001(\014*\351\001\n\004Code\022\010\n\004NONE\020\000\022\021\n\rHEAR" +
+      "TBEAT_REQ\020\001\022\021\n\rHEARTBEAT_RES\020\002\022\017\n\013PREPAR" +
+      "E_REQ\020\003\022\017\n\013PREPARE_RES\020\004\022\016\n\nACCEPT_REQ\020\005" +
+      "\022\016\n\nACCEPT_RES\020\006\022\023\n\017ACCEPTED_NOTIFY\020\007\022\020\n" +
+      "\014ACCEPTED_ACK\020\010\022\r\n\tLEARN_REQ\020\013\022\r\n\tLEARN_" +
+      "RES\020\014\022\024\n\020CHOSEN_QUERY_REQ\020\r\022\024\n\020CHOSEN_QU" +
+      "ERY_RES\020\016*3\n\tValueType\022\013\n\007NOTHING\020\000\022\017\n\013A" +
+      "PPLICATION\020\001\022\010\n\004NOOP\020\002B\016B\014PaxosMessageb\006" +
+      "proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -11318,7 +12151,7 @@ public final class PaxosMessage {
     internal_static_org_axesoft_jaxos_network_protobuff_LearnRes_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_LearnRes_descriptor,
-        new java.lang.String[] { "SquadId", "CheckPoint", "InstanceValue", });
+        new java.lang.String[] { "SquadId", "InstanceValue", "CheckPoint", });
     internal_static_org_axesoft_jaxos_network_protobuff_InstanceValue_descriptor =
       getDescriptor().getMessageTypes().get(11);
     internal_static_org_axesoft_jaxos_network_protobuff_InstanceValue_fieldAccessorTable = new
@@ -11337,6 +12170,12 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_SquadChosen_descriptor,
         new java.lang.String[] { "SquadId", "InstanceId", });
+    internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_descriptor =
+      getDescriptor().getMessageTypes().get(14);
+    internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_descriptor,
+        new java.lang.String[] { "SquadId", "InstanceId", "Timestamp", "Content", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

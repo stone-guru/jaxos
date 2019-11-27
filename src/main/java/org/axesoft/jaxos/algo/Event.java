@@ -586,11 +586,12 @@ public abstract class Event {
     public static class LearnResponse extends InstanceEvent {
         private int squadId;
         private List<InstanceValue> instances;
-
-        public LearnResponse(int senderId, int squadId, List<InstanceValue> instances) {
+        private CheckPoint checkPoint;
+        public LearnResponse(int senderId, int squadId, List<InstanceValue> instances, CheckPoint checkPoint) {
             super(senderId);
             this.squadId = squadId;
             this.instances = checkNotNull(instances);
+            this.checkPoint = checkNotNull(checkPoint);
         }
 
         @Override
@@ -606,12 +607,17 @@ public abstract class Event {
             return this.instances;
         }
 
+        public CheckPoint checkPoint(){
+            return this.checkPoint;
+        }
+
         @Override
         public String toString() {
             return "LearnResponse{" +
                     "senderId=" + super.senderId() +
                     ", squadId=" + super.squadId() +
                     ", instances=I[" + instances.size() + "]" +
+                    ", checkPoint=B[" + checkPoint.content().size() + "]" +
                     '}';
         }
 

@@ -10,6 +10,8 @@ import java.util.Date;
  * @sine 2019/9/24.
  */
 public class CheckPoint implements Serializable {
+    public static CheckPoint EMPTY = new CheckPoint(0, 0, 0, ByteString.EMPTY);
+
     private int squadId;
     private long instanceId;
     private long timestamp;
@@ -36,6 +38,10 @@ public class CheckPoint implements Serializable {
 
     public ByteString content(){
         return this.content;
+    }
+
+    public boolean isEmpty(){
+        return this.content.isEmpty();
     }
 
     @Override

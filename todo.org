@@ -1,34 +1,34 @@
 # Jaxos tasks
-* DONE Implement broadcast by netty.channelgroup 									:network:
-* DONE Adopt JCommand to parse the settings from args 									:base:
-* DONE client close network gracefully 											:network:
-* DONE use ProtoBuff.ByteString to store the general value 								:base:
-* DONE Proposal judge the majority 											:algorithm:
-* DONE implement basic multi-paxos.instance 										:algorithm:
+* DONE Implement broadcast by netty.channelgroup 						     :network:
+* DONE Adopt JCommand to parse the settings from args 							:base:
+* DONE client close network gracefully 								     :network:
+* DONE use ProtoBuff.ByteString to store the general value 						:base:
+* DONE Proposal judge the majority 								   :algorithm:
+* DONE implement basic multi-paxos.instance 							   :algorithm:
 ** DONE acceptor and adaptor use same instance context		  :algorithm:
-* DONE save proposal to localdb 											:log:
-* DONE add accepted message 												:network:
-* DONE add single learn request&response 										:learner:
-* DONE add range learn request&response 										:learner:
-* DONE add general state machine 											:statemachine:
-* DONE save checkpoint 													:statemachine:
-* DONE add log reload 													:log:
-* DONE optimize the thread model 											:base:
-* DONE  support timeout by TimeWheel 											:network:
-* DONE set a fixed gradle version 											:dev:
-* DONE use settings file for peers' address 										:base:
-* DONE connect to other peers lazily											:network:
-* DONE use netty local chanel to unify the broachcast interface 							:network:
+* DONE save proposal to localdb 									 :log:
+* DONE add accepted message 									     :network:
+* DONE add single learn request&response 							     :learner:
+* DONE add range learn request&response 							     :learner:
+* DONE add general state machine 								:statemachine:
+* DONE save checkpoint 										:statemachine:
+* DONE add log reload 											 :log:
+* DONE optimize the thread model 									:base:
+* DONE  support timeout by TimeWheel 								     :network:
+* DONE set a fixed gradle version 									 :dev:
+* DONE use settings file for peers' address 								:base:
+* DONE connect to other peers lazily 								     :network:
+* DONE use netty local chanel to unify the broachcast interface 				     :network:
   The notify message to local acceptor is by direct call, all others 
 are by netty
-* DONE Implment a distributed KV store based on berkely DB 								:application:
-* DONE the ballot is not reset after one instance finished 								:base:
-* DONE close DB when application exit 											:log:
-* DONE [#C] the proposer blocked at "executingSignal" 									:base:
-* DONE Implement a HTTP id service for each server 									:base:
-* DONE implement a HTTP client on netty 										:network:
-* DONE Provide proposal BATCH strategy to improve the throughput 							:algorithm:
-* DONE Ignore Exceptions from channel broken when shudown the server 							:network:
+* DONE Implment a distributed KV store based on berkely DB 					 :application:
+* DONE the ballot is not reset after one instance finished 						:base:
+* DONE close DB when application exit 									 :log:
+* DONE [#C] the proposer blocked at "executingSignal" 							:base:
+* DONE Implement a HTTP id service for each server 							:base:
+* DONE implement a HTTP client on netty 							     :network:
+* DONE Provide proposal BATCH strategy to improve the throughput 				   :algorithm:
+* DONE Ignore Exceptions from channel broken when shudown the server 				     :network:
 * TODO A case of Chosen notify message lost making that server hang 				     :network:
 * TODO Add full unit test case for algo package 						   :algorithm:
 * DONE Add reject strategy for HTTP API server when not leader 					     :network:
@@ -44,6 +44,7 @@ are by netty
 * TODO Change HTTP response format from text to JSON 						 :application:
 * TODO Add ignore leader parameter to HTTP request 						 :application:
 * TODO Metrics support Promethus 								     :metrics:
+* TODO When a node crashed, other node should be leader of its partition			   :algorithm:
 * Issues
 ** TODO [#C] Netty print ERROR message [[file:caselog/netty-error.log][logs]]
 ** TODO client hang when getting redirect to a not given server address 			      :client:

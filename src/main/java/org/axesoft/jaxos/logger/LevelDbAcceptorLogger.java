@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 /**
- * A paxos logger implementation based on the LevelDB
+ * A paxos logger implementation based on the LevelDB and ProtoBuff message coder
  */
 public class LevelDbAcceptorLogger implements AcceptorLogger {
     private static final Logger logger = LoggerFactory.getLogger(LevelDbAcceptorLogger.class);
@@ -229,7 +229,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         byte[] data = db.get(key);
 
         if (data == null) {
-            return null;
+            return CheckPoint.EMPTY;
         }
         return toCheckPoint(data);
     }
@@ -270,33 +270,16 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     }
 
     public byte[] toByteArray(CheckPoint checkPoint) {
-        ByteArrayOutputStream bs = new ByteArrayOutputStream();
-        DataOutputStream os = new DataOutputStream(bs);
-        try {
-            os.writeInt(checkPoint.squadId());
-            os.writeLong(checkPoint.instanceId());
-            os.writeLong(checkPoint.timestamp());
-            os.writeInt(checkPoint.content().size());
-            os.write(checkPoint.content().toByteArray());
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return bs.toByteArray();
+        PaxosMessage.CheckPoint c = this.messageCoder.encodeCheckPoint(checkPoint);
+        return c.toByteArray();
     }
 
     public CheckPoint toCheckPoint(byte[] bytes) {
-        DataInputStream is = new DataInputStream(new ByteArrayInputStream(bytes));
         try {
-            int squadId = is.readInt();
-            long instanceId = is.readLong();
-            long timestamp = is.readLong();
-            int sz = is.readInt();
-            byte[] content = is.readNBytes(sz);
-            return new CheckPoint(squadId, instanceId, timestamp, ByteString.copyFrom(content));
+            PaxosMessage.CheckPoint checkPoint = PaxosMessage.CheckPoint.parseFrom(bytes);
+            return this.messageCoder.decodeCheckPoint(checkPoint);
         }
-        catch (IOException e) {
+        catch (InvalidProtocolBufferException e) {
             throw new RuntimeException(e);
         }
     }

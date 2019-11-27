@@ -1,0 +1,29 @@
+2019-11-22 17:46:26.747 [scheduledTaskThread] INFO  org.axesoft.jaxos.algo.Squad - CheckPoint{squadId=0, instanceId=179, timestamp=Fri Nov 22 17:46:26 CST 2019, content=BX[0]} saved
+2019-11-22 17:46:26.747 [scheduledTaskThread] INFO  org.axesoft.jaxos.algo.Squad - CheckPoint{squadId=1, instanceId=254, timestamp=Fri Nov 22 17:46:26 CST 2019, content=BX[0]} saved
+2019-11-22 17:46:26.764 [scheduledTaskThread] INFO  org.axesoft.jaxos.logger.LevelDbAcceptorLogger - S 2 delete instances from 123689 to 123890, elapsed 13.722802 ms
+2019-11-22 17:46:26.764 [scheduledTaskThread] INFO  org.axesoft.jaxos.algo.Squad - CheckPoint{squadId=2, instanceId=125890, timestamp=Fri Nov 22 17:46:26 CST 2019, content=BX[26]} saved
+2019-11-22 17:46:26.825 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - Sent learn request Learn{senderId=1, squadId=-1, lowInstanceId=125891, highInstanceId=151569}
+2019-11-22 17:46:26.826 [EventWorkerThread-2] WARN  org.axesoft.jaxos.algo.Acceptor - S2: NOTIFY: future notify message of chose notify(151570), mine is 125890 
+2019-11-22 17:46:26.826 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - Sent learn request Learn{senderId=1, squadId=-1, lowInstanceId=125891, highInstanceId=151570}
+2019-11-22 17:46:26.826 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - squad 2 learn instances from 0 to 0
+2019-11-22 17:46:26.828 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - squad 2 learn instances from 0 to 0
+2019-11-22 17:46:30.834 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - Sent learn request Learn{senderId=1, squadId=-1, lowInstanceId=125891, highInstanceId=151570}
+2019-11-22 17:46:30.835 [EventWorkerThread-2] WARN  org.axesoft.jaxos.algo.Acceptor - S2: NOTIFY: future notify message of chose notify(151571), mine is 125890 
+2019-11-22 17:46:30.835 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - Sent learn request Learn{senderId=1, squadId=-1, lowInstanceId=125891, highInstanceId=151571}
+2019-11-22 17:46:30.835 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - squad 2 learn instances from 0 to 0
+2019-11-22 17:46:30.836 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - squad 2 learn instances from 0 to 0
+2019-11-22 17:46:34.845 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - Sent learn request Learn{senderId=1, squadId=-1, lowInstanceId=125891, highInstanceId=151571}
+2019-11-22 17:46:34.846 [EventWorkerThread-2] WARN  org.axesoft.jaxos.algo.Acceptor - S2: NOTIFY: future notify message of chose notify(151572), mine is 125890 
+2019-11-22 17:46:34.846 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - Sent learn request Learn{senderId=1, squadId=-1, lowInstanceId=125891, highInstanceId=151572}
+2019-11-22 17:46:34.846 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - squad 2 learn instances from 0 to 0
+2019-11-22 17:46:34.847 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - squad 2 learn instances from 0 to 0
+2019-11-22 17:46:38.855 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - Sent learn request Learn{senderId=1, squadId=-1, lowInstanceId=125891, highInstanceId=151572}
+2019-11-22 17:46:38.856 [EventWorkerThread-2] WARN  org.axesoft.jaxos.algo.Acceptor - S2: NOTIFY: future notify message of chose notify(151573), mine is 125890 
+2019-11-22 17:46:38.856 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - Sent learn request Learn{senderId=1, squadId=-1, lowInstanceId=125891, highInstanceId=151573}
+2019-11-22 17:46:38.856 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - squad 2 learn instances from 0 to 0
+2019-11-22 17:46:38.857 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - squad 2 learn instances from 0 to 0
+2019-11-22 17:46:42.869 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - Sent learn request Learn{senderId=1, squadId=-1, lowInstanceId=125891, highInstanceId=151573}
+2019-11-22 17:46:42.870 [EventWorkerThread-2] WARN  org.axesoft.jaxos.algo.Acceptor - S2: NOTIFY: future notify message of chose notify(151574), mine is 125890 
+2019-11-22 17:46:42.871 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - Sent learn request Learn{senderId=1, squadId=-1, lowInstanceId=125891, highInstanceId=151574}
+2019-11-22 17:46:42.871 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - squad 2 learn instances from 0 to 0
+2019-11-22 17:46:42.872 [LearnerThread] INFO  org.axesoft.jaxos.algo.Squad - squad 2 learn instances from 0 to 0
