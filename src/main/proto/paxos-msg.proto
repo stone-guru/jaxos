@@ -1,3 +1,5 @@
+// -*- compile-command: "protoc paxos-msg.proto --java_out=../java/" -*-
+
 syntax = "proto3";
 package  org.axesoft.jaxos.network.protobuff;
 
@@ -61,7 +63,7 @@ message PrepareRes {
   int32 maxProposal = 5;
   int32 acceptedProposal = 6;
   BallotValue acceptedValue = 7;
-  int32 valueProposer = 8;
+  int64 ballotId = 8;
   int64 chosenInstanceId = 9;
 }
 
@@ -71,7 +73,7 @@ message AcceptReq {
   int32 round = 3;
   int32 proposal = 4;
   BallotValue value = 5;
-  int32 valueProposer = 6;
+  int64 ballotId = 6;
   int32 lastChosenProposal = 7;
 }
 

@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableBiMap;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang3.tuple.Pair;
-import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.algo.CheckPoint;
 import org.axesoft.jaxos.algo.Event;
 import org.axesoft.jaxos.algo.InstanceValue;
@@ -152,7 +151,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setMaxProposal(resp.maxBallot())
                 .setAcceptedProposal(resp.acceptedBallot())
                 .setAcceptedValue(encodeValue(resp.acceptedValue()))
-                .setValueProposer(resp.valueProposer())
+                .setBallotId(resp.ballotId())
                 .setChosenInstanceId(resp.chosenInstanceId())
                 .build()
                 .toByteString();
@@ -166,7 +165,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setRound(req.round())
                 .setProposal(req.ballot())
                 .setValue(encodeValue(req.value()))
-                .setValueProposer(req.valueProposer())
+                .setBallotId(req.ballotId())
                 .setLastChosenProposal(req.lastChosenBallot())
                 .build()
                 .toByteString();
@@ -299,19 +298,18 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         return new Event.PrepareResponse.Builder(dataGram.getSender(), res.getSquadId(), res.getInstanceId(), res.getRound())
                 .setResult(res.getResult())
                 .setAccepted(res.getAcceptedProposal(), decodeValue(res.getAcceptedValue()))
-                .setValueProposer(res.getValueProposer())
+                .setBallotId(res.getBallotId())
                 .setMaxProposal(res.getMaxProposal())
                 .setChosenInstanceId(res.getChosenInstanceId())
                 .build();
     }
-
 
     private Event decodeAcceptReq(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.AcceptReq req = PaxosMessage.AcceptReq.parseFrom(dataGram.getBody());
         return Event.AcceptRequest.newBuilder(dataGram.getSender(), req.getSquadId(), req.getInstanceId(), req.getRound())
                 .setBallot(req.getProposal())
                 .setValue(decodeValue(req.getValue()))
-                .setValueProposer(req.getValueProposer())
+                .setBallotId(req.getBallotId())
                 .setLastChosenBallot(req.getLastChosenProposal())
                 .build();
     }

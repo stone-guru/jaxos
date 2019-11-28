@@ -17,6 +17,11 @@ public class Acceptor {
     private final JaxosSettings settings;
     private final Components config;
 
+    /**
+     * Indicate that this acceptor has encountered an unrecoverable error and can not work any more
+     */
+    private boolean faulty;
+
     private long acceptedInstanceId;
     private int maxBallot;
     private int acceptedBallot;
@@ -28,6 +33,8 @@ public class Acceptor {
         this.context = context;
         this.learner = learner;
 
+        this.faulty = false;
+
         this.maxBallot = 0;
         this.acceptedBallot = 0;
         this.acceptedValue = Event.BallotValue.EMPTY;
@@ -38,8 +45,11 @@ public class Acceptor {
             logger.trace("S{}: On prepare {} ", context.squadId(), request);
         }
 
-        long last0 = this.learner.lastChosenInstanceId(this.context.squadId());
+        if(this.faulty){
+            return null;
+        }
 
+        long last0 = this.learner.lastChosenInstanceId(this.context.squadId());
         long last = handleAcceptedNotifyLostMaybe(last0, request.instanceId(), request.lastChosenBallot());
 
         if (request.instanceId() <= last) {
@@ -59,12 +69,7 @@ public class Acceptor {
             logger.warn("S{}: PrepareResponse: future instance id in prepare(instance id = {}), request instance id = {}",
                     context.squadId(), last, request.instanceId());
 
-            return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
-                    .setResult(Event.RESULT_STANDBY)
-                    .setMaxProposal(0)
-                    .setAccepted(0, Event.BallotValue.EMPTY)
-                    .setChosenInstanceId(last)
-                    .build();
+            return standByPrepareResponse(request);
         }
         else { // request.instanceId == last + 1
             boolean success = false;
@@ -89,11 +94,25 @@ public class Acceptor {
         }
     }
 
+    private Event.PrepareResponse standByPrepareResponse(Event.PrepareRequest request) {
+        long last = this.learner.lastChosenInstanceId(this.context.squadId());
+        return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
+                .setResult(Event.RESULT_STANDBY)
+                .setMaxProposal(0)
+                .setAccepted(0, Event.BallotValue.EMPTY)
+                .setChosenInstanceId(last)
+                .build();
+    }
+
     public Event.AcceptResponse accept(Event.AcceptRequest request) {
-        logger.trace("On Accept {}", request);
+        if(logger.isTraceEnabled()) {
+            logger.trace("On Accept {}", request);
+        }
+        if(faulty){
+            return null;
+        }
 
         long last0 = this.learner.lastChosenInstanceId(this.context.squadId());
-
         long last = handleAcceptedNotifyLostMaybe(last0, request.instanceId(), request.lastChosenBallot());
 
         if (request.instanceId() <= last) {
@@ -193,7 +212,14 @@ public class Acceptor {
     }
 
     private void chose(long instanceId, int proposal) {
-        learner.learnValue(this.context.squadId(), instanceId, proposal, this.acceptedValue);
+        try {
+            learner.learnValue(this.context.squadId(), instanceId, proposal, this.acceptedValue);
+        }catch(Exception e){
+            this.faulty = true;
+
+            String msg = String.format("Error when chosen value %d.%d", this.context.squadId(), instanceId);
+            logger.error(msg, e);
+        }
 
         // for multi paxos, prepare once and accept many, keep maxBallot unchanged
         this.acceptedBallot = 0;

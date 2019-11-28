@@ -35,7 +35,7 @@ public class ArgumentParser {
         private Integer partitionNumber = 0;
 
         @Parameter(names = {"-m"}, description = "Interval in seconds of print metrics")
-        private Integer printMetricsInterval = 10 * 60;
+        private Integer printMetricsSeconds = 10 * 60;
 
         @Parameter(names = {"-b"}, description = "batch size for HTTP request")
         private Integer requestBatchSize = 8;
@@ -46,6 +46,8 @@ public class ArgumentParser {
 
     private Properties properties;
     private Map<Integer, Integer> peerHttpMap;
+
+    private Integer printMetricsSeconds;
 
     public ArgumentParser() {
     }
@@ -67,10 +69,11 @@ public class ArgumentParser {
 
         JaxosSettings config = buildJaxosConfig(args);
 
-        return new TansConfig(config, this.peerHttpMap, args.printMetricsInterval, args.requestBatchSize);
+        int printMetricsSec = (this.printMetricsSeconds == null)? args.printMetricsSeconds : this.printMetricsSeconds;
+        return new TansConfig(config, this.peerHttpMap, printMetricsSec, args.requestBatchSize);
     }
 
-    public JaxosSettings parseJaxosSettings(String[] sx){
+    public JaxosSettings parseJaxosSettings(String[] sx) {
         Args args = new Args();
 
         JCommander.newBuilder()
@@ -90,7 +93,8 @@ public class ArgumentParser {
             this.properties = new Properties();
             try {
                 properties.load(new BufferedReader(new FileReader(args.configFilename)));
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 this.properties = null;
                 throw new RuntimeException(e);
             }
@@ -117,13 +121,13 @@ public class ArgumentParser {
 
         boolean selfPortSet = false;
         for (String k : properties.stringPropertyNames()) {
-            String s = properties.getProperty(k);
+            String v = properties.getProperty(k);
 
             if (k.startsWith("peer.")) {
                 String[] sx = k.split("\\.");
                 int id = Integer.parseInt(sx[1]);
 
-                String[] ax = s.split(":");
+                String[] ax = v.split(":");
                 String address = ax[0];
                 int port = Integer.parseInt(ax[1]);
                 int httpPort = Integer.parseInt(ax[2]);
@@ -140,15 +144,23 @@ public class ArgumentParser {
                 peerHttpMapBuilder.put(id, httpPort);
             }
             else if (k.equals("partition.number")) {
-                int n = Integer.parseInt(s);
+                int n = Integer.parseInt(v);
                 if (n < 0 || n > 32) {
                     throw new IllegalArgumentException("Partition number should be in [1, 32], actual is " + n);
                 }
                 builder.setPartitionNumber(n);
             }
-            else if (k.equals("checkPoint.minutes")){
-                builder.setCheckPointMinutes(Integer.parseInt(s));
-            } else {
+            else if (k.equals("checkPoint.minutes")) {
+                builder.setCheckPointMinutes(Integer.parseInt(v));
+            }
+            else if (k.equals("printMetrics.seconds")) {
+                int sec = Integer.parseInt(v);
+                if(sec < 0){
+                    throw new IllegalArgumentException("printMetrics.seconds should great than Zero " + v);
+                }
+                this.printMetricsSeconds = sec;
+            }
+            else {
                 System.err.println("Unknown config item: " + k);
             }
         }

@@ -15,6 +15,10 @@ public class CounterTest {
             System.out.println(String.format("key = %s, hashcode=%d, squad=%d", k, c2, c2%3));
         }
         assertTrue(1 == 1);
+    }
+
+    @Test
+    public void testMask() throws Exception {
 
     }
 }

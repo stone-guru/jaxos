@@ -223,7 +223,7 @@ public abstract class Event {
         private int maxBallot;
         private int acceptedBallot;
         private BallotValue acceptedValue;
-        private int valueProposer;
+        private long ballotId;
         private long chosenInstanceId;
 
 
@@ -255,8 +255,8 @@ public abstract class Event {
                 return this;
             }
 
-            public Builder setValueProposer(int i) {
-                resp.valueProposer = i;
+            public Builder setBallotId(long i) {
+                resp.ballotId = i;
                 return this;
             }
 
@@ -295,8 +295,8 @@ public abstract class Event {
             return this.chosenInstanceId;
         }
 
-        public int valueProposer() {
-            return this.valueProposer;
+        public long ballotId() {
+            return this.ballotId;
         }
 
         @Override
@@ -306,7 +306,7 @@ public abstract class Event {
                     ", maxBallot=" + maxBallot +
                     ", acceptedBallot=" + acceptedBallot +
                     ", acceptedValue=" + acceptedValue +
-                    ", valueProposer=" + valueProposer +
+                    ", ballotId=" + ballotId +
                     ", chosenInstanceId=" + chosenInstanceId +
                     '}';
         }
@@ -316,7 +316,7 @@ public abstract class Event {
         private int ballot;
         private int lastChosenBallot;
         private BallotValue value;
-        private int valueProposer;
+        private long ballotId;
 
         public static Builder newBuilder(int sender, int squadId, long instanceId, int round) {
             return new Builder(sender, squadId, instanceId, round);
@@ -339,8 +339,8 @@ public abstract class Event {
                 return this;
             }
 
-            public Builder setValueProposer(int valueProposer) {
-                req.valueProposer = valueProposer;
+            public Builder setBallotId(long id) {
+                req.ballotId = id;
                 return this;
             }
 
@@ -380,15 +380,15 @@ public abstract class Event {
             return this.instanceId() - 1;
         }
 
-        public int valueProposer() {
-            return this.valueProposer;
+        public long ballotId() {
+            return this.ballotId;
         }
 
         @Override
         public String toString() {
             return "AcceptRequest{" + super.toString() +
                     ", ballot=" + ballot +
-                    ", valueProposer=" + valueProposer +
+                    ", ballotId=0x" + Long.toHexString(ballotId) +
                     ", value=" + value +
                     ", lastChosenBallot=" + lastChosenBallot +
                     '}';
@@ -534,13 +534,9 @@ public abstract class Event {
     }
 
     public static abstract class InstanceEvent extends Event {
-
-
         public InstanceEvent(int senderId) {
             super(senderId);
-
         }
-
     }
 
     public static class Learn extends InstanceEvent {

@@ -39,7 +39,7 @@ public class ClientApp {
                 .build()
                 .parse(args);
 
-        int n = 1000;
+        int n = 100;
 
         int p = arg.clientNumber;
 
@@ -98,7 +98,7 @@ public class ClientApp {
         int count = 0;
         try {
             for (int m = 0; m < k; m++) {
-                boolean ignoreLeader = false; //k * 1.0 / m > Math.random();
+                boolean ignoreLeader = true; //k * 1.0 / m > Math.random();
                 for (int i = 0; i < n; i++) {
                     count++;
                     String key = "object-id-" + (count % 5000);
