@@ -1,12 +1,13 @@
 package org.axesoft.jaxos.algo;
 
 import com.google.protobuf.ByteString;
+import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -16,75 +17,63 @@ public class StateMachineRunner implements Learner {
 
     private int squadId;
     private StateMachine machine;
-    private LastChosen lastChosen;
-    private Map<Long, InstanceValue> cachedBallots;
+    private Instance lastChosen;
 
     public StateMachineRunner(int squadId, StateMachine machine) {
         this.squadId = squadId;
         this.machine = checkNotNull(machine);
-        this.cachedBallots = new HashMap<>();
-        this.lastChosen = new LastChosen(squadId, 0, 0);
+        this.lastChosen = Instance.emptyOf(squadId);
     }
 
     public StateMachine machine() {
         return this.machine;
     }
 
-    @Override
-    public synchronized void learnLastChosen(int squadId, long instanceId, int proposal) {
-        checkArgument(squadId == this.squadId, "given squad id %d unequal to mine %d", squadId, this.squadId);
-        this.lastChosen = new LastChosen(squadId, instanceId, proposal);
-        machine.learnLastChosenVersion(squadId, instanceId);
+    public synchronized void restoreFromCheckPoint(CheckPoint checkPoint, List<Instance> ix){
+        if(!checkPoint.isEmpty()) {
+            this.machine.restoreFromCheckPoint(checkPoint);
+            logger.info("S{} Restore of {}", checkPoint.squadId(), checkPoint);
+        }
+        Iterator<Instance> it = ix.iterator();
+        while(it.hasNext()){
+            Instance i = it.next();
+            if(i.instanceId() == checkPoint.instanceId()){
+                this.lastChosen = i;
+                break;
+            } else if (i.instanceId() > checkPoint.instanceId() && checkPoint.instanceId() != 0) {
+                throw new IllegalArgumentException(String.format("S%d instance of checkPoint %s not found",
+                        checkPoint.squadId(), checkPoint.toString()));
+            }
+        }
+
+        while(it.hasNext()){
+            this.innerLearn(it.next());
+        }
     }
 
     @Override
-    public synchronized LastChosen lastChosen(int squadId) {
-        checkArgument(squadId == this.squadId, "given squad id %d unequal to mine %d", squadId, this.squadId);
+    public synchronized Instance getLastChosenInstance(int squadId) {
+        checkArgument(squadId == this.squadId, "given squad id %d is unequal to mine %d", squadId, this.squadId);
         return this.lastChosen;
     }
 
     @Override
-    public synchronized long lastChosenInstanceId(int squadId) {
-        return this.lastChosen(squadId).instanceId;
+    public synchronized void learnValue(Instance i) {
+        checkArgument(i.squadId() == this.squadId, "given squad id %d is unequal to mine %d", i.squadId(), this.squadId);
+        long i0 = this.lastChosen.instanceId();
+        if (i.instanceId() != i0 + 1) {
+            throw new IllegalStateException(String.format("Learning ignore given instance %d, mine is %d", i.instanceId(), i0));
+        }
+        innerLearn(i);
     }
 
-    @Override
-    public synchronized boolean learnValue(int squadId, long instanceId, int proposal, Event.BallotValue value) {
-        if (instanceId != this.lastChosen(squadId).instanceId + 1) {
-            logger.warn("Learning ignore given instance {}, mine is {}", instanceId, this.lastChosen(squadId).instanceId);
-            return false;
+    private void innerLearn(Instance i) {
+        if (i.value().type() == Event.ValueType.APPLICATION) {
+            this.machine.consume(squadId, i.instanceId(), i.value().content());
         }
-        innerLearn(squadId, instanceId, proposal, value);
-        long i = instanceId + 1;
-        InstanceValue b = null;
-        do {
-            b = this.cachedBallots.remove(i);
-            if (b != null) {
-                innerLearn(b.squadId, b.instanceId, b.proposal, b.value);
-                i++;
-            }
-        } while (b != null);
-        return true;
-    }
-
-    private void innerLearn(int squadId, long instanceId, int proposal, Event.BallotValue value) {
-        try {
-            this.lastChosen = new LastChosen(squadId, instanceId, proposal);
-            if (value.type() == Event.ValueType.APPLICATION) {
-                this.machine.consume(squadId, instanceId, value.content());
-            }
-            else {
-                this.machine.consume(squadId, instanceId, ByteString.EMPTY);
-            }
+        else {
+            this.machine.consume(squadId, i.instanceId(), ByteString.EMPTY);
         }
-        catch (Exception e) {
-            //FIXME let outer class know and hold the whole jaxos system
-            throw e;
-        }
-    }
-
-    @Override
-    public synchronized void cacheChosenValue(int squadId, long instanceId, int proposal, Event.BallotValue value) {
-        this.cachedBallots.put(instanceId, new InstanceValue(squadId, instanceId, proposal, value));
+        this.lastChosen = i;
     }
 }

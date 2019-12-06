@@ -61,6 +61,7 @@ public class JaxosSettings {
         private int partitionNumber = 1;
         private int checkPointMinutes = 1;
         private Duration syncInterval = Duration.ofMillis(1000);
+        private long conflictSleepMillis = 50;
 
         private Function<ByteString, String> valueVerboser;
 
@@ -116,6 +117,16 @@ public class JaxosSettings {
             return this;
         }
 
+        public Builder setSyncInterval(Duration syncInterval) {
+            this.syncInterval = syncInterval;
+            return this;
+        }
+
+        public Builder setConflictSleepMillis(long conflictSleepMillis) {
+            this.conflictSleepMillis = conflictSleepMillis;
+            return this;
+        }
+
         public JaxosSettings build(){
             JaxosSettings config = new JaxosSettings();
             config.serverId = this.serverId;
@@ -130,6 +141,7 @@ public class JaxosSettings {
             config.partitionNumber = this.partitionNumber;
             config.checkPointMinutes = this.checkPointMinutes;
             config.syncInterval = this.syncInterval;
+            config.conflictSleepMillis = this.conflictSleepMillis;
             return config;
         }
     }
@@ -145,6 +157,7 @@ public class JaxosSettings {
     private int partitionNumber;
     private int checkPointMinutes;
     private Duration syncInterval;
+    private long conflictSleepMillis;
 
     private Function<ByteString, String> valueVerboser;
 
@@ -215,6 +228,10 @@ public class JaxosSettings {
         return this.syncInterval;
     }
 
+    public long conflictSleepMillis() {
+        return this.conflictSleepMillis;
+    }
+
     @Override
     public String toString() {
         return "JaxosSettings{" +
@@ -227,6 +244,7 @@ public class JaxosSettings {
                 ", prepareTimeoutMillis=" + prepareTimeoutMillis +
                 ", acceptTimeoutMillis=" + acceptTimeoutMillis +
                 ", partitionNumber=" + partitionNumber +
+                ", conflictSleepMillis=" + conflictSleepMillis +
                 '}';
     }
 }

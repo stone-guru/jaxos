@@ -3,7 +3,7 @@ package org.axesoft.jaxos;
 import com.google.protobuf.ByteString;
 import io.netty.util.CharsetUtil;
 import org.axesoft.jaxos.algo.Event;
-import org.axesoft.jaxos.algo.InstanceValue;
+import org.axesoft.jaxos.algo.Instance;
 import org.axesoft.jaxos.logger.InstanceValueRingCache;
 import org.junit.Test;
 
@@ -15,10 +15,10 @@ import static org.junit.Assert.assertEquals;
  * @author gaoyuan
  * @sine 2019/10/15.
  */
-public class InstanceValueRingCacheTest {
-    private InstanceValue newValue(long instanceId) {
-        return new InstanceValue(1, instanceId, 2,
-                Event.BallotValue.appValue(ByteString.copyFrom(Long.toString(instanceId), CharsetUtil.UTF_8)));
+public class InstanceRingCacheTest {
+    private Instance newValue(long instanceId) {
+        return new Instance(1, instanceId, 2,
+                Event.BallotValue.appValue(instanceId, ByteString.copyFrom(Long.toString(instanceId), CharsetUtil.UTF_8)));
     }
 
     @Test
@@ -47,7 +47,7 @@ public class InstanceValueRingCacheTest {
             cache.put(newValue(i));
         }
 
-        List<InstanceValue> ix1 = cache.get(i0, i0 + 9);
+        List<Instance> ix1 = cache.get(i0, i0 + 9);
         assertEquals(10, ix1.size());
         assertEquals(i0, ix1.get(0).instanceId());
         assertEquals(i0 + 9, ix1.get(9).instanceId());
@@ -62,7 +62,7 @@ public class InstanceValueRingCacheTest {
             cache.put(newValue(i));
         }
 
-        List<InstanceValue> ix1 = cache.get(i0 + 120, i0 + 130);
+        List<Instance> ix1 = cache.get(i0 + 120, i0 + 130);
         assertEquals(8, ix1.size());
         assertEquals(i0 + 120, ix1.get(0).instanceId());
         assertEquals(i0 + 127, ix1.get(7).instanceId());
@@ -76,7 +76,7 @@ public class InstanceValueRingCacheTest {
             cache.put(newValue(i));
         }
 
-        List<InstanceValue> ix1 = cache.get(i0 + 201, i0 + 290);
+        List<Instance> ix1 = cache.get(i0 + 201, i0 + 290);
         assertEquals(90, ix1.size());
         assertEquals(i0 + 201, ix1.get(0).instanceId());
         assertEquals(i0 + 290, ix1.get(89).instanceId());

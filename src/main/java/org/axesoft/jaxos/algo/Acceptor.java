@@ -1,6 +1,5 @@
 package org.axesoft.jaxos.algo;
 
-import com.google.protobuf.ByteString;
 import org.axesoft.jaxos.JaxosSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,27 +48,18 @@ public class Acceptor {
             return null;
         }
 
-        long last0 = this.learner.lastChosenInstanceId(this.context.squadId());
-        long last = handleAcceptedNotifyLostMaybe(last0, request.instanceId(), request.lastChosenBallot());
+        Instance i1 = this.learner.getLastChosenInstance(this.context.squadId());
+        long last = handleAcceptedNotifyLostMaybe(i1.instanceId(), request.instanceId(), request.lastChosenBallot());
 
         if (request.instanceId() <= last) {
             logger.debug("S{}: PrepareResponse: historic prepare(instance id = {}), while my instance id is {} ",
                     context.squadId(), request.instanceId(), last);
-            InstanceValue p = this.config.getLogger().loadPromise(this.context.squadId(), request.instanceId());
-            int proposal = (p == null) ? Integer.MAX_VALUE : p.proposal;
-            Event.BallotValue value = (p == null) ? Event.BallotValue.EMPTY : p.value;
-            return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
-                    .setResult(Event.RESULT_REJECT)
-                    .setMaxProposal(Integer.MAX_VALUE)
-                    .setAccepted(proposal, value)
-                    .setChosenInstanceId(last)
-                    .build();
+            return outdatedPrepareResponse(request, last);
         }
         else if (request.instanceId() > last + 1) {
             logger.warn("S{}: PrepareResponse: future instance id in prepare(instance id = {}), request instance id = {}",
                     context.squadId(), last, request.instanceId());
-
-            return standByPrepareResponse(request);
+            return standByPrepareResponse(request, last);
         }
         else { // request.instanceId == last + 1
             boolean success = false;
@@ -94,13 +84,22 @@ public class Acceptor {
         }
     }
 
-    private Event.PrepareResponse standByPrepareResponse(Event.PrepareRequest request) {
-        long last = this.learner.lastChosenInstanceId(this.context.squadId());
+    private Event.PrepareResponse standByPrepareResponse(Event.PrepareRequest request, long chosenInstanceId) {
         return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
                 .setResult(Event.RESULT_STANDBY)
                 .setMaxProposal(0)
                 .setAccepted(0, Event.BallotValue.EMPTY)
-                .setChosenInstanceId(last)
+                .setChosenInstanceId(chosenInstanceId)
+                .build();
+    }
+
+    private Event.PrepareResponse outdatedPrepareResponse(Event.PrepareRequest request, long chosenInstanceId) {
+        Instance i0 = this.config.getLogger().loadPromise(this.context.squadId(), request.instanceId());
+        return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
+                .setResult(Event.RESULT_REJECT)
+                .setMaxProposal(Integer.MAX_VALUE)
+                .setAccepted(i0.isEmpty()? Integer.MAX_VALUE : i0.proposal(), i0.value())
+                .setChosenInstanceId(chosenInstanceId)
                 .build();
     }
 
@@ -112,15 +111,15 @@ public class Acceptor {
             return null;
         }
 
-        long last0 = this.learner.lastChosenInstanceId(this.context.squadId());
-        long last = handleAcceptedNotifyLostMaybe(last0, request.instanceId(), request.lastChosenBallot());
+        Instance i1 = this.learner.getLastChosenInstance(this.context.squadId());
+        long last = handleAcceptedNotifyLostMaybe(i1.instanceId(), request.instanceId(), request.lastChosenBallot());
 
         if (request.instanceId() <= last) {
             if (logger.isDebugEnabled()) {
                 logger.debug("S{}: AcceptResponse: historical in accept(instance id = {}), while my instance id is {} ",
                         context.squadId(), request.instanceId(), last);
             }
-            return buildAcceptResponse(request, Integer.MAX_VALUE, Event.RESULT_REJECT);
+            return buildAcceptResponse(request, Integer.MAX_VALUE, Event.RESULT_REJECT, i1.instanceId());
         }
         else if (request.instanceId() > last + 1) {
             if (acceptedInstanceId == 0 || acceptedInstanceId == request.instanceId()) {
@@ -132,7 +131,7 @@ public class Acceptor {
                         context.squadId(), last, request.instanceId());
             }
 
-            return buildAcceptResponse(request, 0, Event.RESULT_STANDBY);
+            return buildAcceptResponse(request, 0, Event.RESULT_STANDBY, i1.instanceId());
         }
         else { // request.instanceId == last
             this.acceptedInstanceId = request.instanceId();
@@ -141,7 +140,7 @@ public class Acceptor {
                     logger.debug("S{}: Reject accept {}  ballot = {}, while my maxBallot={}",
                             context.squadId(), request.instanceId(), request.ballot(), this.maxBallot);
                 }
-                return buildAcceptResponse(request, this.maxBallot, Event.RESULT_REJECT);
+                return buildAcceptResponse(request, this.maxBallot, Event.RESULT_REJECT, i1.instanceId());
             }
             else {
                 acceptValueOptional(request);
@@ -150,7 +149,7 @@ public class Acceptor {
                             context.squadId(), request.senderId(), request.instanceId(), acceptedBallot, acceptedValue);
                 }
 
-                return buildAcceptResponse(request, this.maxBallot, Event.RESULT_SUCCESS);
+                return buildAcceptResponse(request, this.maxBallot, Event.RESULT_SUCCESS, i1.instanceId());
             }
         }
     }
@@ -164,9 +163,9 @@ public class Acceptor {
         }
     }
 
-    private Event.AcceptResponse buildAcceptResponse(Event.AcceptRequest request, int proposal, int result) {
+    private Event.AcceptResponse buildAcceptResponse(Event.AcceptRequest request, int proposal, int result, long lastChosenInstanceId) {
         return new Event.AcceptResponse(settings.serverId(), this.context.squadId(), request.instanceId(), request.round(),
-                proposal, result, this.learner.lastChosenInstanceId(this.context.squadId()));
+                proposal, result, this.acceptedValue.id(), lastChosenInstanceId);
     }
 
     private long handleAcceptedNotifyLostMaybe(long lastInstanceId, long requestInstanceId, int lastChosenBallot) {
@@ -188,7 +187,7 @@ public class Acceptor {
                     context.squadId(), notify, this.acceptedValue);
         }
 
-        long last = this.learner.lastChosenInstanceId(this.context.squadId());
+        long last = this.learner.getLastChosenInstance(this.context.squadId()).instanceId();
         if (notify.instanceId() == last + 1 && notify.ballot() == this.acceptedBallot) {
             chose(notify.instanceId(), notify.ballot());
             context.setAcceptSuccessRecord(notify.senderId(), notify.ballot());
@@ -213,7 +212,7 @@ public class Acceptor {
 
     private void chose(long instanceId, int proposal) {
         try {
-            learner.learnValue(this.context.squadId(), instanceId, proposal, this.acceptedValue);
+            learner.learnValue(new Instance(this.context.squadId(), instanceId, proposal, this.acceptedValue));
         }catch(Exception e){
             this.faulty = true;
 
@@ -226,19 +225,7 @@ public class Acceptor {
         this.acceptedValue = Event.BallotValue.EMPTY;
     }
 
-    private String valueToString(ByteString value) {
-        if (settings.valueVerboser() != null) {
-            try {
-                return settings.valueVerboser().apply(value);
-            }
-            catch (Exception e) {
-                //ignore
-            }
-        }
-        return "bx[" + value.size() + "]";
-    }
-
     public long lastChosenInstanceId() {
-        return learner.lastChosenInstanceId(context.squadId());
+        return learner.getLastChosenInstance(context.squadId()).instanceId();
     }
 }

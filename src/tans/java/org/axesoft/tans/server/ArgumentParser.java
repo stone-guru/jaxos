@@ -161,7 +161,7 @@ public class ArgumentParser {
                 this.printMetricsSeconds = sec;
             }
             else {
-                System.err.println("Unknown config item: " + k);
+                System.err.println("Ignore unknown config item: " + k);
             }
         }
 

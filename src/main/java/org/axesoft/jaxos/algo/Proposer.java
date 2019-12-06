@@ -33,7 +33,6 @@ public class Proposer {
     private final Components config;
     private final Learner learner;
     private final ProposalNumHolder proposalNumHolder;
-    private final BallotIdHolder ballotIdHolder;
 
     private Timeout proposalTimeout;
     private PrepareActor prepareActor;
@@ -43,7 +42,6 @@ public class Proposer {
 
     private Event.BallotValue proposeValue;
     private long instanceId = 0;
-    private long ballotId = 0;
     private int round = 0;
     private Stage stage;
 
@@ -59,7 +57,6 @@ public class Proposer {
         this.context = context;
         this.learner = learner;
         this.proposalNumHolder = new ProposalNumHolder(this.settings.serverId(), JaxosSettings.SERVER_ID_RANGE);
-        this.ballotIdHolder = new BallotIdHolder(this.settings.serverId());
 
         this.stage = Stage.NONE;
         this.prepareActor = new PrepareActor();
@@ -87,7 +84,6 @@ public class Proposer {
         this.instanceId = instanceId;
         this.proposeValue = value;
         this.round = 0;
-        this.ballotId = this.ballotIdHolder.nextId();
 
         if (settings.leaderless()) {
             startPrepare(proposalNumHolder.getProposal0());
@@ -96,7 +92,7 @@ public class Proposer {
             return endAs(new RedirectException(context.lastSuccessAccept().serverId()));
         }
         else if (context.isLeader()) {
-            startAccept(this.proposeValue, context.lastSuccessAccept().proposal(), settings.serverId());
+            startAccept(this.proposeValue, context.lastSuccessAccept().proposal());
         }
         else {
             startPrepare(proposalNumHolder.getProposal0());
@@ -148,17 +144,17 @@ public class Proposer {
     }
 
     private void startPrepare(int proposal0) {
-        Learner.LastChosen chosen = this.learner.lastChosen(this.context.squadId());
-        if (this.instanceId != chosen.instanceId + 1) {
+        Instance i0 = this.learner.getLastChosenInstance(this.context.squadId());
+        if (this.instanceId != i0.instanceId() + 1) {
             String msg = String.format("when prepare instance %d while last chosen is %d.%d",
-                    context.squadId(), instanceId, chosen.instanceId);
+                    context.squadId(), instanceId, i0.instanceId());
             endAs(new ProposalConflictException(msg));
             return;
         }
 
         this.stage = Stage.PREPARING;
         this.round++;
-        this.prepareActor.startNewRound(this.proposeValue, proposal0, chosen.proposal);
+        this.prepareActor.startNewRound(this.proposeValue, proposal0, i0.proposal());
 
         this.prepareTimeout = config.getEventTimer().createTimeout(this.settings.prepareTimeoutMillis(), TimeUnit.MILLISECONDS,
                 new Event.PrepareTimeout(this.settings.serverId(), this.context.squadId(), this.instanceId, this.round));
@@ -167,7 +163,7 @@ public class Proposer {
 
     public void onPrepareReply(Event.PrepareResponse response) {
         if (logger.isTraceEnabled()) {
-            logger.trace("RECEIVED {}", response);
+            logger.trace("S{} RECEIVED {}", context.squadId(), response);
         }
         //As long as a server give back a response, it's no longer a failing node
         this.failingNodeIds.clear(response.senderId());
@@ -183,36 +179,42 @@ public class Proposer {
 
     public void onPrepareTimeout(Event.PrepareTimeout event) {
         if (logger.isTraceEnabled()) {
-            logger.trace("{}", event);
+            logger.trace("S{} {}", context.squadId(), event);
         }
 
         if (eventMatchRequest(event, Stage.PREPARING)) {
             endPrepare();
         }
+        else {
+            logger.warn("S{} Unnecessary {}", context.squadId(), event);
+        }
     }
 
     private void endPrepare() {
-        recordAnswerNodes(this.prepareActor.repliedNodes);
+        recordRepliedNodes(this.prepareActor.repliedNodes);
 
         if (endWithMajorityCheck(this.prepareActor.votedCount(), "PREPARE " + instanceId)) {
             return;
         }
 
-        PrepareResult v = this.prepareActor.getResult();
+        //PrepareResult v = this.prepareActor.getResult();
         if (this.prepareActor.isApproved()) {
+            //There are some other accepted value
             if (this.prepareActor.maxAcceptedProposal > 0) {
-                startAccept(this.prepareActor.acceptedValue, this.prepareActor.myProposal(), this.prepareActor.ballotId);
+                startAccept(this.prepareActor.acceptedValue, this.prepareActor.myProposal());
             }
+            //No other accepted value, use mine
             else if (this.prepareActor.maxAcceptedProposal == 0) {
-                startAccept(this.proposeValue, this.prepareActor.myProposal(), this.ballotId);
+                startAccept(this.proposeValue, this.prepareActor.myProposal());
             }
             else {
-                throw new IllegalStateException("Got negative proposal id");
+                throw new IllegalStateException("Should not happen, Got negative max accepted proposal");
             }
         }
         else {
+            //The value of this synod has been chosen
             if (this.prepareActor.totalMaxProposal == Integer.MAX_VALUE) {
-                if (v.ballotId == this.ballotId) {
+                if (this.prepareActor.acceptedBallotId == this.proposeValue.id()) {
                     if (logger.isDebugEnabled()) {
                         logger.debug("S{} I{} Other proposer help finish ", context.squadId(), this.instanceId);
                     }
@@ -221,15 +223,15 @@ public class Proposer {
                 else {
                     endAs(new ProposalConflictException(this.instanceId + " CONFLICT other value chosen"));
                 }
-                return;
             }
-            sleepRandom(round, "PREPARE " + context.squadId() + "." + this.instanceId);
-            startPrepare(proposalNumHolder.proposalGreatThan(this.prepareActor.totalMaxProposal()));
+            else {
+                sleepRandom(round, "PREPARE " + context.squadId() + "." + this.instanceId);
+                startPrepare(proposalNumHolder.proposalGreatThan(this.prepareActor.totalMaxProposal()));
+            }
         }
     }
 
-
-    private void recordAnswerNodes(BitSet answerNodes) {
+    private void recordRepliedNodes(BitSet answerNodes) {
         if (this.answerNodeCount != answerNodes.cardinality()) {
             logger.info("S {} Answer node changed from {} to {}",
                     this.context.squadId(), this.answerNodeCount, answerNodes.cardinality());
@@ -240,16 +242,16 @@ public class Proposer {
         this.failingNodeIds.andNot(answerNodes);
     }
 
-    private void startAccept(Event.BallotValue value, int proposal, long ballotId) {
-        Learner.LastChosen chosen = this.learner.lastChosen(this.context.squadId());
-        if (instanceId != chosen.instanceId + 1) {
+    private void startAccept(Event.BallotValue value, int proposal) {
+        Instance i0 = this.learner.getLastChosenInstance(this.context.squadId());
+        if (instanceId != i0.instanceId() + 1) {
             String msg = String.format("when accept instance %d.%d while last chosen is %d",
-                    context.squadId(), instanceId, chosen.instanceId);
+                    context.squadId(), instanceId, i0.instanceId());
             endAs(new ProposalConflictException(msg));
             return;
         }
         this.stage = Stage.ACCEPTING;
-        this.acceptActor.startAccept(value, proposal, ballotId, chosen.proposal);
+        this.acceptActor.startAccept(value, proposal, i0.proposal());
 
         this.acceptTimeout = config.getEventTimer().createTimeout(this.settings.acceptTimeoutMillis(), TimeUnit.MILLISECONDS,
                 new Event.AcceptTimeout(settings.serverId(), this.context.squadId(), this.instanceId, this.round));
@@ -257,10 +259,10 @@ public class Proposer {
 
     void onAcceptReply(Event.AcceptResponse response) {
         if (logger.isTraceEnabled()) {
-            logger.trace("RECEIVED {}", response);
+            logger.trace("S{} RECEIVED {}", context.squadId(), response);
         }
 
-        //As long as a server give back a response, it's no longer a failing node
+        //As long as a server giving a response, it's no longer a failing node
         this.failingNodeIds.clear(response.senderId());
 
         if (eventMatchRequest(response, Stage.ACCEPTING)) {
@@ -279,6 +281,9 @@ public class Proposer {
         if (eventMatchRequest(event, Stage.ACCEPTING)) {
             endAccept();
         }
+        else {
+            logger.warn("S{} Unnecessary {}", context.squadId(), event);
+        }
     }
 
     private void endAccept() {
@@ -286,7 +291,7 @@ public class Proposer {
             logger.trace("S{} Process End Accept({})", context.squadId(), this.instanceId);
         }
 
-        recordAnswerNodes(this.acceptActor.repliedNodes);
+        recordRepliedNodes(this.acceptActor.repliedNodes);
 
         if (endWithMajorityCheck(this.acceptActor.votedCount(), "ACCEPT")) {
             return;
@@ -294,7 +299,7 @@ public class Proposer {
 
         if (this.acceptActor.isAccepted()) {
             this.acceptActor.notifyChosen();
-            if (this.acceptActor.ballotId == this.ballotId) {
+            if (this.acceptActor.sentValue().id() == this.proposeValue.id()) {
                 endAs(null);
             }
             else {
@@ -303,21 +308,26 @@ public class Proposer {
             }
         }
         else if (this.acceptActor.isInstanceChosen()) {
-            endAs(new ProposalConflictException("Chosen by other at accept"));
-        }
-        else if (this.round >= 100) {
-            endAs(new ProposalConflictException("REJECT at accept more than 100 times"));
+            if(this.acceptActor.chosenBallotId == this.proposeValue.id()){
+                endAs(null);
+            } else {
+                endAs(new ProposalConflictException("Chosen by other at accept"));
+            }
         }
         else {
-            //use another prepare status to detect, whether this value chosen
-            //FIXME handle case of someone reject, or self message delay or repeated
-            startPrepare(this.proposalNumHolder.proposalGreatThan(acceptActor.maxProposal));
+            if (this.round >= 10000) {
+                endAs(new ProposalConflictException("REJECT at accept more than 100 times"));
+            }
+            else {
+                sleepRandom(round, "ACCEPT " + context.squadId() + "." + this.instanceId);
+                startPrepare(this.proposalNumHolder.proposalGreatThan(acceptActor.maxProposal));
+            }
         }
     }
 
     private void sleepRandom(int i, String when) {
         try {
-            long t = Math.max(1L, (long) (Math.random() * 50));
+            long t = Math.max(1L, (long) (Math.random() * this.settings.conflictSleepMillis()));
             if (logger.isDebugEnabled()) {
                 logger.debug("({} {}.{}) meet conflict sleep {} ms", when, context.squadId(), this.instanceId, t);
             }
@@ -328,7 +338,6 @@ public class Proposer {
             throw new RuntimeException(e);
         }
     }
-
 
     private boolean eventMatchRequest(Event.BallotEvent event, Stage expectedStage) {
         if (this.stage != expectedStage) {
@@ -353,8 +362,9 @@ public class Proposer {
         private int totalMaxProposal = 0;
         private int maxAcceptedProposal = 0;
         private Event.BallotValue acceptedValue;
+        private long acceptedBallotId = 0;
         private final BitSet repliedNodes = new BitSet();
-        private long ballotId = 0;
+
 
         private boolean someOneReject = false;
         private int approvedCount = 0;
@@ -418,7 +428,7 @@ public class Proposer {
             if (response.acceptedBallot() > this.maxAcceptedProposal) {
                 this.maxAcceptedProposal = response.acceptedBallot();
                 this.acceptedValue = response.acceptedValue();
-                this.ballotId = response.ballotId();
+                this.acceptedBallotId = response.acceptedValue().id();
             }
 
             if (response.chosenInstanceId() >= this.maxOtherChosenInstanceId) {
@@ -472,7 +482,7 @@ public class Proposer {
                     logger.trace("S{}: Result of prepare({}), other accepted value with proposal {}",
                             context.squadId(), Proposer.this.instanceId, maxAcceptedProposal);
                 }
-                return PrepareResult.of(this.totalMaxProposal, this.acceptedValue, this.ballotId);
+                return PrepareResult.of(this.totalMaxProposal, this.acceptedValue, this.acceptedBallotId);
             }
         }
     }
@@ -480,25 +490,22 @@ public class Proposer {
     private class AcceptActor {
         private Event.BallotValue sentValue;
         private int proposal;
-        private long ballotId;
 
         private int maxProposal = 0;
         private boolean someoneReject = true;
         private BitSet repliedNodes = new BitSet();
         private int acceptedCount = 0;
-        private boolean instanceChosen;
+        private long chosenBallotId = 0;
         private int votedCount = 0;
 
-
-        public void startAccept(Event.BallotValue value, int proposal, long ballotId, int lastChosenProposal) {
+        public void startAccept(Event.BallotValue value, int proposal, int lastChosenProposal) {
             this.proposal = proposal;
             this.sentValue = value;
-            this.ballotId = ballotId;
             this.maxProposal = 0;
             this.someoneReject = false;
             this.repliedNodes.clear();
             this.acceptedCount = 0;
-            this.instanceChosen = false;
+            this.chosenBallotId = 0;
             this.votedCount = 0;
 
             if (logger.isDebugEnabled()) {
@@ -509,7 +516,6 @@ public class Proposer {
                     Proposer.this.context.squadId(), Proposer.this.instanceId, Proposer.this.round)
                     .setBallot(proposal)
                     .setValue(value)
-                    .setBallotId(ballotId)
                     .setLastChosenBallot(lastChosenProposal)
                     .build();
             Proposer.this.config.getCommunicator().broadcast(request);
@@ -535,7 +541,7 @@ public class Proposer {
             }
 
             if (response.maxBallot() == Integer.MAX_VALUE) {
-                this.instanceChosen = true;
+                this.chosenBallotId = response.acceptedBallotId();
             }
 
             if (response.maxBallot() > this.maxProposal) {
@@ -552,7 +558,7 @@ public class Proposer {
         }
 
         boolean isInstanceChosen() {
-            return this.instanceChosen;
+            return this.chosenBallotId > 0;
         }
 
         int votedCount() {
@@ -609,22 +615,6 @@ public class Proposer {
         public int proposalGreatThan(int proposal) {
             final int r = this.rangeLength;
             return ((proposal / r) + 1) * r + this.serverId;
-        }
-    }
-
-    static class BallotIdHolder {
-        private long highBits;
-        private int serialNum;
-
-        public BallotIdHolder(int highBits) {
-            this.highBits = ((long) highBits) << 32;
-            this.serialNum = 0;
-        }
-
-        public long nextId() {
-            long r = this.highBits | (this.serialNum & 0xffffffffL);
-            this.serialNum++;
-            return r;
         }
     }
 }

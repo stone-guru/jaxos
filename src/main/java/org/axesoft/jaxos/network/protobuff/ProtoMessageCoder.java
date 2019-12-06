@@ -7,7 +7,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.algo.CheckPoint;
 import org.axesoft.jaxos.algo.Event;
-import org.axesoft.jaxos.algo.InstanceValue;
+import org.axesoft.jaxos.algo.Instance;
 import org.axesoft.jaxos.network.CodingException;
 import org.axesoft.jaxos.network.MessageCoder;
 import org.slf4j.Logger;
@@ -151,7 +151,6 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setMaxProposal(resp.maxBallot())
                 .setAcceptedProposal(resp.acceptedBallot())
                 .setAcceptedValue(encodeValue(resp.acceptedValue()))
-                .setBallotId(resp.ballotId())
                 .setChosenInstanceId(resp.chosenInstanceId())
                 .build()
                 .toByteString();
@@ -165,7 +164,6 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setRound(req.round())
                 .setProposal(req.ballot())
                 .setValue(encodeValue(req.value()))
-                .setBallotId(req.ballotId())
                 .setLastChosenProposal(req.lastChosenBallot())
                 .build()
                 .toByteString();
@@ -178,6 +176,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setRound(resp.round())
                 .setResult(resp.result())
                 .setMaxProposal(resp.maxBallot())
+                .setAcceptedBallotId(resp.acceptedBallotId())
                 .setChosenInstanceId(resp.chosenInstanceId())
                 .build()
                 .toByteString();
@@ -207,7 +206,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setSquadId(response.squadId())
                 .setCheckPoint(encodeCheckPoint(response.checkPoint()));
 
-        for (InstanceValue i : response.instances()) {
+        for (Instance i : response.instances()) {
             builder.addInstanceValue(PaxosMessage.InstanceValue.newBuilder()
                     .setSquadId(i.squadId())
                     .setInstanceId(i.instanceId())
@@ -298,7 +297,6 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         return new Event.PrepareResponse.Builder(dataGram.getSender(), res.getSquadId(), res.getInstanceId(), res.getRound())
                 .setResult(res.getResult())
                 .setAccepted(res.getAcceptedProposal(), decodeValue(res.getAcceptedValue()))
-                .setBallotId(res.getBallotId())
                 .setMaxProposal(res.getMaxProposal())
                 .setChosenInstanceId(res.getChosenInstanceId())
                 .build();
@@ -309,7 +307,6 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         return Event.AcceptRequest.newBuilder(dataGram.getSender(), req.getSquadId(), req.getInstanceId(), req.getRound())
                 .setBallot(req.getProposal())
                 .setValue(decodeValue(req.getValue()))
-                .setBallotId(req.getBallotId())
                 .setLastChosenBallot(req.getLastChosenProposal())
                 .build();
     }
@@ -318,7 +315,8 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         PaxosMessage.AcceptRes res = PaxosMessage.AcceptRes.parseFrom(dataGram.getBody());
         return new Event.AcceptResponse(dataGram.getSender(), res.getSquadId(),
                 res.getInstanceId(), res.getRound(),
-                res.getMaxProposal(), res.getResult(), res.getChosenInstanceId());
+                res.getMaxProposal(), res.getResult(), res.getAcceptedBallotId(),
+                res.getChosenInstanceId());
     }
 
     private Event decodeAcceptedNotify(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
@@ -335,8 +333,8 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         PaxosMessage.LearnRes res = PaxosMessage.LearnRes.parseFrom(dataGram.getBody());
         CheckPoint checkPoint = decodeCheckPoint(res.getCheckPoint());
 
-        List<InstanceValue> ix = res.getInstanceValueList().stream()
-                .map(v -> new InstanceValue(v.getSquadId(), v.getInstanceId(), v.getProposal(), decodeValue(v.getValue())))
+        List<Instance> ix = res.getInstanceValueList().stream()
+                .map(v -> new Instance(v.getSquadId(), v.getInstanceId(), v.getProposal(), decodeValue(v.getValue())))
                 .collect(Collectors.toList());
 
         return new Event.LearnResponse(dataGram.getSender(), res.getSquadId(), ix, checkPoint);
@@ -346,7 +344,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
         if(t == null){
             throw new IllegalArgumentException("Unknown value type " + value.getType());
         }
-        return new Event.BallotValue(t, value.getContent());
+        return new Event.BallotValue(value.getId(), t, value.getContent());
     }
 
     public PaxosMessage.BallotValue encodeValue(Event.BallotValue value){
@@ -355,6 +353,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
             throw new IllegalArgumentException("Unknown value type " + value.type());
         }
         return PaxosMessage.BallotValue.newBuilder()
+                .setId(value.id())
                 .setType(t)
                 .setContent(value.content())
                 .build();

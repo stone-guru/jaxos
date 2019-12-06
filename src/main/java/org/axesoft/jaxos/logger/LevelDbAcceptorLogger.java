@@ -2,12 +2,11 @@ package org.axesoft.jaxos.logger;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.axesoft.jaxos.algo.AcceptorLogger;
 import org.axesoft.jaxos.algo.CheckPoint;
 import org.axesoft.jaxos.algo.Event;
-import org.axesoft.jaxos.algo.InstanceValue;
+import org.axesoft.jaxos.algo.Instance;
 import org.axesoft.jaxos.base.Velometer;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
@@ -88,12 +87,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     public void savePromise(int squadId, long instanceId, int proposal, Event.BallotValue value) {
         long t0 = System.nanoTime();
 
-        InstanceValue instanceValue = new InstanceValue();
-        instanceValue.squadId = squadId;
-        instanceValue.instanceId = instanceId;
-        instanceValue.proposal = proposal;
-        instanceValue.value = value;
-        byte[] data = toByteArray(instanceValue);
+        byte[] data = toByteArray(new Instance(squadId, instanceId, proposal, value));
 
         long current = System.currentTimeMillis();
         recordSaveTimestamp(current);
@@ -146,23 +140,23 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     }
 
     @Override
-    public InstanceValue loadLastPromise(int squadId) {
+    public Instance loadLastPromise(int squadId) {
         byte[] last = keyOfSquadLast(squadId);
         byte[] idx = db.get(last);
         if (idx == null) {
-            return null;
+            return Instance.emptyOf(squadId);
         }
 
         byte[] bx = db.get(idx);
         if (bx == null) {
-            return null;
+            return Instance.emptyOf(squadId);
         }
 
         return toEntity(bx);
     }
 
     @Override
-    public InstanceValue loadPromise(int squadId, long instanceId) {
+    public Instance loadPromise(int squadId, long instanceId) {
         long t0 = System.nanoTime();
         try {
             byte[] key = keyOfInstanceId(squadId, instanceId);
@@ -171,7 +165,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
             if (bx != null) {
                 return toEntity(bx);
             }
-            return null;
+            return Instance.emptyOf(squadId);
         }
         finally {
             this.metrics.loadVelometer.record(System.nanoTime() - t0);
@@ -284,7 +278,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         }
     }
 
-    public InstanceValue toEntity(byte[] bytes) {
+    public Instance toEntity(byte[] bytes) {
         PaxosMessage.InstanceValue i;
         try {
             i = PaxosMessage.InstanceValue.parseFrom(bytes);
@@ -294,11 +288,11 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         }
 
         Event.BallotValue v = messageCoder.decodeValue(i.getValue());
-        return new InstanceValue(i.getSquadId(), i.getInstanceId(), i.getProposal(), v);
+        return new Instance(i.getSquadId(), i.getInstanceId(), i.getProposal(), v);
     }
 
 
-    public byte[] toByteArray(InstanceValue v) {
+    public byte[] toByteArray(Instance v) {
         return PaxosMessage.InstanceValue.newBuilder()
                 .setSquadId(v.squadId())
                 .setInstanceId(v.instanceId())

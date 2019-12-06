@@ -5,9 +5,13 @@ public interface AcceptorLogger {
 
     void savePromise(int squadId, long instanceId, int proposal, Event.BallotValue value);
 
-    InstanceValue loadLastPromise(int squadId);
+    /**
+     * @param squadId
+     * @return not null, {@link Instance#emptyOf(int)} if no such instance
+     */
+    Instance loadLastPromise(int squadId);
 
-    InstanceValue loadPromise(int squadId, long instanceId);
+    Instance loadPromise(int squadId, long instanceId);
 
     void saveCheckPoint(CheckPoint checkPoint);
 

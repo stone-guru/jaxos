@@ -1826,18 +1826,24 @@ public final class PaxosMessage {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 1;</code>
+     * <code>int64 id = 1;</code>
+     * @return The id.
+     */
+    long getId();
+
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 2;</code>
      * @return The enum numeric value on the wire for type.
      */
     int getTypeValue();
     /**
-     * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 1;</code>
+     * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 2;</code>
      * @return The type.
      */
     org.axesoft.jaxos.network.protobuff.PaxosMessage.ValueType getType();
 
     /**
-     * <code>bytes content = 2;</code>
+     * <code>bytes content = 3;</code>
      * @return The content.
      */
     com.google.protobuf.ByteString getContent();
@@ -1890,12 +1896,17 @@ public final class PaxosMessage {
               done = true;
               break;
             case 8: {
+
+              id_ = input.readInt64();
+              break;
+            }
+            case 16: {
               int rawValue = input.readEnum();
 
               type_ = rawValue;
               break;
             }
-            case 18: {
+            case 26: {
 
               content_ = input.readBytes();
               break;
@@ -1932,17 +1943,27 @@ public final class PaxosMessage {
               org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValue.class, org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValue.Builder.class);
     }
 
-    public static final int TYPE_FIELD_NUMBER = 1;
+    public static final int ID_FIELD_NUMBER = 1;
+    private long id_;
+    /**
+     * <code>int64 id = 1;</code>
+     * @return The id.
+     */
+    public long getId() {
+      return id_;
+    }
+
+    public static final int TYPE_FIELD_NUMBER = 2;
     private int type_;
     /**
-     * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 1;</code>
+     * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 2;</code>
      * @return The enum numeric value on the wire for type.
      */
     public int getTypeValue() {
       return type_;
     }
     /**
-     * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 1;</code>
+     * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 2;</code>
      * @return The type.
      */
     public org.axesoft.jaxos.network.protobuff.PaxosMessage.ValueType getType() {
@@ -1951,10 +1972,10 @@ public final class PaxosMessage {
       return result == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.ValueType.UNRECOGNIZED : result;
     }
 
-    public static final int CONTENT_FIELD_NUMBER = 2;
+    public static final int CONTENT_FIELD_NUMBER = 3;
     private com.google.protobuf.ByteString content_;
     /**
-     * <code>bytes content = 2;</code>
+     * <code>bytes content = 3;</code>
      * @return The content.
      */
     public com.google.protobuf.ByteString getContent() {
@@ -1975,11 +1996,14 @@ public final class PaxosMessage {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      if (id_ != 0L) {
+        output.writeInt64(1, id_);
+      }
       if (type_ != org.axesoft.jaxos.network.protobuff.PaxosMessage.ValueType.NOTHING.getNumber()) {
-        output.writeEnum(1, type_);
+        output.writeEnum(2, type_);
       }
       if (!content_.isEmpty()) {
-        output.writeBytes(2, content_);
+        output.writeBytes(3, content_);
       }
       unknownFields.writeTo(output);
     }
@@ -1990,13 +2014,17 @@ public final class PaxosMessage {
       if (size != -1) return size;
 
       size = 0;
+      if (id_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, id_);
+      }
       if (type_ != org.axesoft.jaxos.network.protobuff.PaxosMessage.ValueType.NOTHING.getNumber()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(1, type_);
+          .computeEnumSize(2, type_);
       }
       if (!content_.isEmpty()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, content_);
+          .computeBytesSize(3, content_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -2013,6 +2041,8 @@ public final class PaxosMessage {
       }
       org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValue other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValue) obj;
 
+      if (getId()
+          != other.getId()) return false;
       if (type_ != other.type_) return false;
       if (!getContent()
           .equals(other.getContent())) return false;
@@ -2027,6 +2057,9 @@ public final class PaxosMessage {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getId());
       hash = (37 * hash) + TYPE_FIELD_NUMBER;
       hash = (53 * hash) + type_;
       hash = (37 * hash) + CONTENT_FIELD_NUMBER;
@@ -2164,6 +2197,8 @@ public final class PaxosMessage {
       @java.lang.Override
       public Builder clear() {
         super.clear();
+        id_ = 0L;
+
         type_ = 0;
 
         content_ = com.google.protobuf.ByteString.EMPTY;
@@ -2194,6 +2229,7 @@ public final class PaxosMessage {
       @java.lang.Override
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValue buildPartial() {
         org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValue result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValue(this);
+        result.id_ = id_;
         result.type_ = type_;
         result.content_ = content_;
         onBuilt();
@@ -2244,6 +2280,9 @@ public final class PaxosMessage {
 
       public Builder mergeFrom(org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValue other) {
         if (other == org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValue.getDefaultInstance()) return this;
+        if (other.getId() != 0L) {
+          setId(other.getId());
+        }
         if (other.type_ != 0) {
           setTypeValue(other.getTypeValue());
         }
@@ -2279,16 +2318,46 @@ public final class PaxosMessage {
         return this;
       }
 
+      private long id_ ;
+      /**
+       * <code>int64 id = 1;</code>
+       * @return The id.
+       */
+      public long getId() {
+        return id_;
+      }
+      /**
+       * <code>int64 id = 1;</code>
+       * @param value The id to set.
+       * @return This builder for chaining.
+       */
+      public Builder setId(long value) {
+        
+        id_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearId() {
+        
+        id_ = 0L;
+        onChanged();
+        return this;
+      }
+
       private int type_ = 0;
       /**
-       * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 1;</code>
+       * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 2;</code>
        * @return The enum numeric value on the wire for type.
        */
       public int getTypeValue() {
         return type_;
       }
       /**
-       * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 1;</code>
+       * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 2;</code>
        * @param value The enum numeric value on the wire for type to set.
        * @return This builder for chaining.
        */
@@ -2298,7 +2367,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 1;</code>
+       * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 2;</code>
        * @return The type.
        */
       public org.axesoft.jaxos.network.protobuff.PaxosMessage.ValueType getType() {
@@ -2307,7 +2376,7 @@ public final class PaxosMessage {
         return result == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.ValueType.UNRECOGNIZED : result;
       }
       /**
-       * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 1;</code>
+       * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 2;</code>
        * @param value The type to set.
        * @return This builder for chaining.
        */
@@ -2321,7 +2390,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 1;</code>
+       * <code>.org.axesoft.jaxos.network.protobuff.ValueType type = 2;</code>
        * @return This builder for chaining.
        */
       public Builder clearType() {
@@ -2333,14 +2402,14 @@ public final class PaxosMessage {
 
       private com.google.protobuf.ByteString content_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>bytes content = 2;</code>
+       * <code>bytes content = 3;</code>
        * @return The content.
        */
       public com.google.protobuf.ByteString getContent() {
         return content_;
       }
       /**
-       * <code>bytes content = 2;</code>
+       * <code>bytes content = 3;</code>
        * @param value The content to set.
        * @return This builder for chaining.
        */
@@ -2354,7 +2423,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>bytes content = 2;</code>
+       * <code>bytes content = 3;</code>
        * @return This builder for chaining.
        */
       public Builder clearContent() {
@@ -2472,13 +2541,7 @@ public final class PaxosMessage {
     org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValueOrBuilder getAcceptedValueOrBuilder();
 
     /**
-     * <code>int64 ballotId = 8;</code>
-     * @return The ballotId.
-     */
-    long getBallotId();
-
-    /**
-     * <code>int64 chosenInstanceId = 9;</code>
+     * <code>int64 chosenInstanceId = 8;</code>
      * @return The chosenInstanceId.
      */
     long getChosenInstanceId();
@@ -2572,11 +2635,6 @@ public final class PaxosMessage {
               break;
             }
             case 64: {
-
-              ballotId_ = input.readInt64();
-              break;
-            }
-            case 72: {
 
               chosenInstanceId_ = input.readInt64();
               break;
@@ -2696,20 +2754,10 @@ public final class PaxosMessage {
       return getAcceptedValue();
     }
 
-    public static final int BALLOTID_FIELD_NUMBER = 8;
-    private long ballotId_;
-    /**
-     * <code>int64 ballotId = 8;</code>
-     * @return The ballotId.
-     */
-    public long getBallotId() {
-      return ballotId_;
-    }
-
-    public static final int CHOSENINSTANCEID_FIELD_NUMBER = 9;
+    public static final int CHOSENINSTANCEID_FIELD_NUMBER = 8;
     private long chosenInstanceId_;
     /**
-     * <code>int64 chosenInstanceId = 9;</code>
+     * <code>int64 chosenInstanceId = 8;</code>
      * @return The chosenInstanceId.
      */
     public long getChosenInstanceId() {
@@ -2751,11 +2799,8 @@ public final class PaxosMessage {
       if (acceptedValue_ != null) {
         output.writeMessage(7, getAcceptedValue());
       }
-      if (ballotId_ != 0L) {
-        output.writeInt64(8, ballotId_);
-      }
       if (chosenInstanceId_ != 0L) {
-        output.writeInt64(9, chosenInstanceId_);
+        output.writeInt64(8, chosenInstanceId_);
       }
       unknownFields.writeTo(output);
     }
@@ -2794,13 +2839,9 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(7, getAcceptedValue());
       }
-      if (ballotId_ != 0L) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(8, ballotId_);
-      }
       if (chosenInstanceId_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(9, chosenInstanceId_);
+          .computeInt64Size(8, chosenInstanceId_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -2834,8 +2875,6 @@ public final class PaxosMessage {
         if (!getAcceptedValue()
             .equals(other.getAcceptedValue())) return false;
       }
-      if (getBallotId()
-          != other.getBallotId()) return false;
       if (getChosenInstanceId()
           != other.getChosenInstanceId()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
@@ -2866,9 +2905,6 @@ public final class PaxosMessage {
         hash = (37 * hash) + ACCEPTEDVALUE_FIELD_NUMBER;
         hash = (53 * hash) + getAcceptedValue().hashCode();
       }
-      hash = (37 * hash) + BALLOTID_FIELD_NUMBER;
-      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-          getBallotId());
       hash = (37 * hash) + CHOSENINSTANCEID_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getChosenInstanceId());
@@ -3023,8 +3059,6 @@ public final class PaxosMessage {
           acceptedValue_ = null;
           acceptedValueBuilder_ = null;
         }
-        ballotId_ = 0L;
-
         chosenInstanceId_ = 0L;
 
         return this;
@@ -3064,7 +3098,6 @@ public final class PaxosMessage {
         } else {
           result.acceptedValue_ = acceptedValueBuilder_.build();
         }
-        result.ballotId_ = ballotId_;
         result.chosenInstanceId_ = chosenInstanceId_;
         onBuilt();
         return result;
@@ -3134,9 +3167,6 @@ public final class PaxosMessage {
         }
         if (other.hasAcceptedValue()) {
           mergeAcceptedValue(other.getAcceptedValue());
-        }
-        if (other.getBallotId() != 0L) {
-          setBallotId(other.getBallotId());
         }
         if (other.getChosenInstanceId() != 0L) {
           setChosenInstanceId(other.getChosenInstanceId());
@@ -3469,46 +3499,16 @@ public final class PaxosMessage {
         return acceptedValueBuilder_;
       }
 
-      private long ballotId_ ;
-      /**
-       * <code>int64 ballotId = 8;</code>
-       * @return The ballotId.
-       */
-      public long getBallotId() {
-        return ballotId_;
-      }
-      /**
-       * <code>int64 ballotId = 8;</code>
-       * @param value The ballotId to set.
-       * @return This builder for chaining.
-       */
-      public Builder setBallotId(long value) {
-        
-        ballotId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int64 ballotId = 8;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearBallotId() {
-        
-        ballotId_ = 0L;
-        onChanged();
-        return this;
-      }
-
       private long chosenInstanceId_ ;
       /**
-       * <code>int64 chosenInstanceId = 9;</code>
+       * <code>int64 chosenInstanceId = 8;</code>
        * @return The chosenInstanceId.
        */
       public long getChosenInstanceId() {
         return chosenInstanceId_;
       }
       /**
-       * <code>int64 chosenInstanceId = 9;</code>
+       * <code>int64 chosenInstanceId = 8;</code>
        * @param value The chosenInstanceId to set.
        * @return This builder for chaining.
        */
@@ -3519,7 +3519,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 chosenInstanceId = 9;</code>
+       * <code>int64 chosenInstanceId = 8;</code>
        * @return This builder for chaining.
        */
       public Builder clearChosenInstanceId() {
@@ -3625,13 +3625,7 @@ public final class PaxosMessage {
     org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValueOrBuilder getValueOrBuilder();
 
     /**
-     * <code>int64 ballotId = 6;</code>
-     * @return The ballotId.
-     */
-    long getBallotId();
-
-    /**
-     * <code>int32 lastChosenProposal = 7;</code>
+     * <code>int32 lastChosenProposal = 6;</code>
      * @return The lastChosenProposal.
      */
     int getLastChosenProposal();
@@ -3715,11 +3709,6 @@ public final class PaxosMessage {
               break;
             }
             case 48: {
-
-              ballotId_ = input.readInt64();
-              break;
-            }
-            case 56: {
 
               lastChosenProposal_ = input.readInt32();
               break;
@@ -3819,20 +3808,10 @@ public final class PaxosMessage {
       return getValue();
     }
 
-    public static final int BALLOTID_FIELD_NUMBER = 6;
-    private long ballotId_;
-    /**
-     * <code>int64 ballotId = 6;</code>
-     * @return The ballotId.
-     */
-    public long getBallotId() {
-      return ballotId_;
-    }
-
-    public static final int LASTCHOSENPROPOSAL_FIELD_NUMBER = 7;
+    public static final int LASTCHOSENPROPOSAL_FIELD_NUMBER = 6;
     private int lastChosenProposal_;
     /**
-     * <code>int32 lastChosenProposal = 7;</code>
+     * <code>int32 lastChosenProposal = 6;</code>
      * @return The lastChosenProposal.
      */
     public int getLastChosenProposal() {
@@ -3868,11 +3847,8 @@ public final class PaxosMessage {
       if (value_ != null) {
         output.writeMessage(5, getValue());
       }
-      if (ballotId_ != 0L) {
-        output.writeInt64(6, ballotId_);
-      }
       if (lastChosenProposal_ != 0) {
-        output.writeInt32(7, lastChosenProposal_);
+        output.writeInt32(6, lastChosenProposal_);
       }
       unknownFields.writeTo(output);
     }
@@ -3903,13 +3879,9 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(5, getValue());
       }
-      if (ballotId_ != 0L) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(6, ballotId_);
-      }
       if (lastChosenProposal_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(7, lastChosenProposal_);
+          .computeInt32Size(6, lastChosenProposal_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -3939,8 +3911,6 @@ public final class PaxosMessage {
         if (!getValue()
             .equals(other.getValue())) return false;
       }
-      if (getBallotId()
-          != other.getBallotId()) return false;
       if (getLastChosenProposal()
           != other.getLastChosenProposal()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
@@ -3967,9 +3937,6 @@ public final class PaxosMessage {
         hash = (37 * hash) + VALUE_FIELD_NUMBER;
         hash = (53 * hash) + getValue().hashCode();
       }
-      hash = (37 * hash) + BALLOTID_FIELD_NUMBER;
-      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-          getBallotId());
       hash = (37 * hash) + LASTCHOSENPROPOSAL_FIELD_NUMBER;
       hash = (53 * hash) + getLastChosenProposal();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -4119,8 +4086,6 @@ public final class PaxosMessage {
           value_ = null;
           valueBuilder_ = null;
         }
-        ballotId_ = 0L;
-
         lastChosenProposal_ = 0;
 
         return this;
@@ -4158,7 +4123,6 @@ public final class PaxosMessage {
         } else {
           result.value_ = valueBuilder_.build();
         }
-        result.ballotId_ = ballotId_;
         result.lastChosenProposal_ = lastChosenProposal_;
         onBuilt();
         return result;
@@ -4222,9 +4186,6 @@ public final class PaxosMessage {
         }
         if (other.hasValue()) {
           mergeValue(other.getValue());
-        }
-        if (other.getBallotId() != 0L) {
-          setBallotId(other.getBallotId());
         }
         if (other.getLastChosenProposal() != 0) {
           setLastChosenProposal(other.getLastChosenProposal());
@@ -4497,46 +4458,16 @@ public final class PaxosMessage {
         return valueBuilder_;
       }
 
-      private long ballotId_ ;
-      /**
-       * <code>int64 ballotId = 6;</code>
-       * @return The ballotId.
-       */
-      public long getBallotId() {
-        return ballotId_;
-      }
-      /**
-       * <code>int64 ballotId = 6;</code>
-       * @param value The ballotId to set.
-       * @return This builder for chaining.
-       */
-      public Builder setBallotId(long value) {
-        
-        ballotId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int64 ballotId = 6;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearBallotId() {
-        
-        ballotId_ = 0L;
-        onChanged();
-        return this;
-      }
-
       private int lastChosenProposal_ ;
       /**
-       * <code>int32 lastChosenProposal = 7;</code>
+       * <code>int32 lastChosenProposal = 6;</code>
        * @return The lastChosenProposal.
        */
       public int getLastChosenProposal() {
         return lastChosenProposal_;
       }
       /**
-       * <code>int32 lastChosenProposal = 7;</code>
+       * <code>int32 lastChosenProposal = 6;</code>
        * @param value The lastChosenProposal to set.
        * @return This builder for chaining.
        */
@@ -4547,7 +4478,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int32 lastChosenProposal = 7;</code>
+       * <code>int32 lastChosenProposal = 6;</code>
        * @return This builder for chaining.
        */
       public Builder clearLastChosenProposal() {
@@ -4644,7 +4575,13 @@ public final class PaxosMessage {
     int getMaxProposal();
 
     /**
-     * <code>int64 chosenInstanceId = 6;</code>
+     * <code>int64 acceptedBallotId = 6;</code>
+     * @return The acceptedBallotId.
+     */
+    long getAcceptedBallotId();
+
+    /**
+     * <code>int64 chosenInstanceId = 7;</code>
      * @return The chosenInstanceId.
      */
     long getChosenInstanceId();
@@ -4720,6 +4657,11 @@ public final class PaxosMessage {
               break;
             }
             case 48: {
+
+              acceptedBallotId_ = input.readInt64();
+              break;
+            }
+            case 56: {
 
               chosenInstanceId_ = input.readInt64();
               break;
@@ -4806,10 +4748,20 @@ public final class PaxosMessage {
       return maxProposal_;
     }
 
-    public static final int CHOSENINSTANCEID_FIELD_NUMBER = 6;
+    public static final int ACCEPTEDBALLOTID_FIELD_NUMBER = 6;
+    private long acceptedBallotId_;
+    /**
+     * <code>int64 acceptedBallotId = 6;</code>
+     * @return The acceptedBallotId.
+     */
+    public long getAcceptedBallotId() {
+      return acceptedBallotId_;
+    }
+
+    public static final int CHOSENINSTANCEID_FIELD_NUMBER = 7;
     private long chosenInstanceId_;
     /**
-     * <code>int64 chosenInstanceId = 6;</code>
+     * <code>int64 chosenInstanceId = 7;</code>
      * @return The chosenInstanceId.
      */
     public long getChosenInstanceId() {
@@ -4845,8 +4797,11 @@ public final class PaxosMessage {
       if (maxProposal_ != 0) {
         output.writeInt32(5, maxProposal_);
       }
+      if (acceptedBallotId_ != 0L) {
+        output.writeInt64(6, acceptedBallotId_);
+      }
       if (chosenInstanceId_ != 0L) {
-        output.writeInt64(6, chosenInstanceId_);
+        output.writeInt64(7, chosenInstanceId_);
       }
       unknownFields.writeTo(output);
     }
@@ -4877,9 +4832,13 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(5, maxProposal_);
       }
+      if (acceptedBallotId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(6, acceptedBallotId_);
+      }
       if (chosenInstanceId_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(6, chosenInstanceId_);
+          .computeInt64Size(7, chosenInstanceId_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -4906,6 +4865,8 @@ public final class PaxosMessage {
           != other.getResult()) return false;
       if (getMaxProposal()
           != other.getMaxProposal()) return false;
+      if (getAcceptedBallotId()
+          != other.getAcceptedBallotId()) return false;
       if (getChosenInstanceId()
           != other.getChosenInstanceId()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
@@ -4930,6 +4891,9 @@ public final class PaxosMessage {
       hash = (53 * hash) + getResult();
       hash = (37 * hash) + MAXPROPOSAL_FIELD_NUMBER;
       hash = (53 * hash) + getMaxProposal();
+      hash = (37 * hash) + ACCEPTEDBALLOTID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getAcceptedBallotId());
       hash = (37 * hash) + CHOSENINSTANCEID_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getChosenInstanceId());
@@ -5076,6 +5040,8 @@ public final class PaxosMessage {
 
         maxProposal_ = 0;
 
+        acceptedBallotId_ = 0L;
+
         chosenInstanceId_ = 0L;
 
         return this;
@@ -5109,6 +5075,7 @@ public final class PaxosMessage {
         result.round_ = round_;
         result.result_ = result_;
         result.maxProposal_ = maxProposal_;
+        result.acceptedBallotId_ = acceptedBallotId_;
         result.chosenInstanceId_ = chosenInstanceId_;
         onBuilt();
         return result;
@@ -5172,6 +5139,9 @@ public final class PaxosMessage {
         }
         if (other.getMaxProposal() != 0) {
           setMaxProposal(other.getMaxProposal());
+        }
+        if (other.getAcceptedBallotId() != 0L) {
+          setAcceptedBallotId(other.getAcceptedBallotId());
         }
         if (other.getChosenInstanceId() != 0L) {
           setChosenInstanceId(other.getChosenInstanceId());
@@ -5355,16 +5325,46 @@ public final class PaxosMessage {
         return this;
       }
 
+      private long acceptedBallotId_ ;
+      /**
+       * <code>int64 acceptedBallotId = 6;</code>
+       * @return The acceptedBallotId.
+       */
+      public long getAcceptedBallotId() {
+        return acceptedBallotId_;
+      }
+      /**
+       * <code>int64 acceptedBallotId = 6;</code>
+       * @param value The acceptedBallotId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAcceptedBallotId(long value) {
+        
+        acceptedBallotId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 acceptedBallotId = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAcceptedBallotId() {
+        
+        acceptedBallotId_ = 0L;
+        onChanged();
+        return this;
+      }
+
       private long chosenInstanceId_ ;
       /**
-       * <code>int64 chosenInstanceId = 6;</code>
+       * <code>int64 chosenInstanceId = 7;</code>
        * @return The chosenInstanceId.
        */
       public long getChosenInstanceId() {
         return chosenInstanceId_;
       }
       /**
-       * <code>int64 chosenInstanceId = 6;</code>
+       * <code>int64 chosenInstanceId = 7;</code>
        * @param value The chosenInstanceId to set.
        * @return This builder for chaining.
        */
@@ -5375,7 +5375,7 @@ public final class PaxosMessage {
         return this;
       }
       /**
-       * <code>int64 chosenInstanceId = 6;</code>
+       * <code>int64 chosenInstanceId = 7;</code>
        * @return This builder for chaining.
        */
       public Builder clearChosenInstanceId() {
@@ -12036,52 +12036,52 @@ public final class PaxosMessage {
       "\n\004body\030\004 \001(\014\"n\n\nPrepareReq\022\017\n\007squadId\030\001 " +
       "\001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\020" +
       "\n\010proposal\030\004 \001(\005\022\032\n\022lastChosenProposal\030\005" +
-      " \001(\005\"\\\n\013BallotValue\022<\n\004type\030\001 \001(\0162..org." +
-      "axesoft.jaxos.network.protobuff.ValueTyp" +
-      "e\022\017\n\007content\030\002 \001(\014\"\364\001\n\nPrepareRes\022\017\n\007squ" +
+      " \001(\005\"h\n\013BallotValue\022\n\n\002id\030\001 \001(\003\022<\n\004type\030" +
+      "\002 \001(\0162..org.axesoft.jaxos.network.protob" +
+      "uff.ValueType\022\017\n\007content\030\003 \001(\014\"\342\001\n\nPrepa" +
+      "reRes\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001" +
+      "(\003\022\r\n\005round\030\003 \001(\005\022\016\n\006result\030\004 \001(\005\022\023\n\013max" +
+      "Proposal\030\005 \001(\005\022\030\n\020acceptedProposal\030\006 \001(\005" +
+      "\022G\n\racceptedValue\030\007 \001(\01320.org.axesoft.ja" +
+      "xos.network.protobuff.BallotValue\022\030\n\020cho" +
+      "senInstanceId\030\010 \001(\003\"\256\001\n\tAcceptReq\022\017\n\007squ" +
       "adId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\r\n\005round\030" +
-      "\003 \001(\005\022\016\n\006result\030\004 \001(\005\022\023\n\013maxProposal\030\005 \001" +
-      "(\005\022\030\n\020acceptedProposal\030\006 \001(\005\022G\n\raccepted" +
-      "Value\030\007 \001(\01320.org.axesoft.jaxos.network." +
-      "protobuff.BallotValue\022\020\n\010ballotId\030\010 \001(\003\022" +
-      "\030\n\020chosenInstanceId\030\t \001(\003\"\300\001\n\tAcceptReq\022" +
-      "\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\r\n\005" +
-      "round\030\003 \001(\005\022\020\n\010proposal\030\004 \001(\005\022?\n\005value\030\005" +
-      " \001(\01320.org.axesoft.jaxos.network.protobu" +
-      "ff.BallotValue\022\020\n\010ballotId\030\006 \001(\003\022\032\n\022last" +
-      "ChosenProposal\030\007 \001(\005\"~\n\tAcceptRes\022\017\n\007squ" +
-      "adId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\r\n\005round\030" +
-      "\003 \001(\005\022\016\n\006result\030\004 \001(\005\022\023\n\013maxProposal\030\005 \001" +
-      "(\005\022\030\n\020chosenInstanceId\030\006 \001(\003\"G\n\016Accepted" +
-      "Notify\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 " +
-      "\001(\003\022\020\n\010proposal\030\003 \001(\005\"d\n\023ChosenInstanceI" +
-      "dRes\022M\n\016chosenInstance\030\001 \003(\01325.org.axeso" +
-      "ft.jaxos.network.protobuff.ChosenInstanc" +
-      "eId\"=\n\020ChosenInstanceId\022\017\n\007squadId\030\001 \001(\005" +
-      "\022\030\n\020chosenInstanceId\030\002 \001(\003\"J\n\010LearnReq\022\017" +
-      "\n\007squadId\030\001 \001(\005\022\025\n\rlowInstanceId\030\002 \001(\003\022\026" +
-      "\n\016highInstanceId\030\003 \001(\003\"\253\001\n\010LearnRes\022\017\n\007s" +
-      "quadId\030\001 \001(\005\022I\n\rinstanceValue\030\002 \003(\01322.or" +
-      "g.axesoft.jaxos.network.protobuff.Instan" +
-      "ceValue\022C\n\ncheckPoint\030\003 \001(\0132/.org.axesof" +
-      "t.jaxos.network.protobuff.CheckPoint\"\207\001\n" +
-      "\rInstanceValue\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninsta" +
-      "nceId\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\022?\n\005value\030\004" +
-      " \001(\01320.org.axesoft.jaxos.network.protobu" +
-      "ff.BallotValue\"R\n\016ChosenQueryRes\022@\n\006chos" +
-      "en\030\001 \003(\01320.org.axesoft.jaxos.network.pro" +
-      "tobuff.SquadChosen\"2\n\013SquadChosen\022\017\n\007squ" +
-      "adId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\"U\n\nCheckP" +
-      "oint\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(" +
-      "\003\022\021\n\ttimestamp\030\003 \001(\003\022\017\n\007content\030\004 \001(\014*\351\001" +
-      "\n\004Code\022\010\n\004NONE\020\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021\n\rH" +
-      "EARTBEAT_RES\020\002\022\017\n\013PREPARE_REQ\020\003\022\017\n\013PREPA" +
-      "RE_RES\020\004\022\016\n\nACCEPT_REQ\020\005\022\016\n\nACCEPT_RES\020\006" +
-      "\022\023\n\017ACCEPTED_NOTIFY\020\007\022\020\n\014ACCEPTED_ACK\020\010\022" +
-      "\r\n\tLEARN_REQ\020\013\022\r\n\tLEARN_RES\020\014\022\024\n\020CHOSEN_" +
-      "QUERY_REQ\020\r\022\024\n\020CHOSEN_QUERY_RES\020\016*3\n\tVal" +
-      "ueType\022\013\n\007NOTHING\020\000\022\017\n\013APPLICATION\020\001\022\010\n\004" +
-      "NOOP\020\002B\016B\014PaxosMessageb\006proto3"
+      "\003 \001(\005\022\020\n\010proposal\030\004 \001(\005\022?\n\005value\030\005 \001(\01320" +
+      ".org.axesoft.jaxos.network.protobuff.Bal" +
+      "lotValue\022\032\n\022lastChosenProposal\030\006 \001(\005\"\230\001\n" +
+      "\tAcceptRes\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceI" +
+      "d\030\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\016\n\006result\030\004 \001(\005\022\023" +
+      "\n\013maxProposal\030\005 \001(\005\022\030\n\020acceptedBallotId\030" +
+      "\006 \001(\003\022\030\n\020chosenInstanceId\030\007 \001(\003\"G\n\016Accep" +
+      "tedNotify\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId" +
+      "\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\"d\n\023ChosenInstan" +
+      "ceIdRes\022M\n\016chosenInstance\030\001 \003(\01325.org.ax" +
+      "esoft.jaxos.network.protobuff.ChosenInst" +
+      "anceId\"=\n\020ChosenInstanceId\022\017\n\007squadId\030\001 " +
+      "\001(\005\022\030\n\020chosenInstanceId\030\002 \001(\003\"J\n\010LearnRe" +
+      "q\022\017\n\007squadId\030\001 \001(\005\022\025\n\rlowInstanceId\030\002 \001(" +
+      "\003\022\026\n\016highInstanceId\030\003 \001(\003\"\253\001\n\010LearnRes\022\017" +
+      "\n\007squadId\030\001 \001(\005\022I\n\rinstanceValue\030\002 \003(\01322" +
+      ".org.axesoft.jaxos.network.protobuff.Ins" +
+      "tanceValue\022C\n\ncheckPoint\030\003 \001(\0132/.org.axe" +
+      "soft.jaxos.network.protobuff.CheckPoint\"" +
+      "\207\001\n\rInstanceValue\022\017\n\007squadId\030\001 \001(\005\022\022\n\nin" +
+      "stanceId\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\022?\n\005valu" +
+      "e\030\004 \001(\01320.org.axesoft.jaxos.network.prot" +
+      "obuff.BallotValue\"R\n\016ChosenQueryRes\022@\n\006c" +
+      "hosen\030\001 \003(\01320.org.axesoft.jaxos.network." +
+      "protobuff.SquadChosen\"2\n\013SquadChosen\022\017\n\007" +
+      "squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\"U\n\nChe" +
+      "ckPoint\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002" +
+      " \001(\003\022\021\n\ttimestamp\030\003 \001(\003\022\017\n\007content\030\004 \001(\014" +
+      "*\351\001\n\004Code\022\010\n\004NONE\020\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021" +
+      "\n\rHEARTBEAT_RES\020\002\022\017\n\013PREPARE_REQ\020\003\022\017\n\013PR" +
+      "EPARE_RES\020\004\022\016\n\nACCEPT_REQ\020\005\022\016\n\nACCEPT_RE" +
+      "S\020\006\022\023\n\017ACCEPTED_NOTIFY\020\007\022\020\n\014ACCEPTED_ACK" +
+      "\020\010\022\r\n\tLEARN_REQ\020\013\022\r\n\tLEARN_RES\020\014\022\024\n\020CHOS" +
+      "EN_QUERY_REQ\020\r\022\024\n\020CHOSEN_QUERY_RES\020\016*3\n\t" +
+      "ValueType\022\013\n\007NOTHING\020\000\022\017\n\013APPLICATION\020\001\022" +
+      "\010\n\004NOOP\020\002B\016B\014PaxosMessageb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -12104,25 +12104,25 @@ public final class PaxosMessage {
     internal_static_org_axesoft_jaxos_network_protobuff_BallotValue_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_BallotValue_descriptor,
-        new java.lang.String[] { "Type", "Content", });
+        new java.lang.String[] { "Id", "Type", "Content", });
     internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor,
-        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Result", "MaxProposal", "AcceptedProposal", "AcceptedValue", "BallotId", "ChosenInstanceId", });
+        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Result", "MaxProposal", "AcceptedProposal", "AcceptedValue", "ChosenInstanceId", });
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_descriptor,
-        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Proposal", "Value", "BallotId", "LastChosenProposal", });
+        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Proposal", "Value", "LastChosenProposal", });
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_descriptor,
-        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Result", "MaxProposal", "ChosenInstanceId", });
+        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Result", "MaxProposal", "AcceptedBallotId", "ChosenInstanceId", });
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_fieldAccessorTable = new

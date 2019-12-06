@@ -1,7 +1,7 @@
 package org.axesoft.jaxos.logger;
 
 import com.google.common.collect.ImmutableList;
-import org.axesoft.jaxos.algo.InstanceValue;
+import org.axesoft.jaxos.algo.Instance;
 
 import java.util.Collections;
 import java.util.List;
@@ -12,18 +12,18 @@ import static com.google.common.base.Preconditions.checkArgument;
  * @sine 2019/10/15.
  */
 public class InstanceValueRingCache {
-    private InstanceValue[] buff;
+    private Instance[] buff;
     private int pos;
 
     public InstanceValueRingCache(int size) {
         checkArgument(size > 0, "RingBuff size should be positive %d", size);
         this.pos = 0;
-        this.buff = new InstanceValue[size];
+        this.buff = new Instance[size];
     }
 
-    public synchronized void put(InstanceValue value) {
+    public synchronized void put(Instance value) {
         int p0 = (this.pos - 1 + this.buff.length) % this.buff.length;
-        InstanceValue v0 = this.buff[p0];
+        Instance v0 = this.buff[p0];
         if (v0 != null) {
             checkArgument(value.instanceId() >  v0.instanceId(),
                     "added instance id(%d) should great than prev(%d)",
@@ -41,19 +41,19 @@ public class InstanceValueRingCache {
         return buff.length;
     }
 
-    public synchronized List<InstanceValue> get(long idLow, long idHigh) {
+    public synchronized List<Instance> get(long idLow, long idHigh) {
         int i0 = lessOrEqualPosOf(idHigh);
 
         if (i0 < 0) {
             return Collections.emptyList();
         }
 
-        ImmutableList.Builder<InstanceValue> builder = ImmutableList.builder();
+        ImmutableList.Builder<Instance> builder = ImmutableList.builder();
 
         int i = i0;
         do {
-            InstanceValue v = this.buff[i];
-            if (v == null || v.instanceId < idLow) {
+            Instance v = this.buff[i];
+            if (v == null || v.instanceId() < idLow) {
                 break;
             }
             else {
@@ -69,11 +69,11 @@ public class InstanceValueRingCache {
         int i = (this.pos - 1 + this.buff.length) % this.buff.length;
 
         while (true) {
-            InstanceValue v = this.buff[i];
+            Instance v = this.buff[i];
             if (v == null) {
                 return -1;
             }
-            else if (v.instanceId <= instanceId) {
+            else if (v.instanceId() <= instanceId) {
                 return i;
             }
             else if (i == this.pos) {

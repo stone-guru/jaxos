@@ -47,12 +47,12 @@ enum ValueType {
   NOTHING = 0;
   APPLICATION = 1;
   NOOP = 2;
-  
 }
 
 message BallotValue {
-  ValueType type = 1;
-  bytes content = 2;
+  int64 id = 1;
+  ValueType type = 2;
+  bytes content = 3;
 }
 
 message PrepareRes {
@@ -63,8 +63,7 @@ message PrepareRes {
   int32 maxProposal = 5;
   int32 acceptedProposal = 6;
   BallotValue acceptedValue = 7;
-  int64 ballotId = 8;
-  int64 chosenInstanceId = 9;
+  int64 chosenInstanceId = 8;
 }
 
 message AcceptReq {
@@ -73,8 +72,7 @@ message AcceptReq {
   int32 round = 3;
   int32 proposal = 4;
   BallotValue value = 5;
-  int64 ballotId = 6;
-  int32 lastChosenProposal = 7;
+  int32 lastChosenProposal = 6;
 }
 
 message AcceptRes {
@@ -83,7 +81,8 @@ message AcceptRes {
   int32 round = 3;
   int32 result = 4;
   int32 maxProposal = 5;
-  int64 chosenInstanceId = 6;
+  int64 acceptedBallotId = 6;
+  int64 chosenInstanceId = 7;
 }
 
 message AcceptedNotify {

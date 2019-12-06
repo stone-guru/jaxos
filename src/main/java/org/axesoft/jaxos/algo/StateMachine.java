@@ -3,7 +3,6 @@ package org.axesoft.jaxos.algo;
 import com.google.protobuf.ByteString;
 
 public interface StateMachine {
-    void learnLastChosenVersion(int squadId, long instanceId);
 
     long currentVersion(int squadId);
 

@@ -18,16 +18,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class JaxosService extends AbstractExecutionThreadService implements Proponent {
-    public static final String SERVICE_NAME = "Jaxos service";
+    static final String SERVICE_NAME = "Jaxos service";
 
     private static Logger logger = LoggerFactory.getLogger(JaxosService.class);
 
@@ -44,11 +41,13 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
     private ScheduledExecutorService timerExecutor;
     private Components components;
+    private BallotIdHolder ballotIdHolder;
 
     public JaxosService(JaxosSettings settings, StateMachine stateMachine) {
-        this.settings = checkNotNull(settings, "settings is null");
-        this.stateMachine = stateMachine;
+        this.settings = checkNotNull(settings, "The param settings is null");
+        this.stateMachine = checkNotNull(stateMachine, "The param stateMachine is null");
         this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval());
+        this.ballotIdHolder = new BallotIdHolder(this.settings.serverId());
 
         this.components = new Components() {
             @Override
@@ -94,10 +93,11 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
     @Override
     public ListenableFuture<Void> propose(int squadId, long instanceId, ByteString v, boolean ignoreLeader) {
-        return propose(squadId, instanceId, new Event.BallotValue(Event.ValueType.APPLICATION, v), ignoreLeader);
+        long ballotId = ballotIdHolder.nextIdOf(squadId);
+        return propose(squadId, instanceId, new Event.BallotValue(ballotId, Event.ValueType.APPLICATION, v), ignoreLeader);
     }
 
-    public ListenableFuture<Void> propose(int squadId, long instanceId, Event.BallotValue v, boolean ignoreLeader) {
+    private ListenableFuture<Void> propose(int squadId, long instanceId, Event.BallotValue v, boolean ignoreLeader) {
         if (!this.isRunning()) {
             throw new IllegalStateException(SERVICE_NAME + " is not running");
         }
@@ -148,9 +148,9 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, this.eventWorkerPool);
         this.communicator = factory.createCommunicator();
 
-        this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, 10, 60 * settings.checkPointMinutes(), TimeUnit.SECONDS);
+        this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, settings.checkPointMinutes(), settings.checkPointMinutes(), TimeUnit.MINUTES);
         this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
-        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, 3, 1, TimeUnit.SECONDS);
+        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, 3, 60, TimeUnit.SECONDS);
         this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync()),
                 1000, settings.syncInterval().toMillis() / 2, TimeUnit.MILLISECONDS);
         this.node.startup();
@@ -172,7 +172,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             SquadContext context = squads[i].context();
             if (context.isLeader()) {
                 mySquadCount++;
-                if (System.currentTimeMillis() - context.lastSuccessAccept().timestampMillis() >= this.settings.leaderLeaseSeconds() * 500) {
+                if (System.currentTimeMillis() - context.lastSuccessAccept().timestampMillis() >= this.settings.leaderLeaseSeconds() * 800) {
                     proposeForLeader(i);
                 }
             }
@@ -189,6 +189,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     }
 
     private void proposeForLeader(int squadId) {
+        //TODO ingest that the message id is 0 in BallotValue.EMPTY works fine
         final ListenableFuture<Void> future = this.propose(squadId, squads[squadId].lastChosenInstanceId() + 1, Event.BallotValue.EMPTY, false);
         future.addListener(() -> {
             try {
@@ -336,6 +337,38 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         @Override
         public void terminated(State from) {
             logger.info("{} terminated from {}", SERVICE_NAME, from);
+        }
+    }
+
+
+    static class BallotIdHolder {
+
+        private static class Item {
+            private long highBits;
+            private int serialNum;
+
+            public Item(int highBits) {
+                this.highBits = ((long) highBits) << 32;
+                this.serialNum = 0;
+            }
+
+            public synchronized long nextId() {
+                long r = this.highBits | (this.serialNum & 0xffffffffL);
+                this.serialNum++;
+                return r;
+            }
+        }
+
+        private int serverId;
+        private Map<Integer, Item> itemMap = new ConcurrentHashMap<>();
+
+        public BallotIdHolder(int serverId) {
+            this.serverId = serverId;
+        }
+
+        private long nextIdOf(int squadId){
+            Item item = itemMap.computeIfAbsent(squadId, i -> new Item((serverId << 16) | squadId));
+            return item.nextId();
         }
     }
 }

@@ -31,6 +31,7 @@ public class TansService implements StateMachine {
     public static class AcquireRequest {
 
     }
+
     private Supplier<Proponent> proponent;
     private TansConfig config;
 
@@ -47,11 +48,6 @@ public class TansService implements StateMachine {
             this.numberMaps[i] = new TansNumberMap();
             this.machineLocks[i] = new Object();
         }
-    }
-
-    @Override
-    public void learnLastChosenVersion(int squadId, long instanceId) {
-        this.numberMaps[squadId].learnLastChosenVersion(instanceId);
     }
 
     @Override

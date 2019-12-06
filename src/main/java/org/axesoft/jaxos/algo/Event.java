@@ -149,20 +149,26 @@ public abstract class Event {
     }
 
     public static class BallotValue {
-        public static final BallotValue EMPTY = new BallotValue(ValueType.NOTHING, ByteString.EMPTY);
+        public static final BallotValue EMPTY = new BallotValue(0, ValueType.NOTHING, ByteString.EMPTY);
 
-        public static final BallotValue NOOP = new BallotValue(ValueType.NOOP, ByteString.EMPTY);
+        public static final BallotValue NOOP = new BallotValue(0, ValueType.NOOP, ByteString.EMPTY);
 
-        public static final BallotValue appValue(ByteString v) {
-            return new BallotValue(ValueType.APPLICATION, v);
+        public static final BallotValue appValue(long id, ByteString v) {
+            return new BallotValue(id, ValueType.APPLICATION, v);
         }
 
+        private long id;
         private ValueType type;
         private ByteString content;
 
-        public BallotValue(ValueType type, ByteString content) {
+        public BallotValue(long id, ValueType type, ByteString content) {
+            this.id = id;
             this.type = type;
             this.content = content;
+        }
+
+        public long id(){
+            return this.id;
         }
 
         public ValueType type() {
@@ -175,7 +181,7 @@ public abstract class Event {
 
         @Override
         public String toString() {
-            return "BallotValue{" + type + ", b[" + content.size() + "]}";
+            return "BallotValue{" +  Long.toHexString(id)  + ", " + type + ", b[" + content.size() + "]}";
         }
     }
 
@@ -223,7 +229,6 @@ public abstract class Event {
         private int maxBallot;
         private int acceptedBallot;
         private BallotValue acceptedValue;
-        private long ballotId;
         private long chosenInstanceId;
 
 
@@ -252,11 +257,6 @@ public abstract class Event {
 
             public Builder setChosenInstanceId(long i) {
                 resp.chosenInstanceId = i;
-                return this;
-            }
-
-            public Builder setBallotId(long i) {
-                resp.ballotId = i;
                 return this;
             }
 
@@ -295,10 +295,6 @@ public abstract class Event {
             return this.chosenInstanceId;
         }
 
-        public long ballotId() {
-            return this.ballotId;
-        }
-
         @Override
         public String toString() {
             return "PrepareResponse{" + super.toString() +
@@ -306,7 +302,6 @@ public abstract class Event {
                     ", maxBallot=" + maxBallot +
                     ", acceptedBallot=" + acceptedBallot +
                     ", acceptedValue=" + acceptedValue +
-                    ", ballotId=" + ballotId +
                     ", chosenInstanceId=" + chosenInstanceId +
                     '}';
         }
@@ -316,7 +311,6 @@ public abstract class Event {
         private int ballot;
         private int lastChosenBallot;
         private BallotValue value;
-        private long ballotId;
 
         public static Builder newBuilder(int sender, int squadId, long instanceId, int round) {
             return new Builder(sender, squadId, instanceId, round);
@@ -336,11 +330,6 @@ public abstract class Event {
 
             public Builder setValue(BallotValue value) {
                 req.value = value;
-                return this;
-            }
-
-            public Builder setBallotId(long id) {
-                req.ballotId = id;
                 return this;
             }
 
@@ -380,15 +369,10 @@ public abstract class Event {
             return this.instanceId() - 1;
         }
 
-        public long ballotId() {
-            return this.ballotId;
-        }
-
         @Override
         public String toString() {
             return "AcceptRequest{" + super.toString() +
                     ", ballot=" + ballot +
-                    ", ballotId=0x" + Long.toHexString(ballotId) +
                     ", value=" + value +
                     ", lastChosenBallot=" + lastChosenBallot +
                     '}';
@@ -399,11 +383,13 @@ public abstract class Event {
         private int maxBallot;
         private int result;
         private long chosenInstanceId;
+        private long acceptedBallotId;
 
-        public AcceptResponse(int sender, int squadId, long instanceId, int round, int maxBallot, int result, long chosenInstanceId) {
+        public AcceptResponse(int sender, int squadId, long instanceId, int round, int maxBallot, int result, long acceptedBallotId, long chosenInstanceId) {
             super(sender, squadId, instanceId, round);
             this.maxBallot = maxBallot;
             this.result = result;
+            this.acceptedBallotId = acceptedBallotId;
             this.chosenInstanceId = chosenInstanceId;
         }
 
@@ -418,6 +404,10 @@ public abstract class Event {
 
         public int result() {
             return this.result;
+        }
+
+        public long acceptedBallotId(){
+            return this.acceptedBallotId;
         }
 
         @Override
@@ -581,9 +571,9 @@ public abstract class Event {
 
     public static class LearnResponse extends InstanceEvent {
         private int squadId;
-        private List<InstanceValue> instances;
+        private List<Instance> instances;
         private CheckPoint checkPoint;
-        public LearnResponse(int senderId, int squadId, List<InstanceValue> instances, CheckPoint checkPoint) {
+        public LearnResponse(int senderId, int squadId, List<Instance> instances, CheckPoint checkPoint) {
             super(senderId);
             this.squadId = squadId;
             this.instances = checkNotNull(instances);
@@ -599,7 +589,7 @@ public abstract class Event {
             return squadId;
         }
 
-        public List<InstanceValue> instances() {
+        public List<Instance> instances() {
             return this.instances;
         }
 
@@ -625,9 +615,9 @@ public abstract class Event {
             return instanceIdOf(instances.size() - 1);
         }
 
-        private long instanceIdOf(int i) {
-            if (i >= 0 && i < instances.size()) {
-                return instances.get(i).instanceId;
+        private long instanceIdOf(int index) {
+            if (index >= 0 && index < instances.size()) {
+                return instances.get(index).instanceId();
             }
             return 0;
         }

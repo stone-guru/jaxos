@@ -2,14 +2,15 @@ package org.axesoft.jaxos.algo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
-import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * A Squad is a composition of Proposer and Acceptor, and works as a individual paxos server.
@@ -202,11 +203,11 @@ public class Squad implements EventDispatcher {
 
 
     private Event onLearnRequest(Event.Learn request) {
-        ImmutableList.Builder<InstanceValue> builder = ImmutableList.builder();
+        ImmutableList.Builder<Instance> builder = ImmutableList.builder();
 
         boolean instanceMissing = false;
         for (long id = request.lowInstanceId(); id <= request.highInstanceId(); id++) {
-            InstanceValue p = this.components.getLogger().loadPromise(context.squadId(), id);
+            Instance p = this.components.getLogger().loadPromise(context.squadId(), id);
             if (p == null) {
                 logger.warn("{} lack instance {} of squad {}", settings.serverId(), id, context.squadId());
                 instanceMissing = true;
@@ -232,21 +233,7 @@ public class Squad implements EventDispatcher {
         logger.info("squad {} learn CheckPoint {} with instances from {} to {}",
                 context.squadId(), response.checkPoint().instanceId(),
                 response.lowInstanceId(), response.highInstanceId());
-        if(!response.checkPoint().isEmpty()){
-            this.stateMachineRunner.machine().restoreFromCheckPoint(response.checkPoint());
-            this.stateMachineRunner.learnLastChosen(context.squadId(), response.checkPoint().instanceId(), Integer.MAX_VALUE);
-        }
-
-        for (InstanceValue i : response.instances()) {
-            long instanceId = i.instanceId();
-            this.components.getLogger().savePromise(response.squadId(), instanceId, i.proposal(), i.value());
-            if (!this.stateMachineRunner.learnValue(response.squadId(), instanceId, i.proposal(), i.value())) {
-                if (instanceId > this.stateMachineRunner.lastChosenInstanceId(i.squadId())) {
-                    logger.warn("Learned instance {} is not continued, cache it first", instanceId);
-                    this.stateMachineRunner.cacheChosenValue(response.squadId(), instanceId, i.proposal(), i.value());
-                }
-            }
-        }
+        this.stateMachineRunner.restoreFromCheckPoint(response.checkPoint(), response.instances());
     }
 
     public void computeAndPrintMetrics(long current) {
@@ -277,31 +264,21 @@ public class Squad implements EventDispatcher {
 
     public void restoreFromDB() {
         CheckPoint checkPoint = this.components.getLogger().loadLastCheckPoint(context.squadId());
-        long lastInstanceId = 0;
-        if (!checkPoint.isEmpty()) {
-            lastInstanceId = checkPoint.instanceId();
-            this.stateMachineRunner.machine().restoreFromCheckPoint(checkPoint);
-            this.stateMachineRunner.learnLastChosen(context.squadId(), lastInstanceId, Integer.MAX_VALUE);
-            logger.info("Restore to last {}", checkPoint);
+        Instance lastInstance = this.components.getLogger().loadLastPromise(context.squadId());
+
+        List<Instance> ix = new ArrayList<>();
+        //i starting from checkPoint.instanceId is for restore the last instance
+        for (long i = checkPoint.instanceId(); i <= lastInstance.instanceId(); i++) {
+            Instance instance = this.components.getLogger().loadPromise(context.squadId(), i);
+            if (instance == null) {
+                String msg = String.format("Instance %d.%d not found in DB", context.squadId(), i);
+                throw new IllegalStateException(msg);
+            }
+            ix.add(instance);
         }
 
-        InstanceValue p0 = this.components.getLogger().loadLastPromise(context.squadId());
-        if (p0 != null) {
-            if (!checkPoint.isEmpty() && p0.instanceId == checkPoint.instanceId()) {
-                this.stateMachineRunner.learnLastChosen(p0.squadId, p0.instanceId, p0.proposal);
-            }
-            else {
-                for (long i = lastInstanceId + 1; i <= p0.instanceId; i++) {
-                    InstanceValue p = this.components.getLogger().loadPromise(context.squadId(), i);
-                    if (p == null) {
-                        logger.error("Promise(" + i + ") not found in DB");
-                        break;
-                    }
-                    lastInstanceId = p.instanceId;
-                    this.stateMachineRunner.learnValue(p.squadId, i, p.proposal, p.value);
-                }
-            }
-        }
-        logger.info("Squad {} restored to instance {}", context.squadId(), lastInstanceId);
+        this.stateMachineRunner.restoreFromCheckPoint(checkPoint, ix);
+
+        logger.info("Squad {} restored to instance {}", context.squadId(), lastInstance.instanceId());
     }
 }
