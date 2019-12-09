@@ -28,10 +28,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TansService implements StateMachine {
     private static Logger logger = LoggerFactory.getLogger(TansService.class);
 
-    public static class AcquireRequest {
-
-    }
-
     private Supplier<Proponent> proponent;
     private TansConfig config;
 
@@ -65,17 +61,18 @@ public class TansService implements StateMachine {
     }
 
     @Override
-    public CheckPoint makeCheckPoint(int squadId) {
+    public Pair<ByteString, Long> makeCheckPoint(int squadId) {
         Pair<Collection<TansNumber>, Long> p = this.numberMaps[squadId].getSnapshot();
-        long timestamp = System.currentTimeMillis();
         ByteString content = toCheckPoint(p.getLeft());
-        return new CheckPoint(squadId, p.getRight(), timestamp, content);
+        //return new CheckPoint(squadId, p.getRight(), timestamp, content);
+        return Pair.of(content, p.getRight());
     }
 
     @Override
-    public void restoreFromCheckPoint(CheckPoint checkPoint) {
-        List<TansNumber> nx = fromCheckPoint(checkPoint.content());
-        this.numberMaps[checkPoint.squadId()].transToCheckPoint(checkPoint.instanceId(), nx);
+    public void restoreFromCheckPoint(int squadId, long version, ByteString checkPoint) {
+        List<TansNumber> nx = fromCheckPoint(checkPoint);
+        final long instanceId = version;
+        this.numberMaps[squadId].transFromCheckPoint(instanceId, nx);
     }
 
     @Override
@@ -202,7 +199,7 @@ public class TansService implements StateMachine {
             return Pair.of(this.numbers.values(), lastInstanceId);
         }
 
-        synchronized void transToCheckPoint(long instanceId, List<TansNumber> nx) {
+        synchronized void transFromCheckPoint(long instanceId, List<TansNumber> nx) {
             this.lastInstanceId = instanceId;
             Map<String, TansNumber> m = nx.stream().collect(Collectors.toMap(TansNumber::name, Functions.identity()));
             this.numbers = HashTreePMap.from(m);

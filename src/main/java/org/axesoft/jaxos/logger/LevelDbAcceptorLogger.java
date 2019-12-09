@@ -279,9 +279,9 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     }
 
     public Instance toEntity(byte[] bytes) {
-        PaxosMessage.InstanceValue i;
+        PaxosMessage.Instance i;
         try {
-            i = PaxosMessage.InstanceValue.parseFrom(bytes);
+            i = PaxosMessage.Instance.parseFrom(bytes);
         }
         catch (InvalidProtocolBufferException e) {
             throw new RuntimeException(e);
@@ -293,7 +293,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
 
 
     public byte[] toByteArray(Instance v) {
-        return PaxosMessage.InstanceValue.newBuilder()
+        return PaxosMessage.Instance.newBuilder()
                 .setSquadId(v.squadId())
                 .setInstanceId(v.instanceId())
                 .setProposal(v.proposal())

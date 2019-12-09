@@ -1,6 +1,7 @@
 package org.axesoft.jaxos.algo;
 
 import com.google.protobuf.ByteString;
+import org.apache.commons.lang3.tuple.Pair;
 
 public interface StateMachine {
 
@@ -10,7 +11,7 @@ public interface StateMachine {
 
     void close();
 
-    CheckPoint makeCheckPoint(int squadId);
+    Pair<ByteString, Long> makeCheckPoint(int squadId);
 
-    void restoreFromCheckPoint(CheckPoint checkPoint);
+    void restoreFromCheckPoint(int squadId, long version, ByteString checkPoint);
 }

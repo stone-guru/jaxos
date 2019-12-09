@@ -1,6 +1,7 @@
 package org.axesoft.jaxos.algo;
 
 import com.google.protobuf.ByteString;
+import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,26 +30,34 @@ public class StateMachineRunner implements Learner {
         return this.machine;
     }
 
-    public synchronized void restoreFromCheckPoint(CheckPoint checkPoint, List<Instance> ix){
-        if(!checkPoint.isEmpty()) {
-            this.machine.restoreFromCheckPoint(checkPoint);
+    public synchronized void restoreFromCheckPoint(CheckPoint checkPoint, List<Instance> ix) {
+        if (!checkPoint.isEmpty()) {
+            this.machine.restoreFromCheckPoint(checkPoint.squadId(), checkPoint.instanceId(), checkPoint.content());
+            this.lastChosen = checkPoint.lastInstance();
             logger.info("S{} Restore of {}", checkPoint.squadId(), checkPoint);
         }
+
         Iterator<Instance> it = ix.iterator();
-        while(it.hasNext()){
-            Instance i = it.next();
-            if(i.instanceId() == checkPoint.instanceId()){
-                this.lastChosen = i;
+        Instance i1 = null, i2 = null;
+        while (it.hasNext()) {
+            i1 = it.next();
+            if(i1.instanceId() > this.lastChosen.instanceId()){
+                i2 = i1;
                 break;
-            } else if (i.instanceId() > checkPoint.instanceId() && checkPoint.instanceId() != 0) {
-                throw new IllegalArgumentException(String.format("S%d instance of checkPoint %s not found",
-                        checkPoint.squadId(), checkPoint.toString()));
             }
         }
 
-        while(it.hasNext()){
-            this.innerLearn(it.next());
+        while (i2 != null) {
+            this.innerLearn(i2);
+            i2 = it.hasNext()? it.next() : null;
         }
+    }
+
+
+    public synchronized CheckPoint makeCheckPoint(int squadId) {
+        long timestamp = System.currentTimeMillis();
+        Pair<ByteString, Long> p = this.machine.makeCheckPoint(squadId);
+        return new CheckPoint(squadId, p.getRight(), timestamp, p.getLeft(), this.lastChosen);
     }
 
     @Override
@@ -76,4 +85,5 @@ public class StateMachineRunner implements Learner {
         }
         this.lastChosen = i;
     }
+
 }

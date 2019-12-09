@@ -108,11 +108,11 @@ message LearnReq {
 
 message LearnRes {
   int32 squadId = 1;
-  repeated InstanceValue instanceValue = 2;
+  repeated Instance instance = 2;
   CheckPoint checkPoint = 3;
 }
 
-message InstanceValue {
+message Instance {
   int32 squadId = 1;
   int64 instanceId = 2;
   int32 proposal = 3;
@@ -133,4 +133,5 @@ message CheckPoint {
   int64 instanceId = 2;
   int64 timestamp = 3;
   bytes content = 4;
+  Instance lastInstance = 5;
 }  

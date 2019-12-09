@@ -208,9 +208,12 @@ public class Squad implements EventDispatcher {
         boolean instanceMissing = false;
         for (long id = request.lowInstanceId(); id <= request.highInstanceId(); id++) {
             Instance p = this.components.getLogger().loadPromise(context.squadId(), id);
-            if (p == null) {
-                logger.warn("{} lack instance {} of squad {}", settings.serverId(), id, context.squadId());
+            if (p.isEmpty()) {
                 instanceMissing = true;
+
+                if(logger.isDebugEnabled()) {
+                    logger.debug("Making learn response, Server {} lack instance {} of squad {}, give checkpoint", settings.serverId(), id, context.squadId());
+                }
                 break;
             }
 
@@ -218,14 +221,14 @@ public class Squad implements EventDispatcher {
         }
 
         if (instanceMissing) {
-            CheckPoint checkPoint = this.stateMachineRunner.machine().makeCheckPoint(context.squadId());
+            CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint(context.squadId());
             return new Event.LearnResponse(settings.serverId(), context.squadId(), Collections.emptyList(), checkPoint);
         }
         else {
+            Event.LearnResponse resp = new Event.LearnResponse(settings.serverId(), context.squadId(), builder.build(), CheckPoint.EMPTY);
             logger.info("squad {} prepared learn response from {} to {}", context.squadId(),
-                    request.lowInstanceId(), request.highInstanceId());
-
-            return new Event.LearnResponse(settings.serverId(), context.squadId(), builder.build(), CheckPoint.EMPTY);
+                    resp.lowInstanceId(), resp.highInstanceId());
+            return resp;
         }
     }
 
@@ -256,7 +259,7 @@ public class Squad implements EventDispatcher {
     }
 
     public void saveCheckPoint() {
-        CheckPoint checkPoint = this.stateMachineRunner.machine().makeCheckPoint(context.squadId());
+        CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint(context.squadId());
         this.components.getLogger().saveCheckPoint(checkPoint);
 
         logger.info("{} saved", checkPoint);
@@ -264,13 +267,12 @@ public class Squad implements EventDispatcher {
 
     public void restoreFromDB() {
         CheckPoint checkPoint = this.components.getLogger().loadLastCheckPoint(context.squadId());
-        Instance lastInstance = this.components.getLogger().loadLastPromise(context.squadId());
+        long last = this.components.getLogger().loadLastPromise(context.squadId()).instanceId();
 
         List<Instance> ix = new ArrayList<>();
-        //i starting from checkPoint.instanceId is for restore the last instance
-        for (long i = checkPoint.instanceId(); i <= lastInstance.instanceId(); i++) {
+        for (long i = checkPoint.instanceId() + 1; i <= last; i++) {
             Instance instance = this.components.getLogger().loadPromise(context.squadId(), i);
-            if (instance == null) {
+            if (instance.isEmpty()) {
                 String msg = String.format("Instance %d.%d not found in DB", context.squadId(), i);
                 throw new IllegalStateException(msg);
             }
@@ -279,6 +281,6 @@ public class Squad implements EventDispatcher {
 
         this.stateMachineRunner.restoreFromCheckPoint(checkPoint, ix);
 
-        logger.info("Squad {} restored to instance {}", context.squadId(), lastInstance.instanceId());
+        logger.info("Squad {} restored to instance {}", context.squadId(), last);
     }
 }

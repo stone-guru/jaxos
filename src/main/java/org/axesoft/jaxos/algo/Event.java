@@ -546,6 +546,7 @@ public abstract class Event {
             return Code.LEARN_REQUEST;
         }
 
+        @Override
         public int squadId() {
             return this.squadId;
         }
@@ -562,7 +563,7 @@ public abstract class Event {
         public String toString() {
             return "Learn{" +
                     "senderId=" + super.senderId() +
-                    ", squadId=" + super.squadId() +
+                    ", squadId=" + this.squadId +
                     ", lowInstanceId=" + this.lowInstanceId +
                     ", highInstanceId=" + this.highInstanceId +
                     '}';
@@ -585,8 +586,9 @@ public abstract class Event {
             return Code.LEARN_RESPONSE;
         }
 
+        @Override
         public int squadId() {
-            return squadId;
+            return this.squadId;
         }
 
         public List<Instance> instances() {
@@ -601,9 +603,9 @@ public abstract class Event {
         public String toString() {
             return "LearnResponse{" +
                     "senderId=" + super.senderId() +
-                    ", squadId=" + super.squadId() +
-                    ", instances=I[" + instances.size() + "]" +
-                    ", checkPoint=B[" + checkPoint.content().size() + "]" +
+                    ", squadId=" + this.squadId +
+                    ", instances=I[" + this.instances.size() + "]" +
+                    ", checkPoint=B[" + this.checkPoint.content().size() + "]" +
                     '}';
         }
 
