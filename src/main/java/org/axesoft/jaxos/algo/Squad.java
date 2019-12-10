@@ -66,14 +66,14 @@ public class Squad implements EventDispatcher {
 
         SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessAccept();
 
-        if (this.context.isOtherLeaderActive() && !this.settings.leaderless() && !ignoreLeader) {
+        if (this.context.isOtherLeaderActive() && !this.settings.ignoreLeader() && !ignoreLeader) {
             if (logger.isDebugEnabled()) {
                 logger.debug("S{} I{} redirect to {}", context.squadId(), instanceId, lastSuccessRequestRecord.serverId());
             }
             resultFuture.setException(new RedirectException(lastSuccessRequestRecord.serverId()));
         }
         else {
-            proposer.propose(instanceId, v, ignoreLeader, resultFuture);
+            proposer.propose(instanceId, v, resultFuture);
         }
 
         return resultFuture;
@@ -262,7 +262,7 @@ public class Squad implements EventDispatcher {
         CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint(context.squadId());
         this.components.getLogger().saveCheckPoint(checkPoint);
 
-        logger.info("{} saved", checkPoint);
+        logger.info("Saved {} ", checkPoint);
     }
 
     public void restoreFromDB() {

@@ -71,7 +71,7 @@ public class Acceptor {
             }
 
             if (!success && logger.isDebugEnabled()) {
-                logger.debug("S{}: Reject prepare {} ballot = {} while my max ballot = {}",
+                logger.debug("S{}: Reject prepare I {} ballot = {} while my max ballot = {}",
                         context.squadId(), request.instanceId(), request.ballot(), this.maxBallot);
             }
 
@@ -188,7 +188,7 @@ public class Acceptor {
         }
 
         long last = this.learner.getLastChosenInstance(this.context.squadId()).instanceId();
-        if (notify.instanceId() == last + 1 && notify.ballot() == this.acceptedBallot) {
+        if (notify.instanceId() == last + 1 && notify.ballot() == this.acceptedBallot) { //FIXME notify.ballot judgement is unnecessary
             chose(notify.instanceId(), notify.ballot());
             context.setAcceptSuccessRecord(notify.senderId(), notify.ballot());
         }

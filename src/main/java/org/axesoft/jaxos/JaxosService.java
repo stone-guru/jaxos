@@ -150,9 +150,12 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
         this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, settings.checkPointMinutes(), settings.checkPointMinutes(), TimeUnit.MINUTES);
         this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
-        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, 3, 60, TimeUnit.SECONDS);
         this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync()),
                 1000, settings.syncInterval().toMillis() / 2, TimeUnit.MILLISECONDS);
+        if(!this.settings.ignoreLeader()) {
+            this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, 3, 60, TimeUnit.SECONDS);
+        }
+
         this.node.startup();
     }
 
@@ -189,8 +192,9 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     }
 
     private void proposeForLeader(int squadId) {
-        //TODO ingest that the message id is 0 in BallotValue.EMPTY works fine
-        final ListenableFuture<Void> future = this.propose(squadId, squads[squadId].lastChosenInstanceId() + 1, Event.BallotValue.EMPTY, false);
+        long ballotId = ballotIdHolder.nextIdOf(squadId);
+        Event.BallotValue v = new Event.BallotValue(ballotId, Event.ValueType.NOTHING, ByteString.EMPTY);
+        final ListenableFuture<Void> future = this.propose(squadId, squads[squadId].lastChosenInstanceId() + 1, v, false);
         future.addListener(() -> {
             try {
                 future.get();
@@ -203,7 +207,8 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
                 throw new RuntimeException(e);
             }
             catch (ExecutionException e) {
-                logger.debug("S{} Failed to be leader", squadId);
+                String msg = e.getCause() == null? e.getMessage() : e.getCause().getMessage();
+                logger.debug("S{} Failed to be leader due to '{}'", squadId, msg);
             }
         }, MoreExecutors.directExecutor());
     }

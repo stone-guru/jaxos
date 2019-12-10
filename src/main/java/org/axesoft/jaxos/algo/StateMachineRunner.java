@@ -38,7 +38,7 @@ public class StateMachineRunner implements Learner {
         }
 
         Iterator<Instance> it = ix.iterator();
-        Instance i1 = null, i2 = null;
+        Instance i1, i2 = null;
         while (it.hasNext()) {
             i1 = it.next();
             if(i1.instanceId() > this.lastChosen.instanceId()){

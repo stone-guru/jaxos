@@ -131,7 +131,7 @@ public class JaxosSettings {
             JaxosSettings config = new JaxosSettings();
             config.serverId = this.serverId;
             config.peerMap = this.peerBuilder.build();
-            config.leaderless = this.ignoreLeader;
+            config.ignoreLeader = this.ignoreLeader;
             config.leaderLeaseSeconds = 60;
             config.dbDirectory = this.dbDirectory;
             config.valueVerboser = this.valueVerboser;
@@ -149,7 +149,7 @@ public class JaxosSettings {
     private Map<Integer, Peer> peerMap;
     private int serverId;
     private int leaderLeaseSeconds;
-    private boolean leaderless;
+    private boolean ignoreLeader;
     private String dbDirectory;
     private long wholeProposalTimeoutMillis;
     private long prepareTimeoutMillis;
@@ -188,8 +188,8 @@ public class JaxosSettings {
         return this.leaderLeaseSeconds;
     }
 
-    public boolean leaderless(){
-        return this.leaderless;
+    public boolean ignoreLeader(){
+        return this.ignoreLeader;
     }
 
     public String dbDirectory(){
@@ -238,7 +238,7 @@ public class JaxosSettings {
                 "peerMap=" + peerMap +
                 ", serverId=" + serverId +
                 ", leaderLeaseSeconds=" + leaderLeaseSeconds +
-                ", ignoreLeader=" + leaderless +
+                ", ignoreLeader=" + ignoreLeader +
                 ", dbDirectory='" + dbDirectory + '\'' +
                 ", wholeProposalTimeoutMillis=" + wholeProposalTimeoutMillis +
                 ", prepareTimeoutMillis=" + prepareTimeoutMillis +

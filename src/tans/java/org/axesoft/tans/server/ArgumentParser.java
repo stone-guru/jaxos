@@ -26,10 +26,10 @@ public class ArgumentParser {
         private String configFilename = "./config/jaxos.properties";
 
         @Parameter(names = {"-g"}, description = "ignore other leader, always do propose")
-        private boolean ignoreLeader = false;
+        private Boolean ignoreLeader = null;
 
         @Parameter(names = {"-d"}, description = "Directory of DB")
-        private String dbDirectory;
+        private String dbDirectory = null;
 
         @Parameter(names = {"-p"}, description = "Partition number")
         private Integer partitionNumber = 0;
@@ -69,7 +69,7 @@ public class ArgumentParser {
 
         JaxosSettings config = buildJaxosConfig(args);
 
-        int printMetricsSec = (this.printMetricsSeconds == null)? args.printMetricsSeconds : this.printMetricsSeconds;
+        int printMetricsSec = (this.printMetricsSeconds == null) ? args.printMetricsSeconds : this.printMetricsSeconds;
         return new TansConfig(config, this.peerHttpMap, printMetricsSec, args.requestBatchSize);
     }
 
@@ -105,8 +105,11 @@ public class ArgumentParser {
         JaxosSettings.Builder builder = loadConfigFromFile(this.properties, args.id)
                 .setServerId(args.id)
                 .setDbDirectory(args.dbDirectory)
-                .setCheckPointMinutes(args.checkPointMinutes)
-                .setIgnoreLeader(args.ignoreLeader);
+                .setCheckPointMinutes(args.checkPointMinutes);
+
+        if (args.ignoreLeader != null) {
+            builder.setIgnoreLeader(args.ignoreLeader);
+        }
 
         if (args.partitionNumber > 0) {
             builder.setPartitionNumber(args.partitionNumber);
@@ -155,10 +158,21 @@ public class ArgumentParser {
             }
             else if (k.equals("printMetrics.seconds")) {
                 int sec = Integer.parseInt(v);
-                if(sec < 0){
+                if (sec < 0) {
                     throw new IllegalArgumentException("printMetrics.seconds should great than Zero " + v);
                 }
                 this.printMetricsSeconds = sec;
+            }
+            else if (k.equals("ignoreLeader")) {
+                if ("true".equals(v)) {
+                    builder.setIgnoreLeader(true);
+                }
+                else if ("false".equals(v)) {
+                    builder.setIgnoreLeader(false);
+                }
+                else {
+                    throw new IllegalArgumentException("Unknown boolean value '" + v + "' for config item '" + k + "'");
+                }
             }
             else {
                 System.err.println("Ignore unknown config item: " + k);
