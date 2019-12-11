@@ -427,10 +427,12 @@ public abstract class Event {
 
     public static class ChosenNotify extends BallotEvent {
         private int ballot;
+        private long ballotId;
 
-        public ChosenNotify(int sender, int squadId, long instanceId, int ballot) {
+        public ChosenNotify(int sender, int squadId, long instanceId, int ballot, long ballotId) {
             super(sender, squadId, instanceId, 0);
             this.ballot = ballot;
+            this.ballotId = ballotId;
         }
 
         @Override
@@ -447,10 +449,15 @@ public abstract class Event {
             return this.ballot;
         }
 
+        public long ballotId(){
+            return this.ballotId;
+        }
+
         @Override
         public String toString() {
             return "AcceptedNotify{" + super.toString() +
                     ", ballot=" + ballot +
+                    ", ballotId=" + Long.toHexString(ballotId).toUpperCase() +
                     '}';
         }
     }

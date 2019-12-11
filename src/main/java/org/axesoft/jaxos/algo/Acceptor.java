@@ -188,7 +188,13 @@ public class Acceptor {
         }
 
         long last = this.learner.getLastChosenInstance(this.context.squadId()).instanceId();
-        if (notify.instanceId() == last + 1 && notify.ballot() == this.acceptedBallot) { //FIXME notify.ballot judgement is unnecessary
+        if (notify.instanceId() == last + 1 ) {
+            if(notify.ballotId() != this.acceptedValue.id()){
+                logger.error("S{} I{} Got notify event with different ballot id {}, mine is {}  ", context.squadId(),
+                        notify.instanceId(), notify.ballotId(), this.acceptedValue.id());
+                this.faulty = true;
+                return;
+            }
             chose(notify.instanceId(), notify.ballot());
             context.setAcceptSuccessRecord(notify.senderId(), notify.ballot());
         }

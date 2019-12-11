@@ -45,6 +45,7 @@ are by netty
 * TODO Add ignore leader parameter to HTTP request 						 :application:
 * TODO Metrics support Promethus 								     :metrics:
 * TODO When a node crashed, other node should be leader of its partition			   :algorithm:
+* TODO nextProposal function of 201 should get 203 if sever id is 3					:algo:
 * Issues
 ** TODO [#C] Netty print ERROR message [[file:caselog/netty-error.log][logs]]
 ** TODO client hang when getting redirect to a not given server address 			      :client:

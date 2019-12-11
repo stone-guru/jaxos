@@ -555,7 +555,7 @@ public class Proposer {
 
             //Then notify other peers
             Event notify = new Event.ChosenNotify(Proposer.this.settings.serverId(), Proposer.this.context.squadId(),
-                    Proposer.this.instanceId, this.proposal);
+                    Proposer.this.instanceId, this.proposal, this.sentValue.id());
             Proposer.this.config.getCommunicator().selfFirstBroadcast(notify);
         }
     }

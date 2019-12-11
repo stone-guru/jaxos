@@ -187,6 +187,7 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .setSquadId(notify.squadId())
                 .setInstanceId(notify.instanceId())
                 .setProposal(notify.ballot())
+                .setBallotId(notify.ballotId())
                 .build()
                 .toByteString();
     }
@@ -199,7 +200,6 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
                 .build()
                 .toByteString();
     }
-
 
     private ByteString encodeBody(Event.LearnResponse response) {
         PaxosMessage.LearnRes.Builder builder = PaxosMessage.LearnRes.newBuilder()
@@ -328,7 +328,8 @@ public class ProtoMessageCoder implements MessageCoder<PaxosMessage.DataGram> {
 
     private Event decodeAcceptedNotify(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {
         PaxosMessage.AcceptedNotify notify = PaxosMessage.AcceptedNotify.parseFrom(dataGram.getBody());
-        return new Event.ChosenNotify(dataGram.getSender(), notify.getSquadId(), notify.getInstanceId(), notify.getProposal());
+        return new Event.ChosenNotify(dataGram.getSender(), notify.getSquadId(), notify.getInstanceId(),
+                notify.getProposal(), notify.getBallotId());
     }
 
     private Event decodeLearnReq(PaxosMessage.DataGram dataGram) throws InvalidProtocolBufferException {

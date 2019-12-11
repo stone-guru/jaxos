@@ -5458,6 +5458,12 @@ public final class PaxosMessage {
      * @return The proposal.
      */
     int getProposal();
+
+    /**
+     * <code>int64 ballotId = 4;</code>
+     * @return The ballotId.
+     */
+    long getBallotId();
   }
   /**
    * Protobuf type {@code org.axesoft.jaxos.network.protobuff.AcceptedNotify}
@@ -5517,6 +5523,11 @@ public final class PaxosMessage {
             case 24: {
 
               proposal_ = input.readInt32();
+              break;
+            }
+            case 32: {
+
+              ballotId_ = input.readInt64();
               break;
             }
             default: {
@@ -5581,6 +5592,16 @@ public final class PaxosMessage {
       return proposal_;
     }
 
+    public static final int BALLOTID_FIELD_NUMBER = 4;
+    private long ballotId_;
+    /**
+     * <code>int64 ballotId = 4;</code>
+     * @return The ballotId.
+     */
+    public long getBallotId() {
+      return ballotId_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -5604,6 +5625,9 @@ public final class PaxosMessage {
       if (proposal_ != 0) {
         output.writeInt32(3, proposal_);
       }
+      if (ballotId_ != 0L) {
+        output.writeInt64(4, ballotId_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -5624,6 +5648,10 @@ public final class PaxosMessage {
       if (proposal_ != 0) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(3, proposal_);
+      }
+      if (ballotId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(4, ballotId_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -5646,6 +5674,8 @@ public final class PaxosMessage {
           != other.getInstanceId()) return false;
       if (getProposal()
           != other.getProposal()) return false;
+      if (getBallotId()
+          != other.getBallotId()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -5664,6 +5694,9 @@ public final class PaxosMessage {
           getInstanceId());
       hash = (37 * hash) + PROPOSAL_FIELD_NUMBER;
       hash = (53 * hash) + getProposal();
+      hash = (37 * hash) + BALLOTID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getBallotId());
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -5803,6 +5836,8 @@ public final class PaxosMessage {
 
         proposal_ = 0;
 
+        ballotId_ = 0L;
+
         return this;
       }
 
@@ -5832,6 +5867,7 @@ public final class PaxosMessage {
         result.squadId_ = squadId_;
         result.instanceId_ = instanceId_;
         result.proposal_ = proposal_;
+        result.ballotId_ = ballotId_;
         onBuilt();
         return result;
       }
@@ -5888,6 +5924,9 @@ public final class PaxosMessage {
         }
         if (other.getProposal() != 0) {
           setProposal(other.getProposal());
+        }
+        if (other.getBallotId() != 0L) {
+          setBallotId(other.getBallotId());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -6004,6 +6043,36 @@ public final class PaxosMessage {
       public Builder clearProposal() {
         
         proposal_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private long ballotId_ ;
+      /**
+       * <code>int64 ballotId = 4;</code>
+       * @return The ballotId.
+       */
+      public long getBallotId() {
+        return ballotId_;
+      }
+      /**
+       * <code>int64 ballotId = 4;</code>
+       * @param value The ballotId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBallotId(long value) {
+        
+        ballotId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 ballotId = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBallotId() {
+        
+        ballotId_ = 0L;
         onChanged();
         return this;
       }
@@ -12252,38 +12321,38 @@ public final class PaxosMessage {
       "\tAcceptRes\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceI" +
       "d\030\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\016\n\006result\030\004 \001(\005\022\023" +
       "\n\013maxProposal\030\005 \001(\005\022\030\n\020acceptedBallotId\030" +
-      "\006 \001(\003\022\030\n\020chosenInstanceId\030\007 \001(\003\"G\n\016Accep" +
+      "\006 \001(\003\022\030\n\020chosenInstanceId\030\007 \001(\003\"Y\n\016Accep" +
       "tedNotify\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId" +
-      "\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\"d\n\023ChosenInstan" +
-      "ceIdRes\022M\n\016chosenInstance\030\001 \003(\01325.org.ax" +
-      "esoft.jaxos.network.protobuff.ChosenInst" +
-      "anceId\"=\n\020ChosenInstanceId\022\017\n\007squadId\030\001 " +
-      "\001(\005\022\030\n\020chosenInstanceId\030\002 \001(\003\"J\n\010LearnRe" +
-      "q\022\017\n\007squadId\030\001 \001(\005\022\025\n\rlowInstanceId\030\002 \001(" +
-      "\003\022\026\n\016highInstanceId\030\003 \001(\003\"\241\001\n\010LearnRes\022\017" +
-      "\n\007squadId\030\001 \001(\005\022?\n\010instance\030\002 \003(\0132-.org." +
-      "axesoft.jaxos.network.protobuff.Instance" +
-      "\022C\n\ncheckPoint\030\003 \001(\0132/.org.axesoft.jaxos" +
-      ".network.protobuff.CheckPoint\"\202\001\n\010Instan" +
-      "ce\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022" +
-      "\020\n\010proposal\030\003 \001(\005\022?\n\005value\030\004 \001(\01320.org.a" +
-      "xesoft.jaxos.network.protobuff.BallotVal" +
-      "ue\"R\n\016ChosenQueryRes\022@\n\006chosen\030\001 \003(\01320.o" +
-      "rg.axesoft.jaxos.network.protobuff.Squad" +
-      "Chosen\"2\n\013SquadChosen\022\017\n\007squadId\030\001 \001(\005\022\022" +
-      "\n\ninstanceId\030\002 \001(\003\"\232\001\n\nCheckPoint\022\017\n\007squ" +
-      "adId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\021\n\ttimest" +
-      "amp\030\003 \001(\003\022\017\n\007content\030\004 \001(\014\022C\n\014lastInstan" +
-      "ce\030\005 \001(\0132-.org.axesoft.jaxos.network.pro" +
-      "tobuff.Instance*\351\001\n\004Code\022\010\n\004NONE\020\000\022\021\n\rHE" +
-      "ARTBEAT_REQ\020\001\022\021\n\rHEARTBEAT_RES\020\002\022\017\n\013PREP" +
-      "ARE_REQ\020\003\022\017\n\013PREPARE_RES\020\004\022\016\n\nACCEPT_REQ" +
-      "\020\005\022\016\n\nACCEPT_RES\020\006\022\023\n\017ACCEPTED_NOTIFY\020\007\022" +
-      "\020\n\014ACCEPTED_ACK\020\010\022\r\n\tLEARN_REQ\020\013\022\r\n\tLEAR" +
-      "N_RES\020\014\022\024\n\020CHOSEN_QUERY_REQ\020\r\022\024\n\020CHOSEN_" +
-      "QUERY_RES\020\016*3\n\tValueType\022\013\n\007NOTHING\020\000\022\017\n" +
-      "\013APPLICATION\020\001\022\010\n\004NOOP\020\002B\016B\014PaxosMessage" +
-      "b\006proto3"
+      "\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\022\020\n\010ballotId\030\004 \001" +
+      "(\003\"d\n\023ChosenInstanceIdRes\022M\n\016chosenInsta" +
+      "nce\030\001 \003(\01325.org.axesoft.jaxos.network.pr" +
+      "otobuff.ChosenInstanceId\"=\n\020ChosenInstan" +
+      "ceId\022\017\n\007squadId\030\001 \001(\005\022\030\n\020chosenInstanceI" +
+      "d\030\002 \001(\003\"J\n\010LearnReq\022\017\n\007squadId\030\001 \001(\005\022\025\n\r" +
+      "lowInstanceId\030\002 \001(\003\022\026\n\016highInstanceId\030\003 " +
+      "\001(\003\"\241\001\n\010LearnRes\022\017\n\007squadId\030\001 \001(\005\022?\n\010ins" +
+      "tance\030\002 \003(\0132-.org.axesoft.jaxos.network." +
+      "protobuff.Instance\022C\n\ncheckPoint\030\003 \001(\0132/" +
+      ".org.axesoft.jaxos.network.protobuff.Che" +
+      "ckPoint\"\202\001\n\010Instance\022\017\n\007squadId\030\001 \001(\005\022\022\n" +
+      "\ninstanceId\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\022?\n\005v" +
+      "alue\030\004 \001(\01320.org.axesoft.jaxos.network.p" +
+      "rotobuff.BallotValue\"R\n\016ChosenQueryRes\022@" +
+      "\n\006chosen\030\001 \003(\01320.org.axesoft.jaxos.netwo" +
+      "rk.protobuff.SquadChosen\"2\n\013SquadChosen\022" +
+      "\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\"\232\001\n" +
+      "\nCheckPoint\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstance" +
+      "Id\030\002 \001(\003\022\021\n\ttimestamp\030\003 \001(\003\022\017\n\007content\030\004" +
+      " \001(\014\022C\n\014lastInstance\030\005 \001(\0132-.org.axesoft" +
+      ".jaxos.network.protobuff.Instance*\351\001\n\004Co" +
+      "de\022\010\n\004NONE\020\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021\n\rHEART" +
+      "BEAT_RES\020\002\022\017\n\013PREPARE_REQ\020\003\022\017\n\013PREPARE_R" +
+      "ES\020\004\022\016\n\nACCEPT_REQ\020\005\022\016\n\nACCEPT_RES\020\006\022\023\n\017" +
+      "ACCEPTED_NOTIFY\020\007\022\020\n\014ACCEPTED_ACK\020\010\022\r\n\tL" +
+      "EARN_REQ\020\013\022\r\n\tLEARN_RES\020\014\022\024\n\020CHOSEN_QUER" +
+      "Y_REQ\020\r\022\024\n\020CHOSEN_QUERY_RES\020\016*3\n\tValueTy" +
+      "pe\022\013\n\007NOTHING\020\000\022\017\n\013APPLICATION\020\001\022\010\n\004NOOP" +
+      "\020\002B\016B\014PaxosMessageb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -12330,7 +12399,7 @@ public final class PaxosMessage {
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_descriptor,
-        new java.lang.String[] { "SquadId", "InstanceId", "Proposal", });
+        new java.lang.String[] { "SquadId", "InstanceId", "Proposal", "BallotId", });
     internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceIdRes_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceIdRes_fieldAccessorTable = new
