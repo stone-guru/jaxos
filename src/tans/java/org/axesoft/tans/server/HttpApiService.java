@@ -246,6 +246,9 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                         }
 
                         HttpAcquireRequest httpAcquireRequest = either.getRight();
+                        if(logger.isTraceEnabled()){
+                            logger.trace("Got request {}", httpAcquireRequest.keyLong);
+                        }
                         int i = tansService.squadIdOf(httpAcquireRequest.keyLong.key());
                         requestQueues[i].addRequest(httpAcquireRequest);
                     }

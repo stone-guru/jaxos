@@ -77,6 +77,15 @@ public class TansClientBootstrap {
             result = 31 * result + (ignoreLeader ? 1 : 0);
             return result;
         }
+
+        @Override
+        public String toString() {
+            return "AcquireRequest{" +
+                    "key='" + key + '\'' +
+                    ", n=" + n +
+                    ", ignoreLeader=" + ignoreLeader +
+                    '}';
+        }
     }
 
     private class HttpConnector {
@@ -302,7 +311,7 @@ public class TansClientBootstrap {
                 else {
                     String msg = f.cause().getMessage();
                     if (msg.contains("409")) {//conflict
-                        logger.info("encounter CONFLICT retry after 100 ms");
+                        logger.info("Request {} encounter CONFLICT retry after 100 ms", req);
                         worker.schedule(() -> acquire(req, channel, promise), 100, TimeUnit.MILLISECONDS);
                     }
                     else if (msg.contains("500")) {

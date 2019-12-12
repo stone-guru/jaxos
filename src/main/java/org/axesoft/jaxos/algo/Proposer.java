@@ -140,8 +140,19 @@ public class Proposer {
 
     private void startPrepare(int proposal0) {
         Instance i0 = this.learner.getLastChosenInstance(this.context.squadId());
+        if(this.instanceId == i0.instanceId()){
+            //other server help me finish this value
+            if(i0.value().id() == this.proposeValue.id()){
+                if (logger.isDebugEnabled()) {
+                    logger.debug("S{} I{} Other proposer help finish when startPrepare", context.squadId(), this.instanceId);
+                }
+                endAs(null);
+                return;
+            }
+        }
+
         if (this.instanceId != i0.instanceId() + 1) {
-            String msg = String.format("when prepare instance %d while last chosen is %d.%d",
+            String msg = String.format("S%d when prepare instance %d while last chosen is %d",
                     context.squadId(), instanceId, i0.instanceId());
             endAs(new ProposalConflictException(msg));
             return;
@@ -240,7 +251,18 @@ public class Proposer {
 
     private void startAccept(Event.BallotValue value, int proposal) {
         Instance i0 = this.learner.getLastChosenInstance(this.context.squadId());
-        if (instanceId != i0.instanceId() + 1) {
+        if(this.instanceId == i0.instanceId()){
+            //other server help me finish this value
+            if(i0.value().id() == this.proposeValue.id()){
+                if (logger.isDebugEnabled()) {
+                    logger.debug("S{} I{} Other proposer help finish when startAccept", context.squadId(), this.instanceId);
+                }
+                endAs(null);
+                return;
+            }
+        }
+
+        if (this.instanceId != i0.instanceId() + 1) {
             String msg = String.format("when accept instance %d.%d while last chosen is %d",
                     context.squadId(), instanceId, i0.instanceId());
             endAs(new ProposalConflictException(msg));

@@ -55,7 +55,7 @@ public class TansService implements StateMachine {
     public void consume(int squadId, long instanceId, ByteString proposal) {
         List<TansNumber> nx = proposal.isEmpty()? Collections.emptyList() : fromProposal(proposal);
         if (logger.isTraceEnabled()) {
-            logger.trace("TANS state machine consumer {} event from instance {}.{}", nx.size(), squadId, instanceId);
+            logger.trace("TANS state machine consume {} event from instance {}.{}", nx.size(), squadId, instanceId);
         }
         this.numberMaps[squadId].consume(instanceId, nx);
     }
@@ -171,6 +171,10 @@ public class TansService implements StateMachine {
                     else {
                         throw new RuntimeException(String.format("Unmatched version n0 = %s, n1 = %s", n0, n1));
                     }
+                }
+
+                if(logger.isTraceEnabled()){
+                    logger.trace("Statemachine apply change {}", n1);
                 }
             }
             return numbers1;
