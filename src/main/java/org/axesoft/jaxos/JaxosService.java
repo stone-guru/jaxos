@@ -150,7 +150,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
         this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, settings.checkPointMinutes(), settings.checkPointMinutes(), TimeUnit.MINUTES);
         this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
-        this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync()),
+        this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync(false)),
                 1000, settings.syncInterval().toMillis() / 2, TimeUnit.MILLISECONDS);
         if(!this.settings.ignoreLeader()) {
             this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, 3, 60, TimeUnit.SECONDS);
@@ -346,7 +346,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     }
 
 
-    static class BallotIdHolder {
+    public static class BallotIdHolder {
 
         private static class Item {
             private long highBits;
@@ -371,7 +371,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             this.serverId = serverId;
         }
 
-        private long nextIdOf(int squadId){
+        public long nextIdOf(int squadId){
             Item item = itemMap.computeIfAbsent(squadId, i -> new Item((serverId << 16) | squadId));
             return item.nextId();
         }

@@ -41,8 +41,8 @@ public class AcceptorLoggerTest {
         final int n = 10000;
         StopWatch w = StopWatch.createStarted();
         for(int i = 0; i < n; i++) {
-            logger.savePromise(1, 1000 + i, 1 + i, Event.BallotValue.appValue(ByteString.copyFromUtf8("Hello" + i)));
-            logger.savePromise(2, 1000 + i, 1 + i, Event.BallotValue.appValue(ByteString.copyFromUtf8("Hello" + i)));
+            logger.savePromise(1, 1000 + i, 1 + i, Event.BallotValue.appValue(i, ByteString.copyFromUtf8("Hello" + i)));
+            logger.savePromise(2, 1000 + i, 1 + i, Event.BallotValue.appValue(i, ByteString.copyFromUtf8("Hello" + i)));
         }
 
         w.stop();
@@ -52,9 +52,9 @@ public class AcceptorLoggerTest {
         Instance p = logger.loadLastPromise(1);
         assertNotNull(p);
 
-        assertEquals(1, p.squadId);
-        assertEquals(1000 + n - 1, p.instanceId);
-        assertEquals(n, p.proposal);
-        assertEquals("Hello" + (n - 1), p.value.content().toStringUtf8());
+        assertEquals(1, p.squadId());
+        assertEquals(1000 + n - 1, p.instanceId());
+        assertEquals(n, p.proposal());
+        assertEquals("Hello" + (n - 1), p.value().content().toStringUtf8());
     }
 }

@@ -55,7 +55,17 @@ public class ClientApp {
         for (int j = 0; j < p; j++) {
             new Thread(() -> {
                 try {
-                    run(arg.servers, arg.round, n, arg.printEveryResult, startLatch, checker, millis, times);
+                    new TansClientRunner()
+                            .setServers(arg.servers)
+                            .setK(arg.round)
+                            .setN(n)
+                            .setPrintEveryResult(arg.printEveryResult)
+                            .setStartLatch(startLatch)
+                            .setChecker(checker)
+                            .setMillis(millis)
+                            .setTimes(times)
+                            .execute();
+                    //run(arg.servers, arg.round, n, arg.printEveryResult, startLatch, checker, millis, times);
                 }
                 catch (Exception e) {
                     System.out.println("Exec end with " + e.getMessage());
@@ -89,7 +99,7 @@ public class ClientApp {
                            AtomicLong millis, AtomicLong times) throws Exception {
         TansClientBootstrap cb = new TansClientBootstrap(servers);
         final TansClient client = cb.getClient();
-        final int printInterval =  200 + (int) (Math.random() * 100);
+        final int printInterval = 200 + (int) (Math.random() * 100);
         Thread.sleep(1000);
 
         startLatch.await();
@@ -122,6 +132,96 @@ public class ClientApp {
 
             System.out.println(String.format("%s finish %d in %.2f seconds, OPS is %.1f, DUR is %.1f ms",
                     Thread.currentThread().getName(), count, sec, count / sec, ((double) m) / count));
+        }
+    }
+
+    public static class TansClientRunner {
+        private String servers;
+        private int k;
+        private int n;
+        private boolean printEveryResult;
+        private CountDownLatch startLatch;
+        private ResultChecker checker;
+        private AtomicLong millis;
+        private AtomicLong times;
+
+        public void execute() throws Exception {
+            TansClientBootstrap cb = new TansClientBootstrap(servers);
+            final TansClient client = cb.getClient();
+            final int printInterval = 200 + (int) (Math.random() * 100);
+
+            Thread.sleep(1000);
+            startLatch.await();
+
+            StopWatch watch = StopWatch.createStarted();
+            int count = 0;
+            try {
+                for (int m = 0; m < k; m++) {
+                    boolean ignoreLeader = true; //k * 1.0 / m > Math.random();
+                    for (int i = 0; i < n; i++) {
+                        count++;
+                        String key = "object-id-" + (count % 5000);
+                        Future<LongRange> future = client.acquire(key, 1 + (i % 10), ignoreLeader);
+                        LongRange r = future.get();
+                        checker.accept(key, r.low(), r.high());
+                        if (count % printInterval == 0 || printEveryResult) {
+                            System.out.println(String.format("[%s], %d, %s, %s", Thread.currentThread().getName(), count, key, r.toString()));
+                        }
+                    }
+                }
+            }
+            finally {
+                watch.stop();
+                long m = watch.getTime(TimeUnit.MILLISECONDS);
+                double sec = m / 1000.0;
+
+                millis.addAndGet(m);
+                times.addAndGet(count);
+                cb.close();
+
+                System.out.println(String.format("%s finish %d in %.2f seconds, OPS is %.1f, DUR is %.1f ms",
+                        Thread.currentThread().getName(), count, sec, count / sec, ((double) m) / count));
+            }
+        }
+
+        public TansClientRunner setServers(String servers) {
+            this.servers = servers;
+            return this;
+        }
+
+        public TansClientRunner setK(int k) {
+            this.k = k;
+            return this;
+        }
+
+        public TansClientRunner setN(int n) {
+            this.n = n;
+            return this;
+        }
+
+        public TansClientRunner setPrintEveryResult(boolean printEveryResult) {
+            this.printEveryResult = printEveryResult;
+            return this;
+        }
+
+        public TansClientRunner setStartLatch(CountDownLatch startLatch) {
+            this.startLatch = startLatch;
+            return this;
+        }
+
+        public TansClientRunner setChecker(ResultChecker checker) {
+            this.checker = checker;
+            return this;
+        }
+
+        public TansClientRunner setMillis(AtomicLong millis) {
+            this.millis = millis;
+            return this;
+        }
+
+        public TansClientRunner setTimes(AtomicLong times) {
+            this.times = times;
+            return this;
         }
     }
 

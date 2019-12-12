@@ -187,6 +187,10 @@ public class Acceptor {
                     context.squadId(), notify, this.acceptedValue);
         }
 
+        if(this.faulty){
+            return;
+        }
+
         long last = this.learner.getLastChosenInstance(this.context.squadId()).instanceId();
         if (notify.instanceId() == last + 1 ) {
             if(notify.ballotId() != this.acceptedValue.id()){
@@ -227,6 +231,7 @@ public class Acceptor {
         }
 
         // for multi paxos, prepare once and accept many, keep maxBallot unchanged
+        // this.maxBallot = unchanged
         this.acceptedBallot = 0;
         this.acceptedValue = Event.BallotValue.EMPTY;
     }

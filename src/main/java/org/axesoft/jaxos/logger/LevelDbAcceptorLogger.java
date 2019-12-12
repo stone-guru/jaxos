@@ -229,8 +229,8 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     }
 
     @Override
-    public void sync() {
-        if (!computeShouldSync(System.currentTimeMillis())) {
+    public void sync(boolean force) {
+        if (!force && !computeShouldSync(System.currentTimeMillis())) {
             return;
         }
 
