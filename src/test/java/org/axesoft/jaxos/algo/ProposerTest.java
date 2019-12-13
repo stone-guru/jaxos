@@ -1,6 +1,7 @@
 package org.axesoft.jaxos.algo;
 
 import org.axesoft.jaxos.JaxosService;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -22,7 +23,7 @@ public class ProposerTest {
         assertEquals(i2, i1 + 1);
     }
 
-    @Test
+    @Ignore
     public void testBallotId2() throws Exception {
         JaxosService.BallotIdHolder holder = new JaxosService.BallotIdHolder (7);
         for(int i = 0;i < Integer.MAX_VALUE; i++){
