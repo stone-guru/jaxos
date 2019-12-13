@@ -60,17 +60,19 @@ public class EventWorkerPool implements EventTimer {
 
     public void submitEvent(Event event, Consumer<Event> resultConsumer) {
         ExecutorService executor;
+        int n = event.squadId() % ballotExecutors.length;
+        executor = this.ballotExecutors[n];
 
-        if (event instanceof Event.BallotEvent) {
-            int n = event.squadId() % ballotExecutors.length;
-            executor = this.ballotExecutors[n];
-        }
-        else if (event instanceof Event.InstanceEvent) {
-            executor = this.learnerExecutor;
-        }
-        else {
-            throw new UnsupportedOperationException(event.getClass().getName());
-        }
+//        if (event instanceof Event.BallotEvent) {
+//            int n = event.squadId() % ballotExecutors.length;
+//            executor = this.ballotExecutors[n];
+//        }
+//        else if (event instanceof Event.InstanceEvent) {
+//            executor = this.learnerExecutor;
+//        }
+//        else {
+//            throw new UnsupportedOperationException(event.getClass().getName());
+//        }
 
         executor.submit(new RunnableWithLog(event.squadId(), logger,
                 () -> {

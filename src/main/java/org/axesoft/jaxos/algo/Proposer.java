@@ -133,8 +133,8 @@ public class Proposer {
         if (this.stage != Stage.NONE && event.squadId() == context.squadId() && event.instanceId() == this.instanceId) {
             endAs(new TimeoutException(String.format("S%d I%d whole proposal timeout", context.squadId(), this.instanceId)));
         }
-        else {
-            logger.info("Ignore unnecessary {}", event);
+        else if (logger.isDebugEnabled()){
+            logger.debug("Ignore unnecessary {}", event);
         }
     }
 

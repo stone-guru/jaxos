@@ -32,6 +32,9 @@ public class StateMachineRunner implements Learner {
 
     public synchronized void restoreFromCheckPoint(CheckPoint checkPoint, List<Instance> ix) {
         if (!checkPoint.isEmpty()) {
+            if(checkPoint.squadId() != this.squadId){
+                throw new IllegalArgumentException(checkPoint + " not match mine " + this.squadId );
+            }
             this.machine.restoreFromCheckPoint(checkPoint.squadId(), checkPoint.instanceId(), checkPoint.content());
             this.lastChosen = checkPoint.lastInstance();
             logger.info("S{} Restore of {}", checkPoint.squadId(), checkPoint);
@@ -54,10 +57,10 @@ public class StateMachineRunner implements Learner {
     }
 
 
-    public synchronized CheckPoint makeCheckPoint(int squadId) {
+    public synchronized CheckPoint makeCheckPoint() {
         long timestamp = System.currentTimeMillis();
-        Pair<ByteString, Long> p = this.machine.makeCheckPoint(squadId);
-        return new CheckPoint(squadId, p.getRight(), timestamp, p.getLeft(), this.lastChosen);
+        Pair<ByteString, Long> p = this.machine.makeCheckPoint(this.squadId);
+        return new CheckPoint(this.squadId, p.getRight(), timestamp, p.getLeft(), this.lastChosen);
     }
 
     @Override

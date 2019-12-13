@@ -85,7 +85,7 @@ public class Squad implements EventDispatcher {
             Event.BallotEvent ballotRequest = (Event.BallotEvent) request;
             Event.BallotEvent result = processBallotEvent(ballotRequest);
             long last = this.lastChosenInstanceId();
-            if (last < ballotRequest.chosenInstanceId() && !learning) {
+            if (last < ballotRequest.chosenInstanceId() - 1 && !learning) {
                 startLearn(ballotRequest.senderId(), last, ballotRequest.chosenInstanceId());
             }
             return result;
@@ -221,7 +221,7 @@ public class Squad implements EventDispatcher {
         }
 
         if (instanceMissing) {
-            CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint(context.squadId());
+            CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint();
             return new Event.LearnResponse(settings.serverId(), context.squadId(), Collections.emptyList(), checkPoint);
         }
         else {
@@ -259,7 +259,7 @@ public class Squad implements EventDispatcher {
     }
 
     public void saveCheckPoint() {
-        CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint(context.squadId());
+        CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint();
         this.components.getLogger().saveCheckPoint(checkPoint);
 
         logger.info("Saved {} ", checkPoint);
