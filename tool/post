@@ -11,8 +11,11 @@ URL="http://$SERVER:808$1/acquire?key=girl.id"
 i=0;
 while [ $i -lt $n ]; do
     for url in `cat urls`; do
-       date
-       ab -n 1000 -c 10 -k -l "$url"
+	echo
+	date
+	echo "$url"
+	curl "$url"
+	ab -n 1000 -c 10 -k -l "$url"
     done
     echo "================"
     let i=i+1
