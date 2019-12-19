@@ -318,7 +318,7 @@ public class ArgumentParser {
 
         @Override
         void accept(int v, JaxosSettings.Builder builder) {
-            builder.setLeaderLeaseSeconds(v);
+            builder.setAlgoThreadNumber(v);
         }
     }
 }

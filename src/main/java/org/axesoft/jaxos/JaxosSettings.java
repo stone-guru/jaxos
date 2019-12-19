@@ -255,13 +255,14 @@ public class JaxosSettings {
         return "JaxosSettings{" +
                 "peerMap=" + peerMap +
                 ", serverId=" + serverId +
+                ", dbDirectory='" + dbDirectory + '\'' +
                 ", leaderLeaseSeconds=" + leaderLeaseSeconds +
                 ", leaderOnly=" + leaderOnly +
-                ", dbDirectory='" + dbDirectory + '\'' +
                 ", wholeProposalTimeoutMillis=" + wholeProposalTimeoutMillis +
                 ", prepareTimeoutMillis=" + prepareTimeoutMillis +
                 ", acceptTimeoutMillis=" + acceptTimeoutMillis +
                 ", partitionNumber=" + partitionNumber +
+                ", algoThreadNumber=" + algoThreadNumber +
                 ", conflictSleepMillis=" + conflictSleepMillis +
                 ", checkPointMinutes=" + checkPointMinutes +
                 '}';

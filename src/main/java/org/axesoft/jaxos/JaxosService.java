@@ -173,7 +173,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             SquadContext context = squads[i].context();
             if (context.isLeader()) {
                 mySquadCount++;
-                if (System.currentTimeMillis() - context.lastSuccessAccept().timestampMillis() >= this.settings.leaderLeaseSeconds() * 800) {
+                if (System.currentTimeMillis() - context.chosenTimestamp() >= this.settings.leaderLeaseSeconds() * 800) {
                     proposeForLeader(i);
                 }
             }

@@ -86,10 +86,10 @@ public class Proposer {
         this.round = 0;
 
         if (context.isLeader()) {
-            startAccept(this.proposeValue, context.lastSuccessAccept().proposal());
+            startAccept(this.proposeValue, context.chosenProposal());
         }
         else {
-            int proposal0 = proposalNumHolder.proposalGreatThan(context.lastSuccessAccept().proposal());
+            int proposal0 = proposalNumHolder.proposalGreatThan(context.chosenProposal());
             startPrepare(proposal0);
         }
 

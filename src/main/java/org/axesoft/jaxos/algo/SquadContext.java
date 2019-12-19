@@ -48,11 +48,11 @@ public class SquadContext {
     private SquadMetrics jaxosMetrics = new SquadMetrics();
     private JaxosSettings config;
     private int squadId;
-    private volatile SuccessRequestRecord lastSuccessRequestRecord = new SuccessRequestRecord(-1, 0, 0);
 
     private int proposerId = 0;
     private long chosenInstanceId = 0;
     private long chosenBallotId = 0;
+    private int chosenProposal = 0;
     private long chosenTimestamp = 0;
 
     public SquadContext(int squadId, JaxosSettings config) {
@@ -60,23 +60,25 @@ public class SquadContext {
         this.squadId = squadId;
     }
 
-    public void recordChosenInfo(int proposerId, long chosenInstanceId, long chosenBallotId){
+    public void recordChosenInfo(int proposerId, long chosenInstanceId, long chosenBallotId, int proposal){
         this.proposerId = proposerId;
         this.chosenInstanceId = chosenInstanceId;
         this.chosenBallotId = chosenBallotId;
+        this.chosenProposal = proposal;
         this.chosenTimestamp = System.currentTimeMillis();
+
+        if(logger.isTraceEnabled()){
+            logger.trace("Record chosen info proposer {}, instance {}, ballotId {} at {}",
+                    proposerId, chosenInstanceId, chosenBallotId, new Date(chosenTimestamp));
+        }
     }
 
     public SquadMetrics metrics() {
         return this.jaxosMetrics;
     }
 
-    public void setAcceptSuccessRecord(int serverId, int proposal){
-        this.lastSuccessRequestRecord = new SuccessRequestRecord(serverId, System.currentTimeMillis(), proposal);
-    }
-
-    public SuccessRequestRecord lastSuccessAccept() {
-        return this.lastSuccessRequestRecord;
+    public long chosenTimestamp(){
+        return this.chosenTimestamp;
     }
 
     public boolean isOtherLeaderActive() {
@@ -98,6 +100,14 @@ public class SquadContext {
 
     public long chosenInstanceId() {
         return this.chosenInstanceId;
+    }
+
+    public int lastProposer(){
+        return this.proposerId;
+    }
+
+    public int chosenProposal(){
+        return this.chosenProposal;
     }
 
     public Event.ChosenInfo getLastChosenInfo(){

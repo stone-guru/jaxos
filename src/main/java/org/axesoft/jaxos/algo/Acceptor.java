@@ -49,7 +49,7 @@ public class Acceptor {
         }
 
         //Instance i1 = this.learner.getLastChosenInstance(this.context.squadId());
-        long last = handleAcceptedNotifyLostMaybe(this.context.chosenInstanceId(), request.instanceId(), request.chosenInfo());
+        long last = handleAcceptedNotifyLostMaybe(this.context.chosenInstanceId(), request.senderId(), request.instanceId(), request.chosenInfo());
 
         if (request.instanceId() <= last) {
             logger.debug("S{}: PrepareResponse: historic prepare(instance id = {}), while my instance id is {} ",
@@ -111,7 +111,7 @@ public class Acceptor {
             return null;
         }
 
-        long last = handleAcceptedNotifyLostMaybe(this.context.chosenInstanceId(), request.instanceId(), request.chosenInfo());
+        long last = handleAcceptedNotifyLostMaybe(this.context.chosenInstanceId(), request.senderId(), request.instanceId(), request.chosenInfo());
 
         if (request.instanceId() <= last) {
             if (logger.isDebugEnabled()) {
@@ -167,13 +167,13 @@ public class Acceptor {
                 proposal, result, this.acceptedValue.id(), this.context.getLastChosenInfo());
     }
 
-    private long handleAcceptedNotifyLostMaybe(long chosenInstanceId, long requestInstanceId, Event.ChosenInfo chosenInfo) {
+    private long handleAcceptedNotifyLostMaybe(long chosenInstanceId, int proposer, long requestInstanceId, Event.ChosenInfo chosenInfo) {
         if (requestInstanceId == chosenInstanceId + 2) {
             if (this.acceptedBallot > 0 && this.acceptedValue.id() == chosenInfo.ballotId()) {
                 logger.info("S{}: success handle notify lost, when handle prepare({}), mine is {}",
                         context.squadId(), requestInstanceId, chosenInstanceId);
 
-                chose(chosenInstanceId, 0);//FIXME verify 0 is ok?
+                chose(proposer, chosenInstanceId, 0);//FIXME verify 0 is ok?
                 return chosenInstanceId + 1;
             }
         }
@@ -198,8 +198,8 @@ public class Acceptor {
                 this.faulty = true;
                 return;
             }
-            chose(notify.instanceId(), notify.ballot());
-            context.recordChosenInfo(notify.senderId(), notify.instanceId(), notify.ballotId());
+            chose(notify.senderId(), notify.instanceId(), notify.ballot());
+
             //context.setAcceptSuccessRecord(notify.senderId(), notify.ballot());
         }
         else if (notify.instanceId() <= last + 1) {
@@ -220,7 +220,7 @@ public class Acceptor {
         }
     }
 
-    private void chose(long instanceId, int proposal) {
+    private void chose(int proposer, long instanceId, int proposal) {
         try {
             learner.learnValue(new Instance(this.context.squadId(), instanceId, proposal, this.acceptedValue));
         }catch(Exception e){
@@ -229,6 +229,8 @@ public class Acceptor {
             String msg = String.format("Error when chosen value %d.%d", this.context.squadId(), instanceId);
             logger.error(msg, e);
         }
+
+        context.recordChosenInfo(proposer, instanceId, this.acceptedValue.id(), proposal);
 
         // for multi paxos, prepare once and accept many, keep maxBallot unchanged
         // this.maxBallot = unchanged

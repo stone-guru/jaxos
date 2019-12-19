@@ -68,13 +68,11 @@ public class Squad implements EventDispatcher {
     public ListenableFuture<Void> propose(long instanceId, Event.BallotValue v, boolean ignoreLeader, SettableFuture<Void> resultFuture) {
         attachMetricsListener(resultFuture);
 
-        SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessAccept();
-
         if (this.context.isOtherLeaderActive() && !this.settings.leaderOnly() && !ignoreLeader) {
             if (logger.isDebugEnabled()) {
-                logger.debug("S{} I{} redirect to {}", context.squadId(), instanceId, lastSuccessRequestRecord.serverId());
+                logger.debug("S{} I{} redirect to {}", context.squadId(), instanceId, this.context.lastProposer());
             }
-            resultFuture.setException(new RedirectException(lastSuccessRequestRecord.serverId()));
+            resultFuture.setException(new RedirectException(this.context.lastProposer()));
         }
         else {
             proposer.propose(instanceId, v, resultFuture);
@@ -265,6 +263,10 @@ public class Squad implements EventDispatcher {
                 response.lowInstanceId(), response.highInstanceId());
         this.stateMachineRunner.restoreFromCheckPoint(response.checkPoint(), response.instances());
 
+        List<Instance> ix = response.instances();
+        Instance last = ix.isEmpty()? response.checkPoint().lastInstance() : ix.get(ix.size() - 1);
+        this.context.recordChosenInfo(response.senderId(), last.id(), last.value().id(), last.proposal());
+
         this.learnTimeout.cancel();
         this.learnTimeout = null;
     }
@@ -280,7 +282,7 @@ public class Squad implements EventDispatcher {
         Pair<Double, Double> elapsed = this.metrics.compute(current);
 
         String msg = String.format("S %d, L=%d, PT=%d, PE=%.3f, S=%.2f, C=%.2f, O=%.2f, AE=%.3f, AT=%d (%.0f s), TT=%d, SR=%.3f, LI=%d",
-                this.context.squadId(), context.lastSuccessAccept().serverId(),
+                this.context.squadId(), context.lastProposer(),
                 proposalDelta, elapsed.getLeft(),
                 successRate, conflictRate, otherRate, elapsed.getRight(), acceptDelta, seconds,
                 this.metrics.proposeTimes(), this.metrics.totalSuccessRate(), this.context.chosenInstanceId()
@@ -310,7 +312,7 @@ public class Squad implements EventDispatcher {
         }
 
         this.stateMachineRunner.restoreFromCheckPoint(checkPoint, ix);
-        this.context.recordChosenInfo(0, last.id(), last.value().id());
+        this.context.recordChosenInfo(0, last.id(), last.value().id(), last.proposal());
         logger.info("Squad {} restored to instance {}", context.squadId(), last.id());
     }
 }
