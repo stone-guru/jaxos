@@ -5,9 +5,7 @@ import io.netty.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -18,8 +16,8 @@ import java.util.function.Supplier;
 public class EventWorkerPool implements EventTimer {
     private static Logger logger = LoggerFactory.getLogger(EventWorkerPool.class);
 
+    private static final int THREAD_QUEUE_CAPACITY = 10 * 1024;
     private ExecutorService[] ballotExecutors;
-    private ExecutorService learnerExecutor;
     private Supplier<EventDispatcher> eventDispatcherSupplier;
     private HashedWheelTimer timer = new HashedWheelTimer(100, TimeUnit.MILLISECONDS);
 
@@ -28,20 +26,16 @@ public class EventWorkerPool implements EventTimer {
         this.ballotExecutors = new ExecutorService[threadNum];
         for (int i = 0; i < threadNum; i++) {
             final int threadNo = i;
-            this.ballotExecutors[i] = Executors.newSingleThreadExecutor((r) -> {
-                String name = "EventWorkerThread-" + threadNo;
-                Thread thread = new Thread(r, name);
-                thread.setDaemon(true);
-                return thread;
-            });
+            this.ballotExecutors[i] = new ThreadPoolExecutor(1, 1,
+                    0L, TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<>(THREAD_QUEUE_CAPACITY),
+                    (r) -> {
+                        String name = "EventWorkerThread-" + threadNo;
+                        Thread thread = new Thread(r, name);
+                        thread.setDaemon(true);
+                        return thread;
+                    });
         }
-
-        this.learnerExecutor = Executors.newSingleThreadExecutor((r) -> {
-            String name = "LearnerThread";
-            Thread thread = new Thread(r, name);
-            thread.setDaemon(true);
-            return thread;
-        });
     }
 
     public void queueBallotTask(int squadId, Runnable r) {
@@ -51,7 +45,7 @@ public class EventWorkerPool implements EventTimer {
 
 
     public void queueInstanceTask(Runnable r) {
-        this.learnerExecutor.submit(new RunnableWithLog(logger, r));
+        this.ballotExecutors[0].submit(new RunnableWithLog(logger, r));
     }
 
     public void submitEventToSelf(Event event) {
@@ -59,20 +53,8 @@ public class EventWorkerPool implements EventTimer {
     }
 
     public void submitEvent(Event event, Consumer<Event> resultConsumer) {
-        ExecutorService executor;
         int n = event.squadId() % ballotExecutors.length;
-        executor = this.ballotExecutors[n];
-
-//        if (event instanceof Event.BallotEvent) {
-//            int n = event.squadId() % ballotExecutors.length;
-//            executor = this.ballotExecutors[n];
-//        }
-//        else if (event instanceof Event.InstanceEvent) {
-//            executor = this.learnerExecutor;
-//        }
-//        else {
-//            throw new UnsupportedOperationException(event.getClass().getName());
-//        }
+        ExecutorService executor = this.ballotExecutors[n];
 
         executor.submit(new RunnableWithLog(event.squadId(), logger,
                 () -> {
@@ -92,12 +74,7 @@ public class EventWorkerPool implements EventTimer {
         return timer.newTimeout((t) -> this.submitEventToSelf(timeoutEvent), delay, timeUnit);
     }
 
-    public ExecutorService learnerExecutor() {
-        return this.learnerExecutor;
-    }
-
     public void shutdown() {
-        learnerExecutor.shutdownNow();
         for (ExecutorService executor : this.ballotExecutors) {
             executor.shutdownNow();
         }

@@ -1062,765 +1062,6 @@ public final class PaxosMessage {
 
   }
 
-  public interface PrepareReqOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:org.axesoft.jaxos.network.protobuff.PrepareReq)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>int32 squadId = 1;</code>
-     * @return The squadId.
-     */
-    int getSquadId();
-
-    /**
-     * <code>int64 instanceId = 2;</code>
-     * @return The instanceId.
-     */
-    long getInstanceId();
-
-    /**
-     * <code>int32 round = 3;</code>
-     * @return The round.
-     */
-    int getRound();
-
-    /**
-     * <code>int32 proposal = 4;</code>
-     * @return The proposal.
-     */
-    int getProposal();
-
-    /**
-     * <code>int32 lastChosenProposal = 5;</code>
-     * @return The lastChosenProposal.
-     */
-    int getLastChosenProposal();
-  }
-  /**
-   * Protobuf type {@code org.axesoft.jaxos.network.protobuff.PrepareReq}
-   */
-  public  static final class PrepareReq extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.PrepareReq)
-      PrepareReqOrBuilder {
-  private static final long serialVersionUID = 0L;
-    // Use PrepareReq.newBuilder() to construct.
-    private PrepareReq(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private PrepareReq() {
-    }
-
-    @java.lang.Override
-    @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
-        UnusedPrivateParameter unused) {
-      return new PrepareReq();
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return this.unknownFields;
-    }
-    private PrepareReq(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      this();
-      if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
-      }
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            case 8: {
-
-              squadId_ = input.readInt32();
-              break;
-            }
-            case 16: {
-
-              instanceId_ = input.readInt64();
-              break;
-            }
-            case 24: {
-
-              round_ = input.readInt32();
-              break;
-            }
-            case 32: {
-
-              proposal_ = input.readInt32();
-              break;
-            }
-            case 40: {
-
-              lastChosenProposal_ = input.readInt32();
-              break;
-            }
-            default: {
-              if (!parseUnknownField(
-                  input, unknownFields, extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
-    }
-
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.class, org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.Builder.class);
-    }
-
-    public static final int SQUADID_FIELD_NUMBER = 1;
-    private int squadId_;
-    /**
-     * <code>int32 squadId = 1;</code>
-     * @return The squadId.
-     */
-    public int getSquadId() {
-      return squadId_;
-    }
-
-    public static final int INSTANCEID_FIELD_NUMBER = 2;
-    private long instanceId_;
-    /**
-     * <code>int64 instanceId = 2;</code>
-     * @return The instanceId.
-     */
-    public long getInstanceId() {
-      return instanceId_;
-    }
-
-    public static final int ROUND_FIELD_NUMBER = 3;
-    private int round_;
-    /**
-     * <code>int32 round = 3;</code>
-     * @return The round.
-     */
-    public int getRound() {
-      return round_;
-    }
-
-    public static final int PROPOSAL_FIELD_NUMBER = 4;
-    private int proposal_;
-    /**
-     * <code>int32 proposal = 4;</code>
-     * @return The proposal.
-     */
-    public int getProposal() {
-      return proposal_;
-    }
-
-    public static final int LASTCHOSENPROPOSAL_FIELD_NUMBER = 5;
-    private int lastChosenProposal_;
-    /**
-     * <code>int32 lastChosenProposal = 5;</code>
-     * @return The lastChosenProposal.
-     */
-    public int getLastChosenProposal() {
-      return lastChosenProposal_;
-    }
-
-    private byte memoizedIsInitialized = -1;
-    @java.lang.Override
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    @java.lang.Override
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      if (squadId_ != 0) {
-        output.writeInt32(1, squadId_);
-      }
-      if (instanceId_ != 0L) {
-        output.writeInt64(2, instanceId_);
-      }
-      if (round_ != 0) {
-        output.writeInt32(3, round_);
-      }
-      if (proposal_ != 0) {
-        output.writeInt32(4, proposal_);
-      }
-      if (lastChosenProposal_ != 0) {
-        output.writeInt32(5, lastChosenProposal_);
-      }
-      unknownFields.writeTo(output);
-    }
-
-    @java.lang.Override
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (squadId_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(1, squadId_);
-      }
-      if (instanceId_ != 0L) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(2, instanceId_);
-      }
-      if (round_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(3, round_);
-      }
-      if (proposal_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(4, proposal_);
-      }
-      if (lastChosenProposal_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(5, lastChosenProposal_);
-      }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
-      return size;
-    }
-
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq)) {
-        return super.equals(obj);
-      }
-      org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq) obj;
-
-      if (getSquadId()
-          != other.getSquadId()) return false;
-      if (getInstanceId()
-          != other.getInstanceId()) return false;
-      if (getRound()
-          != other.getRound()) return false;
-      if (getProposal()
-          != other.getProposal()) return false;
-      if (getLastChosenProposal()
-          != other.getLastChosenProposal()) return false;
-      if (!unknownFields.equals(other.unknownFields)) return false;
-      return true;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (37 * hash) + SQUADID_FIELD_NUMBER;
-      hash = (53 * hash) + getSquadId();
-      hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
-      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-          getInstanceId());
-      hash = (37 * hash) + ROUND_FIELD_NUMBER;
-      hash = (53 * hash) + getRound();
-      hash = (37 * hash) + PROPOSAL_FIELD_NUMBER;
-      hash = (53 * hash) + getProposal();
-      hash = (37 * hash) + LASTCHOSENPROPOSAL_FIELD_NUMBER;
-      hash = (53 * hash) + getLastChosenProposal();
-      hash = (29 * hash) + unknownFields.hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
-        java.nio.ByteBuffer data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
-        java.nio.ByteBuffer data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    @java.lang.Override
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    @java.lang.Override
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code org.axesoft.jaxos.network.protobuff.PrepareReq}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:org.axesoft.jaxos.network.protobuff.PrepareReq)
-        org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReqOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
-      }
-
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.class, org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.Builder.class);
-      }
-
-      // Construct using org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
-        }
-      }
-      @java.lang.Override
-      public Builder clear() {
-        super.clear();
-        squadId_ = 0;
-
-        instanceId_ = 0L;
-
-        round_ = 0;
-
-        proposal_ = 0;
-
-        lastChosenProposal_ = 0;
-
-        return this;
-      }
-
-      @java.lang.Override
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
-      }
-
-      @java.lang.Override
-      public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq getDefaultInstanceForType() {
-        return org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.getDefaultInstance();
-      }
-
-      @java.lang.Override
-      public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq build() {
-        org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      @java.lang.Override
-      public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq buildPartial() {
-        org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq(this);
-        result.squadId_ = squadId_;
-        result.instanceId_ = instanceId_;
-        result.round_ = round_;
-        result.proposal_ = proposal_;
-        result.lastChosenProposal_ = lastChosenProposal_;
-        onBuilt();
-        return result;
-      }
-
-      @java.lang.Override
-      public Builder clone() {
-        return super.clone();
-      }
-      @java.lang.Override
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.setField(field, value);
-      }
-      @java.lang.Override
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return super.clearField(field);
-      }
-      @java.lang.Override
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return super.clearOneof(oneof);
-      }
-      @java.lang.Override
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
-        return super.setRepeatedField(field, index, value);
-      }
-      @java.lang.Override
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
-        return super.addRepeatedField(field, value);
-      }
-      @java.lang.Override
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq) {
-          return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq other) {
-        if (other == org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.getDefaultInstance()) return this;
-        if (other.getSquadId() != 0) {
-          setSquadId(other.getSquadId());
-        }
-        if (other.getInstanceId() != 0L) {
-          setInstanceId(other.getInstanceId());
-        }
-        if (other.getRound() != 0) {
-          setRound(other.getRound());
-        }
-        if (other.getProposal() != 0) {
-          setProposal(other.getProposal());
-        }
-        if (other.getLastChosenProposal() != 0) {
-          setLastChosenProposal(other.getLastChosenProposal());
-        }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
-        return this;
-      }
-
-      @java.lang.Override
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      @java.lang.Override
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq) e.getUnfinishedMessage();
-          throw e.unwrapIOException();
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-
-      private int squadId_ ;
-      /**
-       * <code>int32 squadId = 1;</code>
-       * @return The squadId.
-       */
-      public int getSquadId() {
-        return squadId_;
-      }
-      /**
-       * <code>int32 squadId = 1;</code>
-       * @param value The squadId to set.
-       * @return This builder for chaining.
-       */
-      public Builder setSquadId(int value) {
-        
-        squadId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int32 squadId = 1;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearSquadId() {
-        
-        squadId_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private long instanceId_ ;
-      /**
-       * <code>int64 instanceId = 2;</code>
-       * @return The instanceId.
-       */
-      public long getInstanceId() {
-        return instanceId_;
-      }
-      /**
-       * <code>int64 instanceId = 2;</code>
-       * @param value The instanceId to set.
-       * @return This builder for chaining.
-       */
-      public Builder setInstanceId(long value) {
-        
-        instanceId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int64 instanceId = 2;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearInstanceId() {
-        
-        instanceId_ = 0L;
-        onChanged();
-        return this;
-      }
-
-      private int round_ ;
-      /**
-       * <code>int32 round = 3;</code>
-       * @return The round.
-       */
-      public int getRound() {
-        return round_;
-      }
-      /**
-       * <code>int32 round = 3;</code>
-       * @param value The round to set.
-       * @return This builder for chaining.
-       */
-      public Builder setRound(int value) {
-        
-        round_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int32 round = 3;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearRound() {
-        
-        round_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private int proposal_ ;
-      /**
-       * <code>int32 proposal = 4;</code>
-       * @return The proposal.
-       */
-      public int getProposal() {
-        return proposal_;
-      }
-      /**
-       * <code>int32 proposal = 4;</code>
-       * @param value The proposal to set.
-       * @return This builder for chaining.
-       */
-      public Builder setProposal(int value) {
-        
-        proposal_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int32 proposal = 4;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearProposal() {
-        
-        proposal_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private int lastChosenProposal_ ;
-      /**
-       * <code>int32 lastChosenProposal = 5;</code>
-       * @return The lastChosenProposal.
-       */
-      public int getLastChosenProposal() {
-        return lastChosenProposal_;
-      }
-      /**
-       * <code>int32 lastChosenProposal = 5;</code>
-       * @param value The lastChosenProposal to set.
-       * @return This builder for chaining.
-       */
-      public Builder setLastChosenProposal(int value) {
-        
-        lastChosenProposal_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>int32 lastChosenProposal = 5;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearLastChosenProposal() {
-        
-        lastChosenProposal_ = 0;
-        onChanged();
-        return this;
-      }
-      @java.lang.Override
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.setUnknownFields(unknownFields);
-      }
-
-      @java.lang.Override
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return super.mergeUnknownFields(unknownFields);
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:org.axesoft.jaxos.network.protobuff.PrepareReq)
-    }
-
-    // @@protoc_insertion_point(class_scope:org.axesoft.jaxos.network.protobuff.PrepareReq)
-    private static final org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq();
-    }
-
-    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<PrepareReq>
-        PARSER = new com.google.protobuf.AbstractParser<PrepareReq>() {
-      @java.lang.Override
-      public PrepareReq parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new PrepareReq(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<PrepareReq> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<PrepareReq> getParserForType() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
   public interface BallotValueOrBuilder extends
       // @@protoc_insertion_point(interface_extends:org.axesoft.jaxos.network.protobuff.BallotValue)
       com.google.protobuf.MessageOrBuilder {
@@ -2485,6 +1726,1522 @@ public final class PaxosMessage {
 
   }
 
+  public interface ChosenInfoOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:org.axesoft.jaxos.network.protobuff.ChosenInfo)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int64 instanceId = 1;</code>
+     * @return The instanceId.
+     */
+    long getInstanceId();
+
+    /**
+     * <code>int64 ballotId = 2;</code>
+     * @return The ballotId.
+     */
+    long getBallotId();
+
+    /**
+     * <code>int64 elapsedMillis = 3;</code>
+     * @return The elapsedMillis.
+     */
+    long getElapsedMillis();
+  }
+  /**
+   * Protobuf type {@code org.axesoft.jaxos.network.protobuff.ChosenInfo}
+   */
+  public  static final class ChosenInfo extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.ChosenInfo)
+      ChosenInfoOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ChosenInfo.newBuilder() to construct.
+    private ChosenInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ChosenInfo() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ChosenInfo();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ChosenInfo(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              instanceId_ = input.readInt64();
+              break;
+            }
+            case 16: {
+
+              ballotId_ = input.readInt64();
+              break;
+            }
+            case 24: {
+
+              elapsedMillis_ = input.readInt64();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInfo_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInfo_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.class, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder.class);
+    }
+
+    public static final int INSTANCEID_FIELD_NUMBER = 1;
+    private long instanceId_;
+    /**
+     * <code>int64 instanceId = 1;</code>
+     * @return The instanceId.
+     */
+    public long getInstanceId() {
+      return instanceId_;
+    }
+
+    public static final int BALLOTID_FIELD_NUMBER = 2;
+    private long ballotId_;
+    /**
+     * <code>int64 ballotId = 2;</code>
+     * @return The ballotId.
+     */
+    public long getBallotId() {
+      return ballotId_;
+    }
+
+    public static final int ELAPSEDMILLIS_FIELD_NUMBER = 3;
+    private long elapsedMillis_;
+    /**
+     * <code>int64 elapsedMillis = 3;</code>
+     * @return The elapsedMillis.
+     */
+    public long getElapsedMillis() {
+      return elapsedMillis_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (instanceId_ != 0L) {
+        output.writeInt64(1, instanceId_);
+      }
+      if (ballotId_ != 0L) {
+        output.writeInt64(2, ballotId_);
+      }
+      if (elapsedMillis_ != 0L) {
+        output.writeInt64(3, elapsedMillis_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (instanceId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, instanceId_);
+      }
+      if (ballotId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(2, ballotId_);
+      }
+      if (elapsedMillis_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(3, elapsedMillis_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo)) {
+        return super.equals(obj);
+      }
+      org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo) obj;
+
+      if (getInstanceId()
+          != other.getInstanceId()) return false;
+      if (getBallotId()
+          != other.getBallotId()) return false;
+      if (getElapsedMillis()
+          != other.getElapsedMillis()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getInstanceId());
+      hash = (37 * hash) + BALLOTID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getBallotId());
+      hash = (37 * hash) + ELAPSEDMILLIS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getElapsedMillis());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code org.axesoft.jaxos.network.protobuff.ChosenInfo}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:org.axesoft.jaxos.network.protobuff.ChosenInfo)
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInfo_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInfo_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.class, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder.class);
+      }
+
+      // Construct using org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        instanceId_ = 0L;
+
+        ballotId_ = 0L;
+
+        elapsedMillis_ = 0L;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_ChosenInfo_descriptor;
+      }
+
+      @java.lang.Override
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getDefaultInstanceForType() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo build() {
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo buildPartial() {
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo(this);
+        result.instanceId_ = instanceId_;
+        result.ballotId_ = ballotId_;
+        result.elapsedMillis_ = elapsedMillis_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo) {
+          return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo other) {
+        if (other == org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance()) return this;
+        if (other.getInstanceId() != 0L) {
+          setInstanceId(other.getInstanceId());
+        }
+        if (other.getBallotId() != 0L) {
+          setBallotId(other.getBallotId());
+        }
+        if (other.getElapsedMillis() != 0L) {
+          setElapsedMillis(other.getElapsedMillis());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private long instanceId_ ;
+      /**
+       * <code>int64 instanceId = 1;</code>
+       * @return The instanceId.
+       */
+      public long getInstanceId() {
+        return instanceId_;
+      }
+      /**
+       * <code>int64 instanceId = 1;</code>
+       * @param value The instanceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setInstanceId(long value) {
+        
+        instanceId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 instanceId = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearInstanceId() {
+        
+        instanceId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long ballotId_ ;
+      /**
+       * <code>int64 ballotId = 2;</code>
+       * @return The ballotId.
+       */
+      public long getBallotId() {
+        return ballotId_;
+      }
+      /**
+       * <code>int64 ballotId = 2;</code>
+       * @param value The ballotId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBallotId(long value) {
+        
+        ballotId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 ballotId = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBallotId() {
+        
+        ballotId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long elapsedMillis_ ;
+      /**
+       * <code>int64 elapsedMillis = 3;</code>
+       * @return The elapsedMillis.
+       */
+      public long getElapsedMillis() {
+        return elapsedMillis_;
+      }
+      /**
+       * <code>int64 elapsedMillis = 3;</code>
+       * @param value The elapsedMillis to set.
+       * @return This builder for chaining.
+       */
+      public Builder setElapsedMillis(long value) {
+        
+        elapsedMillis_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 elapsedMillis = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearElapsedMillis() {
+        
+        elapsedMillis_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:org.axesoft.jaxos.network.protobuff.ChosenInfo)
+    }
+
+    // @@protoc_insertion_point(class_scope:org.axesoft.jaxos.network.protobuff.ChosenInfo)
+    private static final org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo();
+    }
+
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ChosenInfo>
+        PARSER = new com.google.protobuf.AbstractParser<ChosenInfo>() {
+      @java.lang.Override
+      public ChosenInfo parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ChosenInfo(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ChosenInfo> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ChosenInfo> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface PrepareReqOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:org.axesoft.jaxos.network.protobuff.PrepareReq)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int32 squadId = 1;</code>
+     * @return The squadId.
+     */
+    int getSquadId();
+
+    /**
+     * <code>int64 instanceId = 2;</code>
+     * @return The instanceId.
+     */
+    long getInstanceId();
+
+    /**
+     * <code>int32 round = 3;</code>
+     * @return The round.
+     */
+    int getRound();
+
+    /**
+     * <code>int32 proposal = 4;</code>
+     * @return The proposal.
+     */
+    int getProposal();
+
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+     * @return Whether the chosenInfo field is set.
+     */
+    boolean hasChosenInfo();
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+     * @return The chosenInfo.
+     */
+    org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo();
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+     */
+    org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder();
+  }
+  /**
+   * Protobuf type {@code org.axesoft.jaxos.network.protobuff.PrepareReq}
+   */
+  public  static final class PrepareReq extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:org.axesoft.jaxos.network.protobuff.PrepareReq)
+      PrepareReqOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use PrepareReq.newBuilder() to construct.
+    private PrepareReq(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private PrepareReq() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new PrepareReq();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private PrepareReq(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              squadId_ = input.readInt32();
+              break;
+            }
+            case 16: {
+
+              instanceId_ = input.readInt64();
+              break;
+            }
+            case 24: {
+
+              round_ = input.readInt32();
+              break;
+            }
+            case 32: {
+
+              proposal_ = input.readInt32();
+              break;
+            }
+            case 42: {
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder subBuilder = null;
+              if (chosenInfo_ != null) {
+                subBuilder = chosenInfo_.toBuilder();
+              }
+              chosenInfo_ = input.readMessage(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(chosenInfo_);
+                chosenInfo_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.class, org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.Builder.class);
+    }
+
+    public static final int SQUADID_FIELD_NUMBER = 1;
+    private int squadId_;
+    /**
+     * <code>int32 squadId = 1;</code>
+     * @return The squadId.
+     */
+    public int getSquadId() {
+      return squadId_;
+    }
+
+    public static final int INSTANCEID_FIELD_NUMBER = 2;
+    private long instanceId_;
+    /**
+     * <code>int64 instanceId = 2;</code>
+     * @return The instanceId.
+     */
+    public long getInstanceId() {
+      return instanceId_;
+    }
+
+    public static final int ROUND_FIELD_NUMBER = 3;
+    private int round_;
+    /**
+     * <code>int32 round = 3;</code>
+     * @return The round.
+     */
+    public int getRound() {
+      return round_;
+    }
+
+    public static final int PROPOSAL_FIELD_NUMBER = 4;
+    private int proposal_;
+    /**
+     * <code>int32 proposal = 4;</code>
+     * @return The proposal.
+     */
+    public int getProposal() {
+      return proposal_;
+    }
+
+    public static final int CHOSENINFO_FIELD_NUMBER = 5;
+    private org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo chosenInfo_;
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+     * @return Whether the chosenInfo field is set.
+     */
+    public boolean hasChosenInfo() {
+      return chosenInfo_ != null;
+    }
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+     * @return The chosenInfo.
+     */
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo() {
+      return chosenInfo_ == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+    }
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+     */
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder() {
+      return getChosenInfo();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (squadId_ != 0) {
+        output.writeInt32(1, squadId_);
+      }
+      if (instanceId_ != 0L) {
+        output.writeInt64(2, instanceId_);
+      }
+      if (round_ != 0) {
+        output.writeInt32(3, round_);
+      }
+      if (proposal_ != 0) {
+        output.writeInt32(4, proposal_);
+      }
+      if (chosenInfo_ != null) {
+        output.writeMessage(5, getChosenInfo());
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (squadId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(1, squadId_);
+      }
+      if (instanceId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(2, instanceId_);
+      }
+      if (round_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(3, round_);
+      }
+      if (proposal_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(4, proposal_);
+      }
+      if (chosenInfo_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(5, getChosenInfo());
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq)) {
+        return super.equals(obj);
+      }
+      org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq other = (org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq) obj;
+
+      if (getSquadId()
+          != other.getSquadId()) return false;
+      if (getInstanceId()
+          != other.getInstanceId()) return false;
+      if (getRound()
+          != other.getRound()) return false;
+      if (getProposal()
+          != other.getProposal()) return false;
+      if (hasChosenInfo() != other.hasChosenInfo()) return false;
+      if (hasChosenInfo()) {
+        if (!getChosenInfo()
+            .equals(other.getChosenInfo())) return false;
+      }
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SQUADID_FIELD_NUMBER;
+      hash = (53 * hash) + getSquadId();
+      hash = (37 * hash) + INSTANCEID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getInstanceId());
+      hash = (37 * hash) + ROUND_FIELD_NUMBER;
+      hash = (53 * hash) + getRound();
+      hash = (37 * hash) + PROPOSAL_FIELD_NUMBER;
+      hash = (53 * hash) + getProposal();
+      if (hasChosenInfo()) {
+        hash = (37 * hash) + CHOSENINFO_FIELD_NUMBER;
+        hash = (53 * hash) + getChosenInfo().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code org.axesoft.jaxos.network.protobuff.PrepareReq}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:org.axesoft.jaxos.network.protobuff.PrepareReq)
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReqOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.class, org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.Builder.class);
+      }
+
+      // Construct using org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        squadId_ = 0;
+
+        instanceId_ = 0L;
+
+        round_ = 0;
+
+        proposal_ = 0;
+
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = null;
+        } else {
+          chosenInfo_ = null;
+          chosenInfoBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
+      }
+
+      @java.lang.Override
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq getDefaultInstanceForType() {
+        return org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq build() {
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq buildPartial() {
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq result = new org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq(this);
+        result.squadId_ = squadId_;
+        result.instanceId_ = instanceId_;
+        result.round_ = round_;
+        result.proposal_ = proposal_;
+        if (chosenInfoBuilder_ == null) {
+          result.chosenInfo_ = chosenInfo_;
+        } else {
+          result.chosenInfo_ = chosenInfoBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq) {
+          return mergeFrom((org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq other) {
+        if (other == org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq.getDefaultInstance()) return this;
+        if (other.getSquadId() != 0) {
+          setSquadId(other.getSquadId());
+        }
+        if (other.getInstanceId() != 0L) {
+          setInstanceId(other.getInstanceId());
+        }
+        if (other.getRound() != 0) {
+          setRound(other.getRound());
+        }
+        if (other.getProposal() != 0) {
+          setProposal(other.getProposal());
+        }
+        if (other.hasChosenInfo()) {
+          mergeChosenInfo(other.getChosenInfo());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private int squadId_ ;
+      /**
+       * <code>int32 squadId = 1;</code>
+       * @return The squadId.
+       */
+      public int getSquadId() {
+        return squadId_;
+      }
+      /**
+       * <code>int32 squadId = 1;</code>
+       * @param value The squadId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSquadId(int value) {
+        
+        squadId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 squadId = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSquadId() {
+        
+        squadId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private long instanceId_ ;
+      /**
+       * <code>int64 instanceId = 2;</code>
+       * @return The instanceId.
+       */
+      public long getInstanceId() {
+        return instanceId_;
+      }
+      /**
+       * <code>int64 instanceId = 2;</code>
+       * @param value The instanceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setInstanceId(long value) {
+        
+        instanceId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 instanceId = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearInstanceId() {
+        
+        instanceId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int round_ ;
+      /**
+       * <code>int32 round = 3;</code>
+       * @return The round.
+       */
+      public int getRound() {
+        return round_;
+      }
+      /**
+       * <code>int32 round = 3;</code>
+       * @param value The round to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRound(int value) {
+        
+        round_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 round = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRound() {
+        
+        round_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int proposal_ ;
+      /**
+       * <code>int32 proposal = 4;</code>
+       * @return The proposal.
+       */
+      public int getProposal() {
+        return proposal_;
+      }
+      /**
+       * <code>int32 proposal = 4;</code>
+       * @param value The proposal to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProposal(int value) {
+        
+        proposal_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 proposal = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearProposal() {
+        
+        proposal_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo chosenInfo_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder> chosenInfoBuilder_;
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+       * @return Whether the chosenInfo field is set.
+       */
+      public boolean hasChosenInfo() {
+        return chosenInfoBuilder_ != null || chosenInfo_ != null;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+       * @return The chosenInfo.
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo() {
+        if (chosenInfoBuilder_ == null) {
+          return chosenInfo_ == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+        } else {
+          return chosenInfoBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+       */
+      public Builder setChosenInfo(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo value) {
+        if (chosenInfoBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          chosenInfo_ = value;
+          onChanged();
+        } else {
+          chosenInfoBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+       */
+      public Builder setChosenInfo(
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder builderForValue) {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = builderForValue.build();
+          onChanged();
+        } else {
+          chosenInfoBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+       */
+      public Builder mergeChosenInfo(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo value) {
+        if (chosenInfoBuilder_ == null) {
+          if (chosenInfo_ != null) {
+            chosenInfo_ =
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.newBuilder(chosenInfo_).mergeFrom(value).buildPartial();
+          } else {
+            chosenInfo_ = value;
+          }
+          onChanged();
+        } else {
+          chosenInfoBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+       */
+      public Builder clearChosenInfo() {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = null;
+          onChanged();
+        } else {
+          chosenInfo_ = null;
+          chosenInfoBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder getChosenInfoBuilder() {
+        
+        onChanged();
+        return getChosenInfoFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder() {
+        if (chosenInfoBuilder_ != null) {
+          return chosenInfoBuilder_.getMessageOrBuilder();
+        } else {
+          return chosenInfo_ == null ?
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+        }
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 5;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder> 
+          getChosenInfoFieldBuilder() {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfoBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder>(
+                  getChosenInfo(),
+                  getParentForChildren(),
+                  isClean());
+          chosenInfo_ = null;
+        }
+        return chosenInfoBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:org.axesoft.jaxos.network.protobuff.PrepareReq)
+    }
+
+    // @@protoc_insertion_point(class_scope:org.axesoft.jaxos.network.protobuff.PrepareReq)
+    private static final org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq();
+    }
+
+    public static org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<PrepareReq>
+        PARSER = new com.google.protobuf.AbstractParser<PrepareReq>() {
+      @java.lang.Override
+      public PrepareReq parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new PrepareReq(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<PrepareReq> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<PrepareReq> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.PrepareReq getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface PrepareResOrBuilder extends
       // @@protoc_insertion_point(interface_extends:org.axesoft.jaxos.network.protobuff.PrepareRes)
       com.google.protobuf.MessageOrBuilder {
@@ -2541,10 +3298,19 @@ public final class PaxosMessage {
     org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValueOrBuilder getAcceptedValueOrBuilder();
 
     /**
-     * <code>int64 chosenInstanceId = 8;</code>
-     * @return The chosenInstanceId.
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     * @return Whether the chosenInfo field is set.
      */
-    long getChosenInstanceId();
+    boolean hasChosenInfo();
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     * @return The chosenInfo.
+     */
+    org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo();
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     */
+    org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder();
   }
   /**
    * Protobuf type {@code org.axesoft.jaxos.network.protobuff.PrepareRes}
@@ -2634,9 +3400,17 @@ public final class PaxosMessage {
 
               break;
             }
-            case 64: {
+            case 66: {
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder subBuilder = null;
+              if (chosenInfo_ != null) {
+                subBuilder = chosenInfo_.toBuilder();
+              }
+              chosenInfo_ = input.readMessage(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(chosenInfo_);
+                chosenInfo_ = subBuilder.buildPartial();
+              }
 
-              chosenInstanceId_ = input.readInt64();
               break;
             }
             default: {
@@ -2754,14 +3528,27 @@ public final class PaxosMessage {
       return getAcceptedValue();
     }
 
-    public static final int CHOSENINSTANCEID_FIELD_NUMBER = 8;
-    private long chosenInstanceId_;
+    public static final int CHOSENINFO_FIELD_NUMBER = 8;
+    private org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo chosenInfo_;
     /**
-     * <code>int64 chosenInstanceId = 8;</code>
-     * @return The chosenInstanceId.
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     * @return Whether the chosenInfo field is set.
      */
-    public long getChosenInstanceId() {
-      return chosenInstanceId_;
+    public boolean hasChosenInfo() {
+      return chosenInfo_ != null;
+    }
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     * @return The chosenInfo.
+     */
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo() {
+      return chosenInfo_ == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+    }
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     */
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder() {
+      return getChosenInfo();
     }
 
     private byte memoizedIsInitialized = -1;
@@ -2799,8 +3586,8 @@ public final class PaxosMessage {
       if (acceptedValue_ != null) {
         output.writeMessage(7, getAcceptedValue());
       }
-      if (chosenInstanceId_ != 0L) {
-        output.writeInt64(8, chosenInstanceId_);
+      if (chosenInfo_ != null) {
+        output.writeMessage(8, getChosenInfo());
       }
       unknownFields.writeTo(output);
     }
@@ -2839,9 +3626,9 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(7, getAcceptedValue());
       }
-      if (chosenInstanceId_ != 0L) {
+      if (chosenInfo_ != null) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(8, chosenInstanceId_);
+          .computeMessageSize(8, getChosenInfo());
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -2875,8 +3662,11 @@ public final class PaxosMessage {
         if (!getAcceptedValue()
             .equals(other.getAcceptedValue())) return false;
       }
-      if (getChosenInstanceId()
-          != other.getChosenInstanceId()) return false;
+      if (hasChosenInfo() != other.hasChosenInfo()) return false;
+      if (hasChosenInfo()) {
+        if (!getChosenInfo()
+            .equals(other.getChosenInfo())) return false;
+      }
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -2905,9 +3695,10 @@ public final class PaxosMessage {
         hash = (37 * hash) + ACCEPTEDVALUE_FIELD_NUMBER;
         hash = (53 * hash) + getAcceptedValue().hashCode();
       }
-      hash = (37 * hash) + CHOSENINSTANCEID_FIELD_NUMBER;
-      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-          getChosenInstanceId());
+      if (hasChosenInfo()) {
+        hash = (37 * hash) + CHOSENINFO_FIELD_NUMBER;
+        hash = (53 * hash) + getChosenInfo().hashCode();
+      }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -3059,8 +3850,12 @@ public final class PaxosMessage {
           acceptedValue_ = null;
           acceptedValueBuilder_ = null;
         }
-        chosenInstanceId_ = 0L;
-
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = null;
+        } else {
+          chosenInfo_ = null;
+          chosenInfoBuilder_ = null;
+        }
         return this;
       }
 
@@ -3098,7 +3893,11 @@ public final class PaxosMessage {
         } else {
           result.acceptedValue_ = acceptedValueBuilder_.build();
         }
-        result.chosenInstanceId_ = chosenInstanceId_;
+        if (chosenInfoBuilder_ == null) {
+          result.chosenInfo_ = chosenInfo_;
+        } else {
+          result.chosenInfo_ = chosenInfoBuilder_.build();
+        }
         onBuilt();
         return result;
       }
@@ -3168,8 +3967,8 @@ public final class PaxosMessage {
         if (other.hasAcceptedValue()) {
           mergeAcceptedValue(other.getAcceptedValue());
         }
-        if (other.getChosenInstanceId() != 0L) {
-          setChosenInstanceId(other.getChosenInstanceId());
+        if (other.hasChosenInfo()) {
+          mergeChosenInfo(other.getChosenInfo());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -3499,34 +4298,123 @@ public final class PaxosMessage {
         return acceptedValueBuilder_;
       }
 
-      private long chosenInstanceId_ ;
+      private org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo chosenInfo_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder> chosenInfoBuilder_;
       /**
-       * <code>int64 chosenInstanceId = 8;</code>
-       * @return The chosenInstanceId.
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       * @return Whether the chosenInfo field is set.
        */
-      public long getChosenInstanceId() {
-        return chosenInstanceId_;
+      public boolean hasChosenInfo() {
+        return chosenInfoBuilder_ != null || chosenInfo_ != null;
       }
       /**
-       * <code>int64 chosenInstanceId = 8;</code>
-       * @param value The chosenInstanceId to set.
-       * @return This builder for chaining.
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       * @return The chosenInfo.
        */
-      public Builder setChosenInstanceId(long value) {
-        
-        chosenInstanceId_ = value;
-        onChanged();
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo() {
+        if (chosenInfoBuilder_ == null) {
+          return chosenInfo_ == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+        } else {
+          return chosenInfoBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public Builder setChosenInfo(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo value) {
+        if (chosenInfoBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          chosenInfo_ = value;
+          onChanged();
+        } else {
+          chosenInfoBuilder_.setMessage(value);
+        }
+
         return this;
       }
       /**
-       * <code>int64 chosenInstanceId = 8;</code>
-       * @return This builder for chaining.
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
        */
-      public Builder clearChosenInstanceId() {
-        
-        chosenInstanceId_ = 0L;
-        onChanged();
+      public Builder setChosenInfo(
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder builderForValue) {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = builderForValue.build();
+          onChanged();
+        } else {
+          chosenInfoBuilder_.setMessage(builderForValue.build());
+        }
+
         return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public Builder mergeChosenInfo(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo value) {
+        if (chosenInfoBuilder_ == null) {
+          if (chosenInfo_ != null) {
+            chosenInfo_ =
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.newBuilder(chosenInfo_).mergeFrom(value).buildPartial();
+          } else {
+            chosenInfo_ = value;
+          }
+          onChanged();
+        } else {
+          chosenInfoBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public Builder clearChosenInfo() {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = null;
+          onChanged();
+        } else {
+          chosenInfo_ = null;
+          chosenInfoBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder getChosenInfoBuilder() {
+        
+        onChanged();
+        return getChosenInfoFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder() {
+        if (chosenInfoBuilder_ != null) {
+          return chosenInfoBuilder_.getMessageOrBuilder();
+        } else {
+          return chosenInfo_ == null ?
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+        }
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder> 
+          getChosenInfoFieldBuilder() {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfoBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder>(
+                  getChosenInfo(),
+                  getParentForChildren(),
+                  isClean());
+          chosenInfo_ = null;
+        }
+        return chosenInfoBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -3625,10 +4513,19 @@ public final class PaxosMessage {
     org.axesoft.jaxos.network.protobuff.PaxosMessage.BallotValueOrBuilder getValueOrBuilder();
 
     /**
-     * <code>int32 lastChosenProposal = 6;</code>
-     * @return The lastChosenProposal.
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+     * @return Whether the chosenInfo field is set.
      */
-    int getLastChosenProposal();
+    boolean hasChosenInfo();
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+     * @return The chosenInfo.
+     */
+    org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo();
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+     */
+    org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder();
   }
   /**
    * Protobuf type {@code org.axesoft.jaxos.network.protobuff.AcceptReq}
@@ -3708,9 +4605,17 @@ public final class PaxosMessage {
 
               break;
             }
-            case 48: {
+            case 50: {
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder subBuilder = null;
+              if (chosenInfo_ != null) {
+                subBuilder = chosenInfo_.toBuilder();
+              }
+              chosenInfo_ = input.readMessage(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(chosenInfo_);
+                chosenInfo_ = subBuilder.buildPartial();
+              }
 
-              lastChosenProposal_ = input.readInt32();
               break;
             }
             default: {
@@ -3808,14 +4713,27 @@ public final class PaxosMessage {
       return getValue();
     }
 
-    public static final int LASTCHOSENPROPOSAL_FIELD_NUMBER = 6;
-    private int lastChosenProposal_;
+    public static final int CHOSENINFO_FIELD_NUMBER = 6;
+    private org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo chosenInfo_;
     /**
-     * <code>int32 lastChosenProposal = 6;</code>
-     * @return The lastChosenProposal.
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+     * @return Whether the chosenInfo field is set.
      */
-    public int getLastChosenProposal() {
-      return lastChosenProposal_;
+    public boolean hasChosenInfo() {
+      return chosenInfo_ != null;
+    }
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+     * @return The chosenInfo.
+     */
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo() {
+      return chosenInfo_ == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+    }
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+     */
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder() {
+      return getChosenInfo();
     }
 
     private byte memoizedIsInitialized = -1;
@@ -3847,8 +4765,8 @@ public final class PaxosMessage {
       if (value_ != null) {
         output.writeMessage(5, getValue());
       }
-      if (lastChosenProposal_ != 0) {
-        output.writeInt32(6, lastChosenProposal_);
+      if (chosenInfo_ != null) {
+        output.writeMessage(6, getChosenInfo());
       }
       unknownFields.writeTo(output);
     }
@@ -3879,9 +4797,9 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(5, getValue());
       }
-      if (lastChosenProposal_ != 0) {
+      if (chosenInfo_ != null) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(6, lastChosenProposal_);
+          .computeMessageSize(6, getChosenInfo());
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -3911,8 +4829,11 @@ public final class PaxosMessage {
         if (!getValue()
             .equals(other.getValue())) return false;
       }
-      if (getLastChosenProposal()
-          != other.getLastChosenProposal()) return false;
+      if (hasChosenInfo() != other.hasChosenInfo()) return false;
+      if (hasChosenInfo()) {
+        if (!getChosenInfo()
+            .equals(other.getChosenInfo())) return false;
+      }
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -3937,8 +4858,10 @@ public final class PaxosMessage {
         hash = (37 * hash) + VALUE_FIELD_NUMBER;
         hash = (53 * hash) + getValue().hashCode();
       }
-      hash = (37 * hash) + LASTCHOSENPROPOSAL_FIELD_NUMBER;
-      hash = (53 * hash) + getLastChosenProposal();
+      if (hasChosenInfo()) {
+        hash = (37 * hash) + CHOSENINFO_FIELD_NUMBER;
+        hash = (53 * hash) + getChosenInfo().hashCode();
+      }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -4086,8 +5009,12 @@ public final class PaxosMessage {
           value_ = null;
           valueBuilder_ = null;
         }
-        lastChosenProposal_ = 0;
-
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = null;
+        } else {
+          chosenInfo_ = null;
+          chosenInfoBuilder_ = null;
+        }
         return this;
       }
 
@@ -4123,7 +5050,11 @@ public final class PaxosMessage {
         } else {
           result.value_ = valueBuilder_.build();
         }
-        result.lastChosenProposal_ = lastChosenProposal_;
+        if (chosenInfoBuilder_ == null) {
+          result.chosenInfo_ = chosenInfo_;
+        } else {
+          result.chosenInfo_ = chosenInfoBuilder_.build();
+        }
         onBuilt();
         return result;
       }
@@ -4187,8 +5118,8 @@ public final class PaxosMessage {
         if (other.hasValue()) {
           mergeValue(other.getValue());
         }
-        if (other.getLastChosenProposal() != 0) {
-          setLastChosenProposal(other.getLastChosenProposal());
+        if (other.hasChosenInfo()) {
+          mergeChosenInfo(other.getChosenInfo());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -4458,34 +5389,123 @@ public final class PaxosMessage {
         return valueBuilder_;
       }
 
-      private int lastChosenProposal_ ;
+      private org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo chosenInfo_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder> chosenInfoBuilder_;
       /**
-       * <code>int32 lastChosenProposal = 6;</code>
-       * @return The lastChosenProposal.
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+       * @return Whether the chosenInfo field is set.
        */
-      public int getLastChosenProposal() {
-        return lastChosenProposal_;
+      public boolean hasChosenInfo() {
+        return chosenInfoBuilder_ != null || chosenInfo_ != null;
       }
       /**
-       * <code>int32 lastChosenProposal = 6;</code>
-       * @param value The lastChosenProposal to set.
-       * @return This builder for chaining.
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+       * @return The chosenInfo.
        */
-      public Builder setLastChosenProposal(int value) {
-        
-        lastChosenProposal_ = value;
-        onChanged();
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo() {
+        if (chosenInfoBuilder_ == null) {
+          return chosenInfo_ == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+        } else {
+          return chosenInfoBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+       */
+      public Builder setChosenInfo(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo value) {
+        if (chosenInfoBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          chosenInfo_ = value;
+          onChanged();
+        } else {
+          chosenInfoBuilder_.setMessage(value);
+        }
+
         return this;
       }
       /**
-       * <code>int32 lastChosenProposal = 6;</code>
-       * @return This builder for chaining.
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
        */
-      public Builder clearLastChosenProposal() {
-        
-        lastChosenProposal_ = 0;
-        onChanged();
+      public Builder setChosenInfo(
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder builderForValue) {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = builderForValue.build();
+          onChanged();
+        } else {
+          chosenInfoBuilder_.setMessage(builderForValue.build());
+        }
+
         return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+       */
+      public Builder mergeChosenInfo(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo value) {
+        if (chosenInfoBuilder_ == null) {
+          if (chosenInfo_ != null) {
+            chosenInfo_ =
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.newBuilder(chosenInfo_).mergeFrom(value).buildPartial();
+          } else {
+            chosenInfo_ = value;
+          }
+          onChanged();
+        } else {
+          chosenInfoBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+       */
+      public Builder clearChosenInfo() {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = null;
+          onChanged();
+        } else {
+          chosenInfo_ = null;
+          chosenInfoBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder getChosenInfoBuilder() {
+        
+        onChanged();
+        return getChosenInfoFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder() {
+        if (chosenInfoBuilder_ != null) {
+          return chosenInfoBuilder_.getMessageOrBuilder();
+        } else {
+          return chosenInfo_ == null ?
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+        }
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 6;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder> 
+          getChosenInfoFieldBuilder() {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfoBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder>(
+                  getChosenInfo(),
+                  getParentForChildren(),
+                  isClean());
+          chosenInfo_ = null;
+        }
+        return chosenInfoBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -4585,6 +5605,21 @@ public final class PaxosMessage {
      * @return The chosenInstanceId.
      */
     long getChosenInstanceId();
+
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     * @return Whether the chosenInfo field is set.
+     */
+    boolean hasChosenInfo();
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     * @return The chosenInfo.
+     */
+    org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo();
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     */
+    org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder();
   }
   /**
    * Protobuf type {@code org.axesoft.jaxos.network.protobuff.AcceptRes}
@@ -4664,6 +5699,19 @@ public final class PaxosMessage {
             case 56: {
 
               chosenInstanceId_ = input.readInt64();
+              break;
+            }
+            case 66: {
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder subBuilder = null;
+              if (chosenInfo_ != null) {
+                subBuilder = chosenInfo_.toBuilder();
+              }
+              chosenInfo_ = input.readMessage(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(chosenInfo_);
+                chosenInfo_ = subBuilder.buildPartial();
+              }
+
               break;
             }
             default: {
@@ -4768,6 +5816,29 @@ public final class PaxosMessage {
       return chosenInstanceId_;
     }
 
+    public static final int CHOSENINFO_FIELD_NUMBER = 8;
+    private org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo chosenInfo_;
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     * @return Whether the chosenInfo field is set.
+     */
+    public boolean hasChosenInfo() {
+      return chosenInfo_ != null;
+    }
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     * @return The chosenInfo.
+     */
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo() {
+      return chosenInfo_ == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+    }
+    /**
+     * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+     */
+    public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder() {
+      return getChosenInfo();
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -4802,6 +5873,9 @@ public final class PaxosMessage {
       }
       if (chosenInstanceId_ != 0L) {
         output.writeInt64(7, chosenInstanceId_);
+      }
+      if (chosenInfo_ != null) {
+        output.writeMessage(8, getChosenInfo());
       }
       unknownFields.writeTo(output);
     }
@@ -4840,6 +5914,10 @@ public final class PaxosMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(7, chosenInstanceId_);
       }
+      if (chosenInfo_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(8, getChosenInfo());
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -4869,6 +5947,11 @@ public final class PaxosMessage {
           != other.getAcceptedBallotId()) return false;
       if (getChosenInstanceId()
           != other.getChosenInstanceId()) return false;
+      if (hasChosenInfo() != other.hasChosenInfo()) return false;
+      if (hasChosenInfo()) {
+        if (!getChosenInfo()
+            .equals(other.getChosenInfo())) return false;
+      }
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -4897,6 +5980,10 @@ public final class PaxosMessage {
       hash = (37 * hash) + CHOSENINSTANCEID_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getChosenInstanceId());
+      if (hasChosenInfo()) {
+        hash = (37 * hash) + CHOSENINFO_FIELD_NUMBER;
+        hash = (53 * hash) + getChosenInfo().hashCode();
+      }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -5044,6 +6131,12 @@ public final class PaxosMessage {
 
         chosenInstanceId_ = 0L;
 
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = null;
+        } else {
+          chosenInfo_ = null;
+          chosenInfoBuilder_ = null;
+        }
         return this;
       }
 
@@ -5077,6 +6170,11 @@ public final class PaxosMessage {
         result.maxProposal_ = maxProposal_;
         result.acceptedBallotId_ = acceptedBallotId_;
         result.chosenInstanceId_ = chosenInstanceId_;
+        if (chosenInfoBuilder_ == null) {
+          result.chosenInfo_ = chosenInfo_;
+        } else {
+          result.chosenInfo_ = chosenInfoBuilder_.build();
+        }
         onBuilt();
         return result;
       }
@@ -5145,6 +6243,9 @@ public final class PaxosMessage {
         }
         if (other.getChosenInstanceId() != 0L) {
           setChosenInstanceId(other.getChosenInstanceId());
+        }
+        if (other.hasChosenInfo()) {
+          mergeChosenInfo(other.getChosenInfo());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -5383,6 +6484,125 @@ public final class PaxosMessage {
         chosenInstanceId_ = 0L;
         onChanged();
         return this;
+      }
+
+      private org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo chosenInfo_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder> chosenInfoBuilder_;
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       * @return Whether the chosenInfo field is set.
+       */
+      public boolean hasChosenInfo() {
+        return chosenInfoBuilder_ != null || chosenInfo_ != null;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       * @return The chosenInfo.
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo getChosenInfo() {
+        if (chosenInfoBuilder_ == null) {
+          return chosenInfo_ == null ? org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+        } else {
+          return chosenInfoBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public Builder setChosenInfo(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo value) {
+        if (chosenInfoBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          chosenInfo_ = value;
+          onChanged();
+        } else {
+          chosenInfoBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public Builder setChosenInfo(
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder builderForValue) {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = builderForValue.build();
+          onChanged();
+        } else {
+          chosenInfoBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public Builder mergeChosenInfo(org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo value) {
+        if (chosenInfoBuilder_ == null) {
+          if (chosenInfo_ != null) {
+            chosenInfo_ =
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.newBuilder(chosenInfo_).mergeFrom(value).buildPartial();
+          } else {
+            chosenInfo_ = value;
+          }
+          onChanged();
+        } else {
+          chosenInfoBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public Builder clearChosenInfo() {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfo_ = null;
+          onChanged();
+        } else {
+          chosenInfo_ = null;
+          chosenInfoBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder getChosenInfoBuilder() {
+        
+        onChanged();
+        return getChosenInfoFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      public org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder getChosenInfoOrBuilder() {
+        if (chosenInfoBuilder_ != null) {
+          return chosenInfoBuilder_.getMessageOrBuilder();
+        } else {
+          return chosenInfo_ == null ?
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.getDefaultInstance() : chosenInfo_;
+        }
+      }
+      /**
+       * <code>.org.axesoft.jaxos.network.protobuff.ChosenInfo chosenInfo = 8;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder> 
+          getChosenInfoFieldBuilder() {
+        if (chosenInfoBuilder_ == null) {
+          chosenInfoBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfo.Builder, org.axesoft.jaxos.network.protobuff.PaxosMessage.ChosenInfoOrBuilder>(
+                  getChosenInfo(),
+                  getParentForChildren(),
+                  isClean());
+          chosenInfo_ = null;
+        }
+        return chosenInfoBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -12220,15 +13440,20 @@ public final class PaxosMessage {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_org_axesoft_jaxos_network_protobuff_DataGram_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_org_axesoft_jaxos_network_protobuff_BallotValue_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_org_axesoft_jaxos_network_protobuff_BallotValue_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_org_axesoft_jaxos_network_protobuff_ChosenInfo_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_org_axesoft_jaxos_network_protobuff_ChosenInfo_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor;
   private static final 
@@ -12302,57 +13527,64 @@ public final class PaxosMessage {
       "work.protobuff\"t\n\010DataGram\0227\n\004code\030\001 \001(\016" +
       "2).org.axesoft.jaxos.network.protobuff.C" +
       "ode\022\016\n\006sender\030\002 \001(\005\022\021\n\ttimestamp\030\003 \001(\003\022\014" +
-      "\n\004body\030\004 \001(\014\"n\n\nPrepareReq\022\017\n\007squadId\030\001 " +
-      "\001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\020" +
-      "\n\010proposal\030\004 \001(\005\022\032\n\022lastChosenProposal\030\005" +
-      " \001(\005\"h\n\013BallotValue\022\n\n\002id\030\001 \001(\003\022<\n\004type\030" +
-      "\002 \001(\0162..org.axesoft.jaxos.network.protob" +
-      "uff.ValueType\022\017\n\007content\030\003 \001(\014\"\342\001\n\nPrepa" +
-      "reRes\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001" +
-      "(\003\022\r\n\005round\030\003 \001(\005\022\016\n\006result\030\004 \001(\005\022\023\n\013max" +
-      "Proposal\030\005 \001(\005\022\030\n\020acceptedProposal\030\006 \001(\005" +
-      "\022G\n\racceptedValue\030\007 \001(\01320.org.axesoft.ja" +
-      "xos.network.protobuff.BallotValue\022\030\n\020cho" +
-      "senInstanceId\030\010 \001(\003\"\256\001\n\tAcceptReq\022\017\n\007squ" +
+      "\n\004body\030\004 \001(\014\"h\n\013BallotValue\022\n\n\002id\030\001 \001(\003\022" +
+      "<\n\004type\030\002 \001(\0162..org.axesoft.jaxos.networ" +
+      "k.protobuff.ValueType\022\017\n\007content\030\003 \001(\014\"I" +
+      "\n\nChosenInfo\022\022\n\ninstanceId\030\001 \001(\003\022\020\n\010ball" +
+      "otId\030\002 \001(\003\022\025\n\relapsedMillis\030\003 \001(\003\"\227\001\n\nPr" +
+      "epareReq\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030" +
+      "\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\020\n\010proposal\030\004 \001(\005\022C" +
+      "\n\nchosenInfo\030\005 \001(\0132/.org.axesoft.jaxos.n" +
+      "etwork.protobuff.ChosenInfo\"\215\002\n\nPrepareR" +
+      "es\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022" +
+      "\r\n\005round\030\003 \001(\005\022\016\n\006result\030\004 \001(\005\022\023\n\013maxPro" +
+      "posal\030\005 \001(\005\022\030\n\020acceptedProposal\030\006 \001(\005\022G\n" +
+      "\racceptedValue\030\007 \001(\01320.org.axesoft.jaxos" +
+      ".network.protobuff.BallotValue\022C\n\nchosen" +
+      "Info\030\010 \001(\0132/.org.axesoft.jaxos.network.p" +
+      "rotobuff.ChosenInfo\"\327\001\n\tAcceptReq\022\017\n\007squ" +
       "adId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\r\n\005round\030" +
       "\003 \001(\005\022\020\n\010proposal\030\004 \001(\005\022?\n\005value\030\005 \001(\01320" +
       ".org.axesoft.jaxos.network.protobuff.Bal" +
-      "lotValue\022\032\n\022lastChosenProposal\030\006 \001(\005\"\230\001\n" +
-      "\tAcceptRes\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceI" +
-      "d\030\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\016\n\006result\030\004 \001(\005\022\023" +
-      "\n\013maxProposal\030\005 \001(\005\022\030\n\020acceptedBallotId\030" +
-      "\006 \001(\003\022\030\n\020chosenInstanceId\030\007 \001(\003\"Y\n\016Accep" +
-      "tedNotify\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId" +
-      "\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\022\020\n\010ballotId\030\004 \001" +
-      "(\003\"d\n\023ChosenInstanceIdRes\022M\n\016chosenInsta" +
-      "nce\030\001 \003(\01325.org.axesoft.jaxos.network.pr" +
-      "otobuff.ChosenInstanceId\"=\n\020ChosenInstan" +
-      "ceId\022\017\n\007squadId\030\001 \001(\005\022\030\n\020chosenInstanceI" +
-      "d\030\002 \001(\003\"J\n\010LearnReq\022\017\n\007squadId\030\001 \001(\005\022\025\n\r" +
-      "lowInstanceId\030\002 \001(\003\022\026\n\016highInstanceId\030\003 " +
-      "\001(\003\"\241\001\n\010LearnRes\022\017\n\007squadId\030\001 \001(\005\022?\n\010ins" +
-      "tance\030\002 \003(\0132-.org.axesoft.jaxos.network." +
-      "protobuff.Instance\022C\n\ncheckPoint\030\003 \001(\0132/" +
-      ".org.axesoft.jaxos.network.protobuff.Che" +
-      "ckPoint\"\202\001\n\010Instance\022\017\n\007squadId\030\001 \001(\005\022\022\n" +
-      "\ninstanceId\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\022?\n\005v" +
-      "alue\030\004 \001(\01320.org.axesoft.jaxos.network.p" +
-      "rotobuff.BallotValue\"R\n\016ChosenQueryRes\022@" +
-      "\n\006chosen\030\001 \003(\01320.org.axesoft.jaxos.netwo" +
-      "rk.protobuff.SquadChosen\"2\n\013SquadChosen\022" +
-      "\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\"\232\001\n" +
-      "\nCheckPoint\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstance" +
-      "Id\030\002 \001(\003\022\021\n\ttimestamp\030\003 \001(\003\022\017\n\007content\030\004" +
-      " \001(\014\022C\n\014lastInstance\030\005 \001(\0132-.org.axesoft" +
-      ".jaxos.network.protobuff.Instance*\351\001\n\004Co" +
-      "de\022\010\n\004NONE\020\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021\n\rHEART" +
-      "BEAT_RES\020\002\022\017\n\013PREPARE_REQ\020\003\022\017\n\013PREPARE_R" +
-      "ES\020\004\022\016\n\nACCEPT_REQ\020\005\022\016\n\nACCEPT_RES\020\006\022\023\n\017" +
-      "ACCEPTED_NOTIFY\020\007\022\020\n\014ACCEPTED_ACK\020\010\022\r\n\tL" +
-      "EARN_REQ\020\013\022\r\n\tLEARN_RES\020\014\022\024\n\020CHOSEN_QUER" +
-      "Y_REQ\020\r\022\024\n\020CHOSEN_QUERY_RES\020\016*3\n\tValueTy" +
-      "pe\022\013\n\007NOTHING\020\000\022\017\n\013APPLICATION\020\001\022\010\n\004NOOP" +
-      "\020\002B\016B\014PaxosMessageb\006proto3"
+      "lotValue\022C\n\nchosenInfo\030\006 \001(\0132/.org.axeso" +
+      "ft.jaxos.network.protobuff.ChosenInfo\"\335\001" +
+      "\n\tAcceptRes\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstance" +
+      "Id\030\002 \001(\003\022\r\n\005round\030\003 \001(\005\022\016\n\006result\030\004 \001(\005\022" +
+      "\023\n\013maxProposal\030\005 \001(\005\022\030\n\020acceptedBallotId" +
+      "\030\006 \001(\003\022\030\n\020chosenInstanceId\030\007 \001(\003\022C\n\nchos" +
+      "enInfo\030\010 \001(\0132/.org.axesoft.jaxos.network" +
+      ".protobuff.ChosenInfo\"Y\n\016AcceptedNotify\022" +
+      "\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\020\n\010" +
+      "proposal\030\003 \001(\005\022\020\n\010ballotId\030\004 \001(\003\"d\n\023Chos" +
+      "enInstanceIdRes\022M\n\016chosenInstance\030\001 \003(\0132" +
+      "5.org.axesoft.jaxos.network.protobuff.Ch" +
+      "osenInstanceId\"=\n\020ChosenInstanceId\022\017\n\007sq" +
+      "uadId\030\001 \001(\005\022\030\n\020chosenInstanceId\030\002 \001(\003\"J\n" +
+      "\010LearnReq\022\017\n\007squadId\030\001 \001(\005\022\025\n\rlowInstanc" +
+      "eId\030\002 \001(\003\022\026\n\016highInstanceId\030\003 \001(\003\"\241\001\n\010Le" +
+      "arnRes\022\017\n\007squadId\030\001 \001(\005\022?\n\010instance\030\002 \003(" +
+      "\0132-.org.axesoft.jaxos.network.protobuff." +
+      "Instance\022C\n\ncheckPoint\030\003 \001(\0132/.org.axeso" +
+      "ft.jaxos.network.protobuff.CheckPoint\"\202\001" +
+      "\n\010Instance\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceI" +
+      "d\030\002 \001(\003\022\020\n\010proposal\030\003 \001(\005\022?\n\005value\030\004 \001(\013" +
+      "20.org.axesoft.jaxos.network.protobuff.B" +
+      "allotValue\"R\n\016ChosenQueryRes\022@\n\006chosen\030\001" +
+      " \003(\01320.org.axesoft.jaxos.network.protobu" +
+      "ff.SquadChosen\"2\n\013SquadChosen\022\017\n\007squadId" +
+      "\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\"\232\001\n\nCheckPoin" +
+      "t\022\017\n\007squadId\030\001 \001(\005\022\022\n\ninstanceId\030\002 \001(\003\022\021" +
+      "\n\ttimestamp\030\003 \001(\003\022\017\n\007content\030\004 \001(\014\022C\n\014la" +
+      "stInstance\030\005 \001(\0132-.org.axesoft.jaxos.net" +
+      "work.protobuff.Instance*\351\001\n\004Code\022\010\n\004NONE" +
+      "\020\000\022\021\n\rHEARTBEAT_REQ\020\001\022\021\n\rHEARTBEAT_RES\020\002" +
+      "\022\017\n\013PREPARE_REQ\020\003\022\017\n\013PREPARE_RES\020\004\022\016\n\nAC" +
+      "CEPT_REQ\020\005\022\016\n\nACCEPT_RES\020\006\022\023\n\017ACCEPTED_N" +
+      "OTIFY\020\007\022\020\n\014ACCEPTED_ACK\020\010\022\r\n\tLEARN_REQ\020\013" +
+      "\022\r\n\tLEARN_RES\020\014\022\024\n\020CHOSEN_QUERY_REQ\020\r\022\024\n" +
+      "\020CHOSEN_QUERY_RES\020\016*3\n\tValueType\022\013\n\007NOTH" +
+      "ING\020\000\022\017\n\013APPLICATION\020\001\022\010\n\004NOOP\020\002B\016B\014Paxo" +
+      "sMessageb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -12364,86 +13596,92 @@ public final class PaxosMessage {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_DataGram_descriptor,
         new java.lang.String[] { "Code", "Sender", "Timestamp", "Body", });
-    internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor =
-      getDescriptor().getMessageTypes().get(1);
-    internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor,
-        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Proposal", "LastChosenProposal", });
     internal_static_org_axesoft_jaxos_network_protobuff_BallotValue_descriptor =
-      getDescriptor().getMessageTypes().get(2);
+      getDescriptor().getMessageTypes().get(1);
     internal_static_org_axesoft_jaxos_network_protobuff_BallotValue_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_BallotValue_descriptor,
         new java.lang.String[] { "Id", "Type", "Content", });
-    internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor =
+    internal_static_org_axesoft_jaxos_network_protobuff_ChosenInfo_descriptor =
+      getDescriptor().getMessageTypes().get(2);
+    internal_static_org_axesoft_jaxos_network_protobuff_ChosenInfo_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_org_axesoft_jaxos_network_protobuff_ChosenInfo_descriptor,
+        new java.lang.String[] { "InstanceId", "BallotId", "ElapsedMillis", });
+    internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor =
       getDescriptor().getMessageTypes().get(3);
+    internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_org_axesoft_jaxos_network_protobuff_PrepareReq_descriptor,
+        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Proposal", "ChosenInfo", });
+    internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor =
+      getDescriptor().getMessageTypes().get(4);
     internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_PrepareRes_descriptor,
-        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Result", "MaxProposal", "AcceptedProposal", "AcceptedValue", "ChosenInstanceId", });
+        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Result", "MaxProposal", "AcceptedProposal", "AcceptedValue", "ChosenInfo", });
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_AcceptReq_descriptor,
-        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Proposal", "Value", "LastChosenProposal", });
+        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Proposal", "Value", "ChosenInfo", });
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_AcceptRes_descriptor,
-        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Result", "MaxProposal", "AcceptedBallotId", "ChosenInstanceId", });
+        new java.lang.String[] { "SquadId", "InstanceId", "Round", "Result", "MaxProposal", "AcceptedBallotId", "ChosenInstanceId", "ChosenInfo", });
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_AcceptedNotify_descriptor,
         new java.lang.String[] { "SquadId", "InstanceId", "Proposal", "BallotId", });
     internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceIdRes_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceIdRes_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceIdRes_descriptor,
         new java.lang.String[] { "ChosenInstance", });
     internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceId_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceId_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_ChosenInstanceId_descriptor,
         new java.lang.String[] { "SquadId", "ChosenInstanceId", });
     internal_static_org_axesoft_jaxos_network_protobuff_LearnReq_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_org_axesoft_jaxos_network_protobuff_LearnReq_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_LearnReq_descriptor,
         new java.lang.String[] { "SquadId", "LowInstanceId", "HighInstanceId", });
     internal_static_org_axesoft_jaxos_network_protobuff_LearnRes_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_org_axesoft_jaxos_network_protobuff_LearnRes_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_LearnRes_descriptor,
         new java.lang.String[] { "SquadId", "Instance", "CheckPoint", });
     internal_static_org_axesoft_jaxos_network_protobuff_Instance_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_org_axesoft_jaxos_network_protobuff_Instance_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_Instance_descriptor,
         new java.lang.String[] { "SquadId", "InstanceId", "Proposal", "Value", });
     internal_static_org_axesoft_jaxos_network_protobuff_ChosenQueryRes_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_org_axesoft_jaxos_network_protobuff_ChosenQueryRes_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_ChosenQueryRes_descriptor,
         new java.lang.String[] { "Chosen", });
     internal_static_org_axesoft_jaxos_network_protobuff_SquadChosen_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_org_axesoft_jaxos_network_protobuff_SquadChosen_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_SquadChosen_descriptor,
         new java.lang.String[] { "SquadId", "InstanceId", });
     internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_descriptor =
-      getDescriptor().getMessageTypes().get(14);
+      getDescriptor().getMessageTypes().get(15);
     internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_axesoft_jaxos_network_protobuff_CheckPoint_descriptor,

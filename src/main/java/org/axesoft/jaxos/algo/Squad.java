@@ -2,6 +2,7 @@ package org.axesoft.jaxos.algo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
+import io.netty.util.Timeout;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -11,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A Squad is a composition of Proposer and Acceptor, and works as a individual paxos server.
@@ -27,7 +30,7 @@ public class Squad implements EventDispatcher {
     private JaxosSettings settings;
     private StateMachineRunner stateMachineRunner;
     private Components components;
-    private volatile boolean learning;
+    private Timeout learnTimeout;
 
     public Squad(int squadId, JaxosSettings settings, Components components, StateMachine machine) {
         this.settings = settings;
@@ -38,7 +41,8 @@ public class Squad implements EventDispatcher {
         this.proposer = new Proposer(this.settings, components, this.context, (Learner) stateMachineRunner);
         this.acceptor = new Acceptor(this.settings, components, this.context, (Learner) stateMachineRunner);
 
-        this.learning = false;
+        //indicate that there is no lear request sent
+        this.learnTimeout = null;
     }
 
     /**
@@ -66,7 +70,7 @@ public class Squad implements EventDispatcher {
 
         SquadContext.SuccessRequestRecord lastSuccessRequestRecord = this.context.lastSuccessAccept();
 
-        if (this.context.isOtherLeaderActive() && !this.settings.ignoreLeader() && !ignoreLeader) {
+        if (this.context.isOtherLeaderActive() && !this.settings.leaderOnly() && !ignoreLeader) {
             if (logger.isDebugEnabled()) {
                 logger.debug("S{} I{} redirect to {}", context.squadId(), instanceId, lastSuccessRequestRecord.serverId());
             }
@@ -82,12 +86,8 @@ public class Squad implements EventDispatcher {
     @Override
     public Event processEvent(Event request) {
         if (request instanceof Event.BallotEvent) {
-            Event.BallotEvent ballotRequest = (Event.BallotEvent) request;
-            Event.BallotEvent result = processBallotEvent(ballotRequest);
-            long last = this.lastChosenInstanceId();
-            if (last < ballotRequest.chosenInstanceId() - 1 && !learning) {
-                startLearn(ballotRequest.senderId(), last, ballotRequest.chosenInstanceId());
-            }
+            Event.BallotEvent result = processBallotEvent((Event.BallotEvent) request);
+            examChosenLag((Event.BallotEvent) request);
             return result;
         }
         else if (request instanceof Event.InstanceEvent) {
@@ -125,32 +125,9 @@ public class Squad implements EventDispatcher {
     }
 
     public long lastChosenInstanceId() {
-        return this.acceptor.lastChosenInstanceId();
+        return this.context.chosenInstanceId();
     }
 
-    private Event processLearnerEvent(Event event) {
-        switch (event.code()) {
-            case CHOSEN_QUERY_RESPONSE: {
-                long otherLast = ((Event.ChosenQueryResponse) event).chosenInstanceIdOf(context.squadId());
-                long last = this.lastChosenInstanceId();
-                if (last < otherLast - 1 && !learning) {
-                    startLearn(event.senderId(), last, otherLast);
-                }
-                return null;
-            }
-            case LEARN_REQUEST: {
-                return this.onLearnRequest((Event.Learn) event);
-            }
-            case LEARN_RESPONSE: {
-                this.onLearnResponse((Event.LearnResponse) event);
-                this.learning = false;
-                return null;
-            }
-            default: {
-                throw new UnsupportedOperationException(event.code().toString());
-            }
-        }
-    }
 
     private Event.BallotEvent processBallotEvent(Event.BallotEvent event) {
         switch (event.code()) {
@@ -193,43 +170,93 @@ public class Squad implements EventDispatcher {
         }
     }
 
+    private Event processLearnerEvent(Event event) {
+        switch (event.code()) {
+            case CHOSEN_QUERY_RESPONSE: {
+                long otherLast = ((Event.ChosenQueryResponse) event).chosenInstanceIdOf(context.squadId());
+                long last = this.lastChosenInstanceId();
+                if (last < otherLast - 1 && learnTimeout == null) {
+                    startLearn(event.senderId(), last, otherLast);
+                }
+                return null;
+            }
+            case LEARN_REQUEST: {
+                return this.onLearnRequest((Event.Learn) event);
+            }
+            case LEARN_RESPONSE: {
+                this.onLearnResponse((Event.LearnResponse) event);
+                return null;
+            }
+            case LEARN_TIMEOUT: {
+                if (learnTimeout != null) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("S{} learn timeout", context.squadId());
+                    }
+
+                    this.learnTimeout = null;
+                }
+                return null;
+            }
+            default: {
+                throw new UnsupportedOperationException(event.code().toString());
+            }
+        }
+    }
+
+    private void examChosenLag(Event.BallotEvent receivedEvent){
+        Event.ChosenInfo chosenInfo = receivedEvent.chosenInfo();
+        if(chosenInfo != null) {
+            if (this.context.chosenInstanceId() < chosenInfo.instanceId()
+                    && chosenInfo.elapsedMillis() >= 1000
+                    && this.learnTimeout == null) {
+                startLearn(receivedEvent.senderId(), this.context.chosenInstanceId(), chosenInfo.instanceId());
+            }
+        }
+    }
+
     private void startLearn(int senderId, long myLast, long otherLast) {
-        this.components.getWorkerPool().queueInstanceTask(() -> {
+        this.components.getWorkerPool().queueBallotTask(context().squadId(), () -> {
             Event.Learn learn = new Event.Learn(settings.serverId(), context.squadId(), myLast + 1, otherLast);
             this.components.getCommunicator().send(learn, senderId);
             logger.info("Sent learn request {}", learn);
         });
+
+        this.learnTimeout = this.components.getEventTimer().createTimeout(1, TimeUnit.SECONDS,
+                new Event.LearnTimeout(settings.serverId(), context.squadId()));
     }
 
 
     private Event onLearnRequest(Event.Learn request) {
+        Optional<List<Instance>> ix0 = loadInstances(request.lowInstanceId(), request.highInstanceId());
+
+        if (ix0.isEmpty()) {
+            CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint();
+            return new Event.LearnResponse(settings.serverId(), context.squadId(), Collections.emptyList(), checkPoint);
+        }
+        else {
+            Event.LearnResponse resp = new Event.LearnResponse(settings.serverId(), context.squadId(), ix0.get(), CheckPoint.EMPTY);
+            logger.info("squad {} prepared learn response from {} to {} for server {}", context.squadId(),
+                    resp.lowInstanceId(), resp.highInstanceId(), request.senderId());
+            return resp;
+        }
+    }
+
+    private Optional<List<Instance>> loadInstances(long low, long high) {
         ImmutableList.Builder<Instance> builder = ImmutableList.builder();
 
-        boolean instanceMissing = false;
-        for (long id = request.lowInstanceId(); id <= request.highInstanceId(); id++) {
+        for (long id = low; id <= high; id++) {
             Instance p = this.components.getLogger().loadPromise(context.squadId(), id);
             if (p.isEmpty()) {
-                instanceMissing = true;
-
-                if(logger.isDebugEnabled()) {
+                if (logger.isDebugEnabled()) {
                     logger.debug("Making learn response, Server {} lack instance {} of squad {}, give checkpoint", settings.serverId(), id, context.squadId());
                 }
-                break;
+                return Optional.empty();
             }
 
             builder.add(p);
         }
 
-        if (instanceMissing) {
-            CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint();
-            return new Event.LearnResponse(settings.serverId(), context.squadId(), Collections.emptyList(), checkPoint);
-        }
-        else {
-            Event.LearnResponse resp = new Event.LearnResponse(settings.serverId(), context.squadId(), builder.build(), CheckPoint.EMPTY);
-            logger.info("squad {} prepared learn response from {} to {}", context.squadId(),
-                    resp.lowInstanceId(), resp.highInstanceId());
-            return resp;
-        }
+        return Optional.of(builder.build());
     }
 
     private void onLearnResponse(Event.LearnResponse response) {
@@ -237,6 +264,9 @@ public class Squad implements EventDispatcher {
                 context.squadId(), response.checkPoint().instanceId(),
                 response.lowInstanceId(), response.highInstanceId());
         this.stateMachineRunner.restoreFromCheckPoint(response.checkPoint(), response.instances());
+
+        this.learnTimeout.cancel();
+        this.learnTimeout = null;
     }
 
     public void computeAndPrintMetrics(long current) {
@@ -253,7 +283,7 @@ public class Squad implements EventDispatcher {
                 this.context.squadId(), context.lastSuccessAccept().serverId(),
                 proposalDelta, elapsed.getLeft(),
                 successRate, conflictRate, otherRate, elapsed.getRight(), acceptDelta, seconds,
-                this.metrics.proposeTimes(), this.metrics.totalSuccessRate(), this.acceptor.lastChosenInstanceId()
+                this.metrics.proposeTimes(), this.metrics.totalSuccessRate(), this.context.chosenInstanceId()
         );
         logger.info(msg);
     }
@@ -267,10 +297,10 @@ public class Squad implements EventDispatcher {
 
     public void restoreFromDB() {
         CheckPoint checkPoint = this.components.getLogger().loadLastCheckPoint(context.squadId());
-        long last = this.components.getLogger().loadLastPromise(context.squadId()).instanceId();
+        Instance last = this.components.getLogger().loadLastPromise(context.squadId());
 
         List<Instance> ix = new ArrayList<>();
-        for (long i = checkPoint.instanceId() + 1; i <= last; i++) {
+        for (long i = checkPoint.instanceId() + 1; i <= last.id(); i++) {
             Instance instance = this.components.getLogger().loadPromise(context.squadId(), i);
             if (instance.isEmpty()) {
                 String msg = String.format("Instance %d.%d not found in DB", context.squadId(), i);
@@ -280,7 +310,7 @@ public class Squad implements EventDispatcher {
         }
 
         this.stateMachineRunner.restoreFromCheckPoint(checkPoint, ix);
-
-        logger.info("Squad {} restored to instance {}", context.squadId(), last);
+        this.context.recordChosenInfo(0, last.id(), last.value().id());
+        logger.info("Squad {} restored to instance {}", context.squadId(), last.id());
     }
 }

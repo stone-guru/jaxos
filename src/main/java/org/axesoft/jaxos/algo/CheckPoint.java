@@ -13,14 +13,14 @@ public class CheckPoint implements Serializable {
     public static CheckPoint EMPTY = new CheckPoint(0, 0, 0, ByteString.EMPTY, Instance.emptyOf(0));
 
     private int squadId;
-    private long version;
+    private long instanceId;
     private long timestamp;
     private ByteString content;
     private Instance lastInstance;
 
     public CheckPoint(int squadId, long instanceId, long timestamp, ByteString content, Instance lastInstance) {
         this.squadId = squadId;
-        this.version = instanceId;
+        this.instanceId = instanceId;
         this.timestamp = timestamp;
         this.content = content;
         this.lastInstance = lastInstance;
@@ -31,7 +31,7 @@ public class CheckPoint implements Serializable {
     }
 
     public long instanceId(){
-        return this.version;
+        return this.instanceId;
     }
 
     public long timestamp(){
@@ -43,7 +43,7 @@ public class CheckPoint implements Serializable {
     }
 
     public boolean isEmpty(){
-        return this.content.isEmpty();
+        return this.instanceId == 0;
     }
 
     public Instance lastInstance(){
@@ -54,7 +54,7 @@ public class CheckPoint implements Serializable {
     public String toString() {
         return "CheckPoint{" +
                 "squadId=" + squadId +
-                ", version=" + version +
+                ", version=" + instanceId +
                 ", timestamp=" + new Date(timestamp)+
                 ", content=BX[" + content.size() + "]" +
                 ", lastInstance=" + this.lastInstance +

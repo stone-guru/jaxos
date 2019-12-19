@@ -25,9 +25,9 @@ public class InstanceValueRingCache {
         int p0 = (this.pos - 1 + this.buff.length) % this.buff.length;
         Instance v0 = this.buff[p0];
         if (v0 != null) {
-            checkArgument(value.instanceId() >  v0.instanceId(),
+            checkArgument(value.id() >  v0.id(),
                     "added instance id(%d) should great than prev(%d)",
-                    value.instanceId(), v0.instanceId());
+                    value.id(), v0.id());
         }
 
         this.buff[this.pos] = value;
@@ -53,7 +53,7 @@ public class InstanceValueRingCache {
         int i = i0;
         do {
             Instance v = this.buff[i];
-            if (v == null || v.instanceId() < idLow) {
+            if (v == null || v.id() < idLow) {
                 break;
             }
             else {
@@ -73,7 +73,7 @@ public class InstanceValueRingCache {
             if (v == null) {
                 return -1;
             }
-            else if (v.instanceId() <= instanceId) {
+            else if (v.id() <= instanceId) {
                 return i;
             }
             else if (i == this.pos) {

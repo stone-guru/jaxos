@@ -140,7 +140,7 @@ public class Proposer {
 
     private void startPrepare(int proposal0) {
         Instance i0 = this.learner.getLastChosenInstance(this.context.squadId());
-        if(this.instanceId == i0.instanceId()){
+        if(this.instanceId == i0.id()){
             //other server help me finish this value
             if(i0.value().id() == this.proposeValue.id()){
                 if (logger.isDebugEnabled()) {
@@ -151,9 +151,9 @@ public class Proposer {
             }
         }
 
-        if (this.instanceId != i0.instanceId() + 1) {
+        if (this.instanceId != i0.id() + 1) {
             String msg = String.format("S%d when prepare instance %d while last chosen is %d",
-                    context.squadId(), instanceId, i0.instanceId());
+                    context.squadId(), instanceId, i0.id());
             endAs(new ProposalConflictException(msg));
             return;
         }
@@ -251,7 +251,7 @@ public class Proposer {
 
     private void startAccept(Event.BallotValue value, int proposal) {
         Instance i0 = this.learner.getLastChosenInstance(this.context.squadId());
-        if(this.instanceId == i0.instanceId()){
+        if(this.instanceId == i0.id()){
             //other server help me finish this value
             if(i0.value().id() == this.proposeValue.id()){
                 if (logger.isDebugEnabled()) {
@@ -262,9 +262,9 @@ public class Proposer {
             }
         }
 
-        if (this.instanceId != i0.instanceId() + 1) {
+        if (this.instanceId != i0.id() + 1) {
             String msg = String.format("when accept instance %d.%d while last chosen is %d",
-                    context.squadId(), instanceId, i0.instanceId());
+                    context.squadId(), instanceId, i0.id());
             endAs(new ProposalConflictException(msg));
             return;
         }
@@ -412,7 +412,7 @@ public class Proposer {
             Event.PrepareRequest req = new Event.PrepareRequest(
                     Proposer.this.settings.serverId(), Proposer.this.context.squadId(),
                     Proposer.this.instanceId, Proposer.this.round,
-                    this.proposal, chosenProposal);
+                    this.proposal, context.getLastChosenInfo());
 
             config.getCommunicator().broadcast(req);
         }
@@ -431,7 +431,7 @@ public class Proposer {
             if (response.result() == Event.RESULT_STANDBY) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("S{}: On PrepareReply: Server {} is standby at last chosen instance id is {}",
-                            context.squadId(), response.senderId(), response.chosenInstanceId());
+                            context.squadId(), response.senderId(), context.chosenInstanceId());
                 }
                 return;
             }
@@ -454,8 +454,8 @@ public class Proposer {
                 this.acceptedBallotId = response.acceptedValue().id();
             }
 
-            if (response.chosenInstanceId() >= this.maxOtherChosenInstanceId) {
-                this.maxOtherChosenInstanceId = response.chosenInstanceId();
+            if (response.chosenInfo().instanceId() >= this.maxOtherChosenInstanceId) {
+                this.maxOtherChosenInstanceId = response.chosenInfo().instanceId();
             }
         }
 
@@ -517,7 +517,7 @@ public class Proposer {
                     Proposer.this.context.squadId(), Proposer.this.instanceId, Proposer.this.round)
                     .setBallot(proposal)
                     .setValue(value)
-                    .setLastChosenBallot(lastChosenProposal)
+                    .setChosenInfo(context.getLastChosenInfo())
                     .build();
             Proposer.this.config.getCommunicator().broadcast(request);
         }
@@ -528,7 +528,7 @@ public class Proposer {
             if (response.result() == Event.RESULT_STANDBY) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("S{} AcceptReply: Server {} is standby at last chosen instance id is {}",
-                            context.squadId(), response.senderId(), response.chosenInstanceId());
+                            context.squadId(), response.senderId(), response.chosenInfo().instanceId());
                 }
                 return;
             }

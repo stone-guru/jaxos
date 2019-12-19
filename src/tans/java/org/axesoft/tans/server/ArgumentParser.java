@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -35,7 +36,7 @@ public class ArgumentParser {
         private Integer partitionNumber = 0;
 
         @Parameter(names = {"-m"}, description = "Interval in seconds of print metrics")
-        private Integer printMetricsSeconds = 10 * 60;
+        private Integer printMetricsSeconds = null;
 
         @Parameter(names = {"-b"}, description = "batch size for HTTP request")
         private Integer requestBatchSize = 8;
@@ -47,9 +48,20 @@ public class ArgumentParser {
     private Properties properties;
     private Map<Integer, Integer> peerHttpMap;
 
-    private Integer printMetricsSeconds;
+    private Map<String, ItemParser> configItemMap;
+
+    private int printMetricsSeconds = 60;
 
     public ArgumentParser() {
+        ItemParser[] items = new ItemParser[]{
+                new PartitionNumberItemParser("partition.number", 1, 64),
+                new CheckPointMinutesItemParser("checkPoint.minutes", 1, Integer.MAX_VALUE),
+                new LeaderLeaseItemParser("leader.lease.seconds", 1, Integer.MAX_VALUE),
+                new PrintMetricsSecondsItemParser("metrics.print.seconds", 1, Integer.MAX_VALUE),
+                new IgnoreLeaderItemParser("leader.ignore"),
+                new AlgoThreadItemParser("algo.thread.number", 1, 32)
+        };
+        this.configItemMap = Arrays.stream(items).collect(Collectors.toMap(ItemParser::itemName, i -> i));
     }
 
     /**
@@ -69,7 +81,7 @@ public class ArgumentParser {
 
         JaxosSettings config = buildJaxosConfig(args);
 
-        int printMetricsSec = (this.printMetricsSeconds == null) ? args.printMetricsSeconds : this.printMetricsSeconds;
+        int printMetricsSec = (args.printMetricsSeconds != null) ? args.printMetricsSeconds : this.printMetricsSeconds;
         return new TansConfig(config, this.peerHttpMap, printMetricsSec, args.requestBatchSize);
     }
 
@@ -108,7 +120,7 @@ public class ArgumentParser {
                 .setCheckPointMinutes(args.checkPointMinutes);
 
         if (args.ignoreLeader != null) {
-            builder.setIgnoreLeader(args.ignoreLeader);
+            builder.setLeaderOnly(args.ignoreLeader);
         }
 
         if (args.partitionNumber > 0) {
@@ -145,37 +157,13 @@ public class ArgumentParser {
                 builder.addPeer(peer);
 
                 peerHttpMapBuilder.put(id, httpPort);
-            }
-            else if (k.equals("partition.number")) {
-                int n = Integer.parseInt(v);
-                if (n < 0 || n > 32) {
-                    throw new IllegalArgumentException("Partition number should be in [1, 32], actual is " + n);
+            } else {
+                ItemParser parser = this.configItemMap.get(k);
+                if(parser != null){
+                    parser.parse(v, builder);
+                } else {
+                    System.err.println("Ignore known config item '" + k + "'");
                 }
-                builder.setPartitionNumber(n);
-            }
-            else if (k.equals("checkPoint.minutes")) {
-                builder.setCheckPointMinutes(Integer.parseInt(v));
-            }
-            else if (k.equals("printMetrics.seconds")) {
-                int sec = Integer.parseInt(v);
-                if (sec < 0) {
-                    throw new IllegalArgumentException("printMetrics.seconds should great than Zero " + v);
-                }
-                this.printMetricsSeconds = sec;
-            }
-            else if (k.equals("ignoreLeader")) {
-                if ("true".equals(v)) {
-                    builder.setIgnoreLeader(true);
-                }
-                else if ("false".equals(v)) {
-                    builder.setIgnoreLeader(false);
-                }
-                else {
-                    throw new IllegalArgumentException("Unknown boolean value '" + v + "' for config item '" + k + "'");
-                }
-            }
-            else {
-                System.err.println("Ignore unknown config item: " + k);
             }
         }
 
@@ -185,5 +173,152 @@ public class ArgumentParser {
 
         this.peerHttpMap = peerHttpMapBuilder.build();
         return builder;
+    }
+
+    private static abstract class ItemParser {
+        private String itemName;
+
+        public ItemParser(String itemName) {
+            this.itemName = itemName;
+        }
+
+        public String itemName() {
+            return itemName;
+        }
+
+        abstract void parse(String value, JaxosSettings.Builder builder);
+    }
+
+    private static abstract class IntItemParser extends ItemParser {
+        private int low;
+        private int high;
+        private boolean parsed;
+
+        public IntItemParser(String itemName, int low, int high) {
+            super(itemName);
+            this.low = low;
+            this.high = high;
+        }
+
+        @Override
+        void parse(String value, JaxosSettings.Builder builder) {
+            if(this.parsed){
+                throw new IllegalArgumentException("'" + itemName() + "' duplicated");
+            }
+            int x = 0;
+            try {
+                x = Integer.parseInt(value);
+            }
+            catch (NumberFormatException e) {
+                throw new IllegalArgumentException("value " + value + " of " + itemName() + " is not valid integer");
+            }
+            if (x > high) {
+                throw new IllegalArgumentException("value " + value + " of " + itemName() + " large than " + this.high);
+            }
+            if (x < low) {
+                throw new IllegalArgumentException("value " + value + " of " + itemName() + " less than " + this.low);
+            }
+            accept(x, builder);
+            this.parsed = true;
+        }
+
+        public boolean parsed() {
+            return this.parsed;
+        }
+
+        abstract void accept(int v, JaxosSettings.Builder builder);
+    }
+
+    private static abstract class BoolItemParser extends ItemParser {
+        public BoolItemParser(String itemName) {
+            super(itemName);
+        }
+
+        @Override
+        void parse(String value, JaxosSettings.Builder builder) {
+            boolean b;
+            if ("true".equals(value)) {
+                b = true;
+            }
+            else if ("false".equals(value)) {
+                b = false;
+            }
+            else {
+                throw new IllegalArgumentException("Unknown boolean value '" + value + "' for  '" + itemName() + "'");
+            }
+            accept(b, builder);
+
+        }
+
+        abstract void accept(boolean b, JaxosSettings.Builder builder);
+    }
+
+    private static class PartitionNumberItemParser extends IntItemParser {
+        public PartitionNumberItemParser(String itemName, int low, int high) {
+            super(itemName, low, high);
+        }
+
+        @Override
+        void accept(int v, JaxosSettings.Builder builder) {
+            builder.setPartitionNumber(v);
+        }
+    }
+
+    private static class IgnoreLeaderItemParser extends BoolItemParser {
+        public IgnoreLeaderItemParser(String itemName) {
+            super(itemName);
+        }
+
+        @Override
+        void accept(boolean b, JaxosSettings.Builder builder) {
+            if(b){
+                builder.setLeaderOnly(false);
+            }
+        }
+    }
+
+    private static class CheckPointMinutesItemParser extends IntItemParser {
+        public CheckPointMinutesItemParser(String itemName, int low, int high) {
+            super(itemName, low, high);
+        }
+
+        @Override
+        void accept(int v, JaxosSettings.Builder builder) {
+            builder.setCheckPointMinutes(v);
+        }
+    }
+
+    private  class PrintMetricsSecondsItemParser extends IntItemParser {
+
+        public PrintMetricsSecondsItemParser(String itemName, int low, int high) {
+            super(itemName, low, high);
+        }
+
+        @Override
+        void accept(int v, JaxosSettings.Builder builder) {
+            ArgumentParser.this.printMetricsSeconds = v;
+        }
+    }
+
+    private static class LeaderLeaseItemParser extends IntItemParser {
+        public LeaderLeaseItemParser(String itemName, int low, int high) {
+            super(itemName, low, high);
+        }
+
+        @Override
+        void accept(int v, JaxosSettings.Builder builder) {
+            builder.setLeaderLeaseSeconds(v);
+        }
+    }
+
+    private static class AlgoThreadItemParser extends IntItemParser {
+        public AlgoThreadItemParser(String itemName, int low, int high) {
+            super(itemName, low, high);
+        }
+
+        @Override
+        void accept(int v, JaxosSettings.Builder builder) {
+            builder.setLeaderLeaseSeconds(v);
+        }
     }
 }

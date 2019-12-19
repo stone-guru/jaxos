@@ -38,11 +38,11 @@ are by netty
 * DONE Add metrics for logger 										 :log:
 * TODO add ring cache to logger 									 :log:
 * DONE delete logs after checkpoint created 								 :log:
-* TODO proposal give each value a unique message id for handling conflict			   :algorithm:
+* DONE proposal give each value a unique message id for handling conflict			   :algorithm:
 * TODO Improve the Velometer component, let compute return pair of (t, elapsed) 		     :metrics:
-* TODO send checkpoint to learner if required logs were deleted 				     :learner:
+* DONE send checkpoint to learner if required logs were deleted					     :learner:
 * TODO Change HTTP response format from text to JSON 						 :application:
-* TODO Add ignore leader parameter to HTTP request 						 :application:
+* DONE Add ignore leader parameter to HTTP request						 :application:
 * TODO Metrics support Promethus 								     :metrics:
 * TODO When a node crashed, other node should be leader of its partition			   :algorithm:
 * TODO nextProposal function of 201 should get 203 if sever id is 3					:algo:
@@ -50,3 +50,4 @@ are by netty
 ** TODO [#C] Netty print ERROR message [[file:caselog/netty-error.log][logs]]
 ** TODO client hang when getting redirect to a not given server address 			      :client:
 ** TODO conflict propose cause some log dropped [[file:caselog/version-error.log][version error]]					   :algorithm:
+** TODO sometime, raised an exception of propose not end, and most after save checkpoint [[file:caselog/propose-not-end.log][log]]	   :algorithm:

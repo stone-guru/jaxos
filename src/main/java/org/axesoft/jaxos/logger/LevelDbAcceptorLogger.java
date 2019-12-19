@@ -295,7 +295,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     public byte[] toByteArray(Instance v) {
         return PaxosMessage.Instance.newBuilder()
                 .setSquadId(v.squadId())
-                .setInstanceId(v.instanceId())
+                .setInstanceId(v.id())
                 .setProposal(v.proposal())
                 .setValue(messageCoder.encodeValue(v.value()))
                 .build()

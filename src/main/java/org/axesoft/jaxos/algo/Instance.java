@@ -31,13 +31,13 @@ public class Instance implements Serializable {
     }
 
     private int squadId;
-    private long instanceId;
+    private long id;
     private int proposal;
     private Event.BallotValue value;
 
-    public Instance(int squadId, long instanceId, int proposal, Event.BallotValue value) {
+    public Instance(int squadId, long id, int proposal, Event.BallotValue value) {
         this.squadId = squadId;
-        this.instanceId = instanceId;
+        this.id = id;
         this.proposal = proposal;
         this.value = value;
     }
@@ -46,8 +46,8 @@ public class Instance implements Serializable {
         return this.squadId;
     }
 
-    public long instanceId() {
-        return this.instanceId;
+    public long id() {
+        return this.id;
     }
 
     public int proposal() {
@@ -59,14 +59,14 @@ public class Instance implements Serializable {
     }
 
     public boolean isEmpty() {
-        return this.instanceId == 0;
+        return this.id == 0;
     }
 
     @Override
     public String toString() {
-        return "Promise{" +
+        return "Instance{" +
                 "squadId=" + squadId +
-                ", instanceId=" + instanceId +
+                ", id=" + id +
                 ", proposal=" + proposal +
                 ", value=" + value +
                 '}';

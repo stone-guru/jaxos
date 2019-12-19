@@ -48,18 +48,18 @@ public class Acceptor {
             return null;
         }
 
-        Instance i1 = this.learner.getLastChosenInstance(this.context.squadId());
-        long last = handleAcceptedNotifyLostMaybe(i1.instanceId(), request.instanceId(), request.lastChosenBallot());
+        //Instance i1 = this.learner.getLastChosenInstance(this.context.squadId());
+        long last = handleAcceptedNotifyLostMaybe(this.context.chosenInstanceId(), request.instanceId(), request.chosenInfo());
 
         if (request.instanceId() <= last) {
             logger.debug("S{}: PrepareResponse: historic prepare(instance id = {}), while my instance id is {} ",
                     context.squadId(), request.instanceId(), last);
-            return outdatedPrepareResponse(request, last);
+            return outdatedPrepareResponse(request);
         }
         else if (request.instanceId() > last + 1) {
             logger.warn("S{}: PrepareResponse: future instance id in prepare(instance id = {}), request instance id = {}",
                     context.squadId(), last, request.instanceId());
-            return standByPrepareResponse(request, last);
+            return standByPrepareResponse(request);
         }
         else { // request.instanceId == last + 1
             boolean success = false;
@@ -79,27 +79,27 @@ public class Acceptor {
                     .setResult(success ? Event.RESULT_SUCCESS : Event.RESULT_REJECT)
                     .setMaxProposal(b0)
                     .setAccepted(this.acceptedBallot, this.acceptedValue)
-                    .setChosenInstanceId(last)
+                    .setChosenInfo(this.context.getLastChosenInfo())
                     .build();
         }
     }
 
-    private Event.PrepareResponse standByPrepareResponse(Event.PrepareRequest request, long chosenInstanceId) {
+    private Event.PrepareResponse standByPrepareResponse(Event.PrepareRequest request) {
         return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
                 .setResult(Event.RESULT_STANDBY)
                 .setMaxProposal(0)
                 .setAccepted(0, Event.BallotValue.EMPTY)
-                .setChosenInstanceId(chosenInstanceId)
+                .setChosenInfo(this.context.getLastChosenInfo())
                 .build();
     }
 
-    private Event.PrepareResponse outdatedPrepareResponse(Event.PrepareRequest request, long chosenInstanceId) {
+    private Event.PrepareResponse outdatedPrepareResponse(Event.PrepareRequest request) {
         Instance i0 = this.config.getLogger().loadPromise(this.context.squadId(), request.instanceId());
         return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
                 .setResult(Event.RESULT_REJECT)
                 .setMaxProposal(Integer.MAX_VALUE)
                 .setAccepted(i0.isEmpty()? Integer.MAX_VALUE : i0.proposal(), i0.value())
-                .setChosenInstanceId(chosenInstanceId)
+                .setChosenInfo(this.context.getLastChosenInfo())
                 .build();
     }
 
@@ -111,15 +111,14 @@ public class Acceptor {
             return null;
         }
 
-        Instance i1 = this.learner.getLastChosenInstance(this.context.squadId());
-        long last = handleAcceptedNotifyLostMaybe(i1.instanceId(), request.instanceId(), request.lastChosenBallot());
+        long last = handleAcceptedNotifyLostMaybe(this.context.chosenInstanceId(), request.instanceId(), request.chosenInfo());
 
         if (request.instanceId() <= last) {
             if (logger.isDebugEnabled()) {
                 logger.debug("S{}: AcceptResponse: historical in accept(instance id = {}), while my instance id is {} ",
                         context.squadId(), request.instanceId(), last);
             }
-            return buildAcceptResponse(request, Integer.MAX_VALUE, Event.RESULT_REJECT, i1.instanceId());
+            return buildAcceptResponse(request, Integer.MAX_VALUE, Event.RESULT_REJECT);
         }
         else if (request.instanceId() > last + 1) {
             if (acceptedInstanceId == 0 || acceptedInstanceId == request.instanceId()) {
@@ -131,7 +130,7 @@ public class Acceptor {
                         context.squadId(), last, request.instanceId());
             }
 
-            return buildAcceptResponse(request, 0, Event.RESULT_STANDBY, i1.instanceId());
+            return buildAcceptResponse(request, 0, Event.RESULT_STANDBY);
         }
         else { // request.instanceId == last
             this.acceptedInstanceId = request.instanceId();
@@ -140,7 +139,7 @@ public class Acceptor {
                     logger.debug("S{}: Reject accept {}  ballot = {}, while my maxBallot={}",
                             context.squadId(), request.instanceId(), request.ballot(), this.maxBallot);
                 }
-                return buildAcceptResponse(request, this.maxBallot, Event.RESULT_REJECT, i1.instanceId());
+                return buildAcceptResponse(request, this.maxBallot, Event.RESULT_REJECT);
             }
             else {
                 acceptValueOptional(request);
@@ -149,7 +148,7 @@ public class Acceptor {
                             context.squadId(), request.senderId(), request.instanceId(), acceptedBallot, acceptedValue);
                 }
 
-                return buildAcceptResponse(request, this.maxBallot, Event.RESULT_SUCCESS, i1.instanceId());
+                return buildAcceptResponse(request, this.maxBallot, Event.RESULT_SUCCESS);
             }
         }
     }
@@ -163,22 +162,22 @@ public class Acceptor {
         }
     }
 
-    private Event.AcceptResponse buildAcceptResponse(Event.AcceptRequest request, int proposal, int result, long lastChosenInstanceId) {
+    private Event.AcceptResponse buildAcceptResponse(Event.AcceptRequest request, int proposal, int result) {
         return new Event.AcceptResponse(settings.serverId(), this.context.squadId(), request.instanceId(), request.round(),
-                proposal, result, this.acceptedValue.id(), lastChosenInstanceId);
+                proposal, result, this.acceptedValue.id(), this.context.getLastChosenInfo());
     }
 
-    private long handleAcceptedNotifyLostMaybe(long lastInstanceId, long requestInstanceId, int lastChosenBallot) {
-        if (requestInstanceId == lastInstanceId + 2) {
-            if (this.acceptedBallot > 0 && lastChosenBallot == this.acceptedBallot) {
+    private long handleAcceptedNotifyLostMaybe(long chosenInstanceId, long requestInstanceId, Event.ChosenInfo chosenInfo) {
+        if (requestInstanceId == chosenInstanceId + 2) {
+            if (this.acceptedBallot > 0 && this.acceptedValue.id() == chosenInfo.ballotId()) {
                 logger.info("S{}: success handle notify lost, when handle prepare({}), mine is {}",
-                        context.squadId(), requestInstanceId, lastInstanceId);
+                        context.squadId(), requestInstanceId, chosenInstanceId);
 
-                chose(lastInstanceId, lastChosenBallot);
-                return lastInstanceId + 1;
+                chose(chosenInstanceId, 0);//FIXME verify 0 is ok?
+                return chosenInstanceId + 1;
             }
         }
-        return lastInstanceId;
+        return chosenInstanceId;
     }
 
     public void onChosenNotify(Event.ChosenNotify notify) {
@@ -191,7 +190,7 @@ public class Acceptor {
             return;
         }
 
-        long last = this.learner.getLastChosenInstance(this.context.squadId()).instanceId();
+        long last = this.context.chosenInstanceId();
         if (notify.instanceId() == last + 1 ) {
             if(notify.ballotId() != this.acceptedValue.id()){
                 logger.error("S{} I{} Got notify event with different ballot id {}, mine is {}  ", context.squadId(),
@@ -200,7 +199,8 @@ public class Acceptor {
                 return;
             }
             chose(notify.instanceId(), notify.ballot());
-            context.setAcceptSuccessRecord(notify.senderId(), notify.ballot());
+            context.recordChosenInfo(notify.senderId(), notify.instanceId(), notify.ballotId());
+            //context.setAcceptSuccessRecord(notify.senderId(), notify.ballot());
         }
         else if (notify.instanceId() <= last + 1) {
             logger.debug("S{}: NOTIFY late notify message of chose notify({}), while my last instance id is {} ",
@@ -234,9 +234,5 @@ public class Acceptor {
         // this.maxBallot = unchanged
         this.acceptedBallot = 0;
         this.acceptedValue = Event.BallotValue.EMPTY;
-    }
-
-    public long lastChosenInstanceId() {
-        return learner.getLastChosenInstance(context.squadId()).instanceId();
     }
 }

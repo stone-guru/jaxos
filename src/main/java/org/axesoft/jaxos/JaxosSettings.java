@@ -53,7 +53,7 @@ public class JaxosSettings {
 
     public static class Builder {
         private int serverId;
-        private boolean ignoreLeader;
+        private boolean leaderOnly = true;
         private String dbDirectory;
         private long wholeProposalTimeoutMillis = 1500;
         private long prepareTimeoutMillis = 150;
@@ -62,6 +62,8 @@ public class JaxosSettings {
         private int checkPointMinutes = 1;
         private Duration syncInterval = Duration.ofMillis(1000);
         private long conflictSleepMillis = 50;
+        private int leaderLeaseSeconds = 3;
+        private int algoThreadNumber = 3;
 
         private Function<ByteString, String> valueVerboser;
 
@@ -77,8 +79,8 @@ public class JaxosSettings {
             return this;
         }
 
-        public Builder setIgnoreLeader(boolean ignoreLeader) {
-            this.ignoreLeader = ignoreLeader;
+        public Builder setLeaderOnly(boolean leaderOnly) {
+            this.leaderOnly = leaderOnly;
             return this;
         }
 
@@ -127,12 +129,22 @@ public class JaxosSettings {
             return this;
         }
 
+        public Builder setLeaderLeaseSeconds(int leaderLeaseSeconds) {
+            this.leaderLeaseSeconds = leaderLeaseSeconds;
+            return this;
+        }
+
+        public Builder setAlgoThreadNumber(int algoThreadNumber) {
+            this.algoThreadNumber = algoThreadNumber;
+            return this;
+        }
+
         public JaxosSettings build(){
             JaxosSettings config = new JaxosSettings();
             config.serverId = this.serverId;
             config.peerMap = this.peerBuilder.build();
-            config.ignoreLeader = this.ignoreLeader;
-            config.leaderLeaseSeconds = 60;
+            config.leaderOnly = this.leaderOnly;
+            config.leaderLeaseSeconds = this.leaderLeaseSeconds;
             config.dbDirectory = this.dbDirectory;
             config.valueVerboser = this.valueVerboser;
             config.wholeProposalTimeoutMillis = this.wholeProposalTimeoutMillis;
@@ -142,6 +154,7 @@ public class JaxosSettings {
             config.checkPointMinutes = this.checkPointMinutes;
             config.syncInterval = this.syncInterval;
             config.conflictSleepMillis = this.conflictSleepMillis;
+            config.algoThreadNumber = this.algoThreadNumber;
             return config;
         }
     }
@@ -149,7 +162,7 @@ public class JaxosSettings {
     private Map<Integer, Peer> peerMap;
     private int serverId;
     private int leaderLeaseSeconds;
-    private boolean ignoreLeader;
+    private boolean leaderOnly;
     private String dbDirectory;
     private long wholeProposalTimeoutMillis;
     private long prepareTimeoutMillis;
@@ -158,6 +171,7 @@ public class JaxosSettings {
     private int checkPointMinutes;
     private Duration syncInterval;
     private long conflictSleepMillis;
+    private int algoThreadNumber;
 
     private Function<ByteString, String> valueVerboser;
 
@@ -188,8 +202,8 @@ public class JaxosSettings {
         return this.leaderLeaseSeconds;
     }
 
-    public boolean ignoreLeader(){
-        return this.ignoreLeader;
+    public boolean leaderOnly(){
+        return this.leaderOnly;
     }
 
     public String dbDirectory(){
@@ -232,19 +246,24 @@ public class JaxosSettings {
         return this.conflictSleepMillis;
     }
 
+    public int algoThreadNumber() {
+        return this.algoThreadNumber;
+    }
+
     @Override
     public String toString() {
         return "JaxosSettings{" +
                 "peerMap=" + peerMap +
                 ", serverId=" + serverId +
                 ", leaderLeaseSeconds=" + leaderLeaseSeconds +
-                ", ignoreLeader=" + ignoreLeader +
+                ", leaderOnly=" + leaderOnly +
                 ", dbDirectory='" + dbDirectory + '\'' +
                 ", wholeProposalTimeoutMillis=" + wholeProposalTimeoutMillis +
                 ", prepareTimeoutMillis=" + prepareTimeoutMillis +
                 ", acceptTimeoutMillis=" + acceptTimeoutMillis +
                 ", partitionNumber=" + partitionNumber +
                 ", conflictSleepMillis=" + conflictSleepMillis +
+                ", checkPointMinutes=" + checkPointMinutes +
                 '}';
     }
 }

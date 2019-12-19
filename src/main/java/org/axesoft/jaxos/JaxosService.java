@@ -142,7 +142,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
     @Override
     protected void run() throws Exception {
-        this.eventWorkerPool = new EventWorkerPool(settings.partitionNumber(), () -> this.platoon);
+        this.eventWorkerPool = new EventWorkerPool(settings.algoThreadNumber(), () -> this.platoon);
         this.node = new NettyJaxosServer(this.settings, this.eventWorkerPool);
 
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, this.eventWorkerPool);
@@ -152,9 +152,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
         this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync(false)),
                 1000, settings.syncInterval().toMillis() / 2, TimeUnit.MILLISECONDS);
-        if(!this.settings.ignoreLeader()) {
-            this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, 3, 60, TimeUnit.SECONDS);
-        }
+        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, 3, 3, TimeUnit.SECONDS);
 
         this.node.startup();
     }
@@ -294,7 +292,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             }
 
             components.getCommunicator().broadcastOthers(new Event.ChosenQuery(settings.serverId()));
-            this.chosenQueryTimeout = components.getEventTimer().createTimeout(100, TimeUnit.MILLISECONDS,
+            this.chosenQueryTimeout = components.getEventTimer().createTimeout(500, TimeUnit.MILLISECONDS,
                     new Event.ChosenQueryTimeout(settings.serverId()));
         }
 

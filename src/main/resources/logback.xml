@@ -23,4 +23,5 @@
   <logger name="org.axesoft.jaxos" level="INFO"/>
   <logger name="org.axesoft.tans.server" level="INFO"/>
   <logger name="org.axesoft.jaxos.network.protobuff" level="INFO"/>
+  <logger name="io.netty.handler.logging" level="OFF"/>
 </configuration>

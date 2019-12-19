@@ -35,14 +35,6 @@ message DataGram {
   bytes body = 4;
 }
 
-message PrepareReq {
-  int32 squadId = 1;
-  int64 instanceId = 2;
-  int32 round = 3;
-  int32 proposal = 4;
-  int32 lastChosenProposal = 5;
-}
-
 enum ValueType {
   NOTHING = 0;
   APPLICATION = 1;
@@ -55,6 +47,20 @@ message BallotValue {
   bytes content = 3;
 }
 
+message ChosenInfo {
+  int64 instanceId = 1;
+  int64 ballotId = 2;
+  int64 elapsedMillis = 3;
+}
+
+message PrepareReq {
+  int32 squadId = 1;
+  int64 instanceId = 2;
+  int32 round = 3;
+  int32 proposal = 4;
+  ChosenInfo chosenInfo = 5;
+}
+
 message PrepareRes {
   int32 squadId = 1;
   int64 instanceId = 2;
@@ -63,7 +69,7 @@ message PrepareRes {
   int32 maxProposal = 5;
   int32 acceptedProposal = 6;
   BallotValue acceptedValue = 7;
-  int64 chosenInstanceId = 8;
+  ChosenInfo chosenInfo = 8;
 }
 
 message AcceptReq {
@@ -72,7 +78,7 @@ message AcceptReq {
   int32 round = 3;
   int32 proposal = 4;
   BallotValue value = 5;
-  int32 lastChosenProposal = 6;
+  ChosenInfo chosenInfo = 6;
 }
 
 message AcceptRes {
@@ -83,6 +89,7 @@ message AcceptRes {
   int32 maxProposal = 5;
   int64 acceptedBallotId = 6;
   int64 chosenInstanceId = 7;
+  ChosenInfo chosenInfo = 8;
 }
 
 message AcceptedNotify {
@@ -135,4 +142,5 @@ message CheckPoint {
   int64 timestamp = 3;
   bytes content = 4;
   Instance lastInstance = 5;
-}  
+}
+

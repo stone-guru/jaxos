@@ -49,8 +49,8 @@ public class InstanceRingCacheTest {
 
         List<Instance> ix1 = cache.get(i0, i0 + 9);
         assertEquals(10, ix1.size());
-        assertEquals(i0, ix1.get(0).instanceId());
-        assertEquals(i0 + 9, ix1.get(9).instanceId());
+        assertEquals(i0, ix1.get(0).id());
+        assertEquals(i0 + 9, ix1.get(9).id());
     }
 
 
@@ -64,8 +64,8 @@ public class InstanceRingCacheTest {
 
         List<Instance> ix1 = cache.get(i0 + 120, i0 + 130);
         assertEquals(8, ix1.size());
-        assertEquals(i0 + 120, ix1.get(0).instanceId());
-        assertEquals(i0 + 127, ix1.get(7).instanceId());
+        assertEquals(i0 + 120, ix1.get(0).id());
+        assertEquals(i0 + 127, ix1.get(7).id());
     }
 
     @Test
@@ -78,7 +78,7 @@ public class InstanceRingCacheTest {
 
         List<Instance> ix1 = cache.get(i0 + 201, i0 + 290);
         assertEquals(90, ix1.size());
-        assertEquals(i0 + 201, ix1.get(0).instanceId());
-        assertEquals(i0 + 290, ix1.get(89).instanceId());
+        assertEquals(i0 + 201, ix1.get(0).id());
+        assertEquals(i0 + 290, ix1.get(89).id());
     }
 }

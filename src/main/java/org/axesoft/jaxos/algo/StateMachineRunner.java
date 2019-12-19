@@ -2,7 +2,6 @@ package org.axesoft.jaxos.algo;
 
 import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.tuple.Pair;
-import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +43,7 @@ public class StateMachineRunner implements Learner {
         Instance i1, i2 = null;
         while (it.hasNext()) {
             i1 = it.next();
-            if(i1.instanceId() > this.lastChosen.instanceId()){
+            if(i1.id() > this.lastChosen.id()){
                 i2 = i1;
                 break;
             }
@@ -72,19 +71,19 @@ public class StateMachineRunner implements Learner {
     @Override
     public synchronized void learnValue(Instance i) {
         checkArgument(i.squadId() == this.squadId, "given squad id %d is unequal to mine %d", i.squadId(), this.squadId);
-        long i0 = this.lastChosen.instanceId();
-        if (i.instanceId() != i0 + 1) {
-            throw new IllegalStateException(String.format("Learning ignore given instance %d, mine is %d", i.instanceId(), i0));
+        long i0 = this.lastChosen.id();
+        if (i.id() != i0 + 1) {
+            throw new IllegalStateException(String.format("Learning ignore given instance %d, mine is %d", i.id(), i0));
         }
         innerLearn(i);
     }
 
     private void innerLearn(Instance i) {
         if (i.value().type() == Event.ValueType.APPLICATION) {
-            this.machine.consume(squadId, i.instanceId(), i.value().content());
+            this.machine.consume(squadId, i.id(), i.value().content());
         }
         else {
-            this.machine.consume(squadId, i.instanceId(), ByteString.EMPTY);
+            this.machine.consume(squadId, i.id(), ByteString.EMPTY);
         }
         this.lastChosen = i;
     }

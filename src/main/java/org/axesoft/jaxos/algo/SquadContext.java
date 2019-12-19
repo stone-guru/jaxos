@@ -50,9 +50,21 @@ public class SquadContext {
     private int squadId;
     private volatile SuccessRequestRecord lastSuccessRequestRecord = new SuccessRequestRecord(-1, 0, 0);
 
+    private int proposerId = 0;
+    private long chosenInstanceId = 0;
+    private long chosenBallotId = 0;
+    private long chosenTimestamp = 0;
+
     public SquadContext(int squadId, JaxosSettings config) {
         this.config = config;
         this.squadId = squadId;
+    }
+
+    public void recordChosenInfo(int proposerId, long chosenInstanceId, long chosenBallotId){
+        this.proposerId = proposerId;
+        this.chosenInstanceId = chosenInstanceId;
+        this.chosenBallotId = chosenBallotId;
+        this.chosenTimestamp = System.currentTimeMillis();
     }
 
     public SquadMetrics metrics() {
@@ -68,12 +80,12 @@ public class SquadContext {
     }
 
     public boolean isOtherLeaderActive() {
-        return lastSuccessRequestRecord.serverId() != -1 && lastSuccessRequestRecord.serverId() != config.serverId()
-                && !leaderLeaseExpired(lastSuccessRequestRecord.timestampMillis());
+        return proposerId > 0 && proposerId != config.serverId()
+                && !leaderLeaseExpired(chosenTimestamp);
     }
 
     public boolean isLeader() {
-        return (lastSuccessRequestRecord.serverId() == config.serverId()) && !leaderLeaseExpired(lastSuccessRequestRecord.timestampMillis());
+        return (this.proposerId == config.serverId()) && !leaderLeaseExpired(this.chosenTimestamp);
     }
 
     public int squadId() {
@@ -82,5 +94,13 @@ public class SquadContext {
 
     private boolean leaderLeaseExpired(long timestampMillis) {
         return (System.currentTimeMillis() - timestampMillis) / 1000.0 > config.leaderLeaseSeconds();
+    }
+
+    public long chosenInstanceId() {
+        return this.chosenInstanceId;
+    }
+
+    public Event.ChosenInfo getLastChosenInfo(){
+        return new Event.ChosenInfo(chosenInstanceId, chosenBallotId, System.currentTimeMillis() - chosenTimestamp);
     }
 }

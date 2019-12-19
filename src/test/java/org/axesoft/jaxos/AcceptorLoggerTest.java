@@ -53,7 +53,7 @@ public class AcceptorLoggerTest {
         assertNotNull(p);
 
         assertEquals(1, p.squadId());
-        assertEquals(1000 + n - 1, p.instanceId());
+        assertEquals(1000 + n - 1, p.id());
         assertEquals(n, p.proposal());
         assertEquals("Hello" + (n - 1), p.value().content().toStringUtf8());
     }

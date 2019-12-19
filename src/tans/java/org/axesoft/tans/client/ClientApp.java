@@ -22,11 +22,14 @@ public class ClientApp {
         @Parameter(names = {"-c"}, description = "Num of clients")
         private Integer clientNumber = 1;
 
-        @Parameter(names = {"-k"}, description = "How many round of 1000")
+        @Parameter(names = {"-n"}, description = "How many round of 1000")
         private Integer round = 1;
 
         @Parameter(names = {"-e"}, description = "Print every result or not")
         private Boolean printEveryResult = false;
+
+        @Parameter(names = {"-l"}, description = "ignore the leader")
+        private boolean ignoreLeader = false;
     }
 
     public static void main(String[] args) throws Exception {
@@ -39,7 +42,7 @@ public class ClientApp {
                 .build()
                 .parse(args);
 
-        int n = 100;
+        int n = 1000;
 
         int p = arg.clientNumber;
 
@@ -64,8 +67,8 @@ public class ClientApp {
                             .setChecker(checker)
                             .setMillis(millis)
                             .setTimes(times)
+                            .setIgnoreLeader(arg.ignoreLeader)
                             .execute();
-                    //run(arg.servers, arg.round, n, arg.printEveryResult, startLatch, checker, millis, times);
                 }
                 catch (Exception e) {
                     System.out.println("Exec end with " + e.getMessage());
@@ -94,52 +97,12 @@ public class ClientApp {
         checker.printCheckResult();
     }
 
-    public static void run(String servers, int k, int n, boolean printEveryResult,
-                           CountDownLatch startLatch, ResultChecker checker,
-                           AtomicLong millis, AtomicLong times) throws Exception {
-        TansClientBootstrap cb = new TansClientBootstrap(servers);
-        final TansClient client = cb.getClient();
-        final int printInterval = 200 + (int) (Math.random() * 100);
-        Thread.sleep(1000);
-
-        startLatch.await();
-
-        StopWatch watch = StopWatch.createStarted();
-        int count = 0;
-        try {
-            for (int m = 0; m < k; m++) {
-                boolean ignoreLeader = true; //k * 1.0 / m > Math.random();
-                for (int i = 0; i < n; i++) {
-                    count++;
-                    String key = "object-id-" + (count % 5000);
-                    Future<LongRange> future = client.acquire(key, 1 + (i % 10), ignoreLeader);
-                    LongRange r = future.get();
-                    checker.accept(key, r.low(), r.high());
-                    if (count % printInterval == 0 || printEveryResult) {
-                        System.out.println(String.format("[%s], %d, %s, %s", Thread.currentThread().getName(), count, key, r.toString()));
-                    }
-                }
-            }
-        }
-        finally {
-            watch.stop();
-            long m = watch.getTime(TimeUnit.MILLISECONDS);
-            double sec = m / 1000.0;
-
-            millis.addAndGet(m);
-            times.addAndGet(count);
-            cb.close();
-
-            System.out.println(String.format("%s finish %d in %.2f seconds, OPS is %.1f, DUR is %.1f ms",
-                    Thread.currentThread().getName(), count, sec, count / sec, ((double) m) / count));
-        }
-    }
-
     public static class TansClientRunner {
         private String servers;
         private int k;
         private int n;
         private boolean printEveryResult;
+        private boolean ignoreLeader;
         private CountDownLatch startLatch;
         private ResultChecker checker;
         private AtomicLong millis;
@@ -157,11 +120,10 @@ public class ClientApp {
             int count = 0;
             try {
                 for (int m = 0; m < k; m++) {
-                    boolean ignoreLeader = true; //k * 1.0 / m > Math.random();
                     for (int i = 0; i < n; i++) {
                         count++;
                         String key = "object-id-" + (count % 5000);
-                        Future<LongRange> future = client.acquire(key, 1 + (i % 10), ignoreLeader);
+                        Future<LongRange> future = client.acquire(key, 1 + (i % 10), this.ignoreLeader);
                         LongRange r = future.get();
                         checker.accept(key, r.low(), r.high());
                         if (count % printInterval == 0 || printEveryResult) {
@@ -221,6 +183,11 @@ public class ClientApp {
 
         public TansClientRunner setTimes(AtomicLong times) {
             this.times = times;
+            return this;
+        }
+
+        public TansClientRunner setIgnoreLeader(boolean ignoreLeader) {
+            this.ignoreLeader = ignoreLeader;
             return this;
         }
     }
