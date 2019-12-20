@@ -201,12 +201,13 @@ public class Squad implements EventDispatcher {
         }
     }
 
-    private void examChosenLag(Event.BallotEvent receivedEvent){
+    private void examChosenLag(Event.BallotEvent receivedEvent) {
         Event.ChosenInfo chosenInfo = receivedEvent.chosenInfo();
-        if(chosenInfo != null) {
-            if (this.context.chosenInstanceId() < chosenInfo.instanceId()
-                    && chosenInfo.elapsedMillis() >= 1000
-                    && this.learnTimeout == null) {
+        if (chosenInfo != null) {
+            if ((this.context.chosenInstanceId() + 1 < chosenInfo.instanceId()) ||
+                    (this.context.chosenInstanceId() < chosenInfo.instanceId()
+                            && chosenInfo.elapsedMillis() >= 1000
+                            && this.learnTimeout == null)) {
                 startLearn(receivedEvent.senderId(), this.context.chosenInstanceId(), chosenInfo.instanceId());
             }
         }
@@ -216,7 +217,7 @@ public class Squad implements EventDispatcher {
         this.components.getWorkerPool().queueBallotTask(context().squadId(), () -> {
             Event.Learn learn = new Event.Learn(settings.serverId(), context.squadId(), myLast + 1, otherLast);
             this.components.getCommunicator().send(learn, senderId);
-            logger.info("Sent learn request {}", learn);
+            logger.info("S{} Sent learn request {} to server {}", context.squadId(), learn, senderId);
         });
 
         this.learnTimeout = this.components.getEventTimer().createTimeout(1, TimeUnit.SECONDS,
@@ -225,7 +226,8 @@ public class Squad implements EventDispatcher {
 
 
     private Event onLearnRequest(Event.Learn request) {
-        Optional<List<Instance>> ix0 = loadInstances(request.lowInstanceId(), request.highInstanceId());
+        long high = this.context.chosenInstanceId();
+        Optional<List<Instance>> ix0 = loadInstances(request.lowInstanceId(), high);
 
         if (ix0.isEmpty()) {
             CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint();
@@ -233,7 +235,7 @@ public class Squad implements EventDispatcher {
         }
         else {
             Event.LearnResponse resp = new Event.LearnResponse(settings.serverId(), context.squadId(), ix0.get(), CheckPoint.EMPTY);
-            logger.info("squad {} prepared learn response from {} to {} for server {}", context.squadId(),
+            logger.info("S{} prepared learn response from {} to {} for server {}", context.squadId(),
                     resp.lowInstanceId(), resp.highInstanceId(), request.senderId());
             return resp;
         }
@@ -246,7 +248,7 @@ public class Squad implements EventDispatcher {
             Instance p = this.components.getLogger().loadPromise(context.squadId(), id);
             if (p.isEmpty()) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Making learn response, Server {} lack instance {} of squad {}, give checkpoint", settings.serverId(), id, context.squadId());
+                    logger.debug("S{} Making learn response, Server {} lack instance {} ", context.squadId(), settings.serverId(), id);
                 }
                 return Optional.empty();
             }
@@ -258,17 +260,33 @@ public class Squad implements EventDispatcher {
     }
 
     private void onLearnResponse(Event.LearnResponse response) {
-        logger.info("squad {} learn CheckPoint {} with instances from {} to {}",
+        logger.info("S{} learn CheckPoint {} with instances from {} to {}",
                 context.squadId(), response.checkPoint().instanceId(),
                 response.lowInstanceId(), response.highInstanceId());
+
+        //sometimes the learn response will comeback lately
+        if(this.learnTimeout != null) {
+            this.learnTimeout.cancel();
+            this.learnTimeout = null;
+        }
+
         this.stateMachineRunner.restoreFromCheckPoint(response.checkPoint(), response.instances());
 
         List<Instance> ix = response.instances();
-        Instance last = ix.isEmpty()? response.checkPoint().lastInstance() : ix.get(ix.size() - 1);
-        this.context.recordChosenInfo(response.senderId(), last.id(), last.value().id(), last.proposal());
+        CheckPoint checkPoint = response.checkPoint();
 
-        this.learnTimeout.cancel();
-        this.learnTimeout = null;
+        Instance last = ix.isEmpty() ? checkPoint.lastInstance() : ix.get(ix.size() - 1);
+        //FIXME use learnresponse sender as leader works fine?
+        this.context.recordChosenInfo(response.senderId(), last.id(), last.value().id(), last.proposal());
+        this.acceptor.reset();
+
+        if(!checkPoint.isEmpty()){
+            saveCheckPoint();
+        } else {
+            for(Instance i : ix){
+                this.components.getLogger().savePromise(i.squadId(), i.id(), i.proposal(), i.value());
+            }
+        }
     }
 
     public void computeAndPrintMetrics(long current) {
@@ -305,7 +323,8 @@ public class Squad implements EventDispatcher {
         for (long i = checkPoint.instanceId() + 1; i <= last.id(); i++) {
             Instance instance = this.components.getLogger().loadPromise(context.squadId(), i);
             if (instance.isEmpty()) {
-                String msg = String.format("Instance %d.%d not found in DB", context.squadId(), i);
+                String msg = String.format("Instance %d.%d not found in DB, with checkPoint(%d) last(%d) ",
+                        context.squadId(), i, checkPoint.instanceId(), last.id());
                 throw new IllegalStateException(msg);
             }
             ix.add(instance);
@@ -313,6 +332,7 @@ public class Squad implements EventDispatcher {
 
         this.stateMachineRunner.restoreFromCheckPoint(checkPoint, ix);
         this.context.recordChosenInfo(0, last.id(), last.value().id(), last.proposal());
+
         logger.info("Squad {} restored to instance {}", context.squadId(), last.id());
     }
 }

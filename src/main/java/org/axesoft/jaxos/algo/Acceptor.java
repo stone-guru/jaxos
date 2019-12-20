@@ -121,10 +121,9 @@ public class Acceptor {
             return buildAcceptResponse(request, Integer.MAX_VALUE, Event.RESULT_REJECT);
         }
         else if (request.instanceId() > last + 1) {
-            if (acceptedInstanceId == 0 || acceptedInstanceId == request.instanceId()) {
-                acceptValueOptional(request);
-            }
-
+//            if (acceptedInstanceId == 0 || acceptedInstanceId == request.instanceId()) {
+//                acceptValueOptional(request);
+//            }
             if (logger.isDebugEnabled()) {
                 logger.debug("S{}: AcceptResponse: future in accept(instance id = {}), request instance id = {}",
                         context.squadId(), last, request.instanceId());
@@ -132,7 +131,7 @@ public class Acceptor {
 
             return buildAcceptResponse(request, 0, Event.RESULT_STANDBY);
         }
-        else { // request.instanceId == last
+        else { // request.instanceId == last + 1
             this.acceptedInstanceId = request.instanceId();
             if (request.ballot() < this.maxBallot) {
                 if (logger.isDebugEnabled()) {
@@ -236,5 +235,13 @@ public class Acceptor {
         // this.maxBallot = unchanged
         this.acceptedBallot = 0;
         this.acceptedValue = Event.BallotValue.EMPTY;
+        this.acceptedInstanceId = 0;
+    }
+
+    public void reset(){
+        this.maxBallot = 0;
+        this.acceptedValue = Event.BallotValue.EMPTY;
+        this.acceptedBallot = 0;
+        this.acceptedInstanceId = 0;
     }
 }

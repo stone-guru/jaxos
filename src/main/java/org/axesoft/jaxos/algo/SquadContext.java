@@ -67,10 +67,10 @@ public class SquadContext {
         this.chosenProposal = proposal;
         this.chosenTimestamp = System.currentTimeMillis();
 
-        if(logger.isTraceEnabled()){
-            logger.trace("Record chosen info proposer {}, instance {}, ballotId {} at {}",
-                    proposerId, chosenInstanceId, chosenBallotId, new Date(chosenTimestamp));
-        }
+        //if(logger.isTraceEnabled()){
+//            logger.trace("Record chosen info S{}, proposer {}, instance {}, ballotId {} at {}",
+//                    this.squadId, proposerId, chosenInstanceId, chosenBallotId, new Date(chosenTimestamp));
+        //}
     }
 
     public SquadMetrics metrics() {

@@ -2,8 +2,8 @@
 SERVER="10.135.72.251"
 
 n=1000000
-if [ -n "$2" ]; then
-    n="$2"
+if [ -n "$1" ]; then
+    n="$1"
 fi
 
 URL="http://$SERVER:808$1/acquire?key=girl.id"
@@ -15,7 +15,7 @@ while [ $i -lt $n ]; do
 	date
 	echo "$url"
 	curl "$url"
-	ab -n 1000 -c 10 -k -l "$url"
+	ab -n 10 -c 1 -k -l "$url"
     done
     echo "================"
     let i=i+1
