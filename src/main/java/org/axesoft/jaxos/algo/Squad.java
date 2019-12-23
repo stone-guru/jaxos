@@ -68,7 +68,7 @@ public class Squad implements EventDispatcher {
     public ListenableFuture<Void> propose(long instanceId, Event.BallotValue v, boolean ignoreLeader, SettableFuture<Void> resultFuture) {
         attachMetricsListener(resultFuture);
 
-        if (this.context.isOtherLeaderActive() && !this.settings.leaderOnly() && !ignoreLeader) {
+        if (this.context.isOtherLeaderActive() && this.settings.leaderOnly() && !ignoreLeader) {
             if (logger.isDebugEnabled()) {
                 logger.debug("S{} I{} redirect to {}", context.squadId(), instanceId, this.context.lastProposer());
             }
@@ -203,11 +203,10 @@ public class Squad implements EventDispatcher {
 
     private void examChosenLag(Event.BallotEvent receivedEvent) {
         Event.ChosenInfo chosenInfo = receivedEvent.chosenInfo();
-        if (chosenInfo != null) {
+        if (chosenInfo != null && this.learnTimeout == null) {
             if ((this.context.chosenInstanceId() + 1 < chosenInfo.instanceId()) ||
                     (this.context.chosenInstanceId() < chosenInfo.instanceId()
-                            && chosenInfo.elapsedMillis() >= 1000
-                            && this.learnTimeout == null)) {
+                            && chosenInfo.elapsedMillis() >= 1000)) {
                 startLearn(receivedEvent.senderId(), this.context.chosenInstanceId(), chosenInfo.instanceId());
             }
         }
@@ -299,7 +298,7 @@ public class Squad implements EventDispatcher {
 
         Pair<Double, Double> elapsed = this.metrics.compute(current);
 
-        String msg = String.format("S %d, L=%d, PT=%d, PE=%.3f, S=%.2f, C=%.2f, O=%.2f, AE=%.3f, AT=%d (%.0f s), TT=%d, SR=%.3f, LI=%d",
+        String msg = String.format("S%d, L=%d, PT=%d, PE=%.3f, S=%.2f, C=%.2f, O=%.2f, AE=%.3f, AT=%d (%.0f s), TT=%d, SR=%.3f, LI=%d",
                 this.context.squadId(), context.lastProposer(),
                 proposalDelta, elapsed.getLeft(),
                 successRate, conflictRate, otherRate, elapsed.getRight(), acceptDelta, seconds,
@@ -312,7 +311,7 @@ public class Squad implements EventDispatcher {
         CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint();
         this.components.getLogger().saveCheckPoint(checkPoint);
 
-        logger.info("Saved {} ", checkPoint);
+        logger.info("S{} Saved {} ", checkPoint.squadId(), checkPoint);
     }
 
     public void restoreFromDB() {
@@ -333,6 +332,6 @@ public class Squad implements EventDispatcher {
         this.stateMachineRunner.restoreFromCheckPoint(checkPoint, ix);
         this.context.recordChosenInfo(0, last.id(), last.value().id(), last.proposal());
 
-        logger.info("Squad {} restored to instance {}", context.squadId(), last.id());
+        logger.info("S{} restored to instance {}", context.squadId(), last.id());
     }
 }

@@ -133,7 +133,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         }
 
         boolean ret = syncTimestamp.compareAndSet(t0, current, st, pt);
-        if (ret) {
+        if (ret && logger.isTraceEnabled()) {
             logger.trace("should do sync");
         }
         return ret || syncInterval.isZero();
@@ -214,7 +214,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
 
         double millis = (System.nanoTime() - t0)/1e+6;
 
-        logger.info("S {} delete instances from {} to {}, elapsed {} ms", squadId, idLow + 1, idHigh, millis);
+        logger.info("S{} delete instances from {} to {}, elapsed {} ms", squadId, idLow + 1, idHigh, millis);
     }
 
     @Override

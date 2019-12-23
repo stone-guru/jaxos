@@ -7,6 +7,7 @@ if [ -n "$1" ]; then
 fi
 
 URL="http://$SERVER:808$1/acquire?key=girl.id"
+IGNORE_LEADER_PARAM="&ignoreleader=true"
 
 i=0;
 while [ $i -lt $n ]; do
@@ -15,7 +16,7 @@ while [ $i -lt $n ]; do
 	date
 	echo "$url"
 	curl "$url"
-	ab -n 10 -c 1 -k -l "$url"
+	ab -n 1000 -c 10 -k -l "$url$IGNORE_LEADER_PARAM"
     done
     echo "================"
     let i=i+1

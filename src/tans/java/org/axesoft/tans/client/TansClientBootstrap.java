@@ -262,7 +262,9 @@ public class TansClientBootstrap {
         }
 
         private synchronized HttpConnector redirect(String key, String location) {
-            logger.info("Handler redirect of {} for {}", location, key);
+            if(logger.isDebugEnabled()) {
+                logger.debug("Handler redirect of {} for {}", location, key);
+            }
             URI uri;
             try {
                 uri = new URI(location);

@@ -122,7 +122,7 @@ public class ClientApp {
                 for (int m = 0; m < k; m++) {
                     for (int i = 0; i < n; i++) {
                         count++;
-                        String key = "object-id-" + (count % 5000);
+                        String key = "entity-id-" + (count % 5000);
                         Future<LongRange> future = client.acquire(key, 1 + (i % 10), this.ignoreLeader);
                         LongRange r = future.get();
                         checker.accept(key, r.low(), r.high());
