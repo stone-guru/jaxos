@@ -59,6 +59,7 @@ dependencies {
     //implementation group: 'org.iq80.leveldb', name: 'leveldb-api', version: '0.12'
     implementation group: 'org.pcollections', name: 'pcollections', version: '2.1.2'
     implementation group: 'org.fusesource.leveldbjni', name: 'leveldbjni-all', version: '1.8'
+    implementation 'io.micrometer:micrometer-registry-prometheus:latest.release'
     // Use JUnit test framework
     testImplementation 'junit:junit:4.10'
 }

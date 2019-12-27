@@ -27,11 +27,6 @@ public class ServerApp {
     }
 
     private void start() {
-        jaxosService.timerExecutor().scheduleAtFixedRate(() -> {
-            httpApiService.printMetrics();
-            jaxosService.printMetrics();
-        }, 3, config.printMetricsIntervalSeconds(), TimeUnit.SECONDS);
-
         serviceManager.startAsync();
     }
 

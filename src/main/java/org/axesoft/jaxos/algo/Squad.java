@@ -26,7 +26,7 @@ public class Squad implements EventDispatcher {
     private Acceptor acceptor;
     private Proposer proposer;
     private SquadContext context;
-    private SquadMetrics metrics;
+    private JaxosMetrics metrics;
     private JaxosSettings settings;
     private StateMachineRunner stateMachineRunner;
     private Components components;
@@ -36,7 +36,7 @@ public class Squad implements EventDispatcher {
         this.settings = settings;
         this.components = components;
         this.context = new SquadContext(squadId, this.settings);
-        this.metrics = new SquadMetrics();
+        this.metrics = new JaxosMetrics(settings.serverId(), squadId);
         this.stateMachineRunner = new StateMachineRunner(squadId, machine);
         this.proposer = new Proposer(this.settings, components, this.context, (Learner) stateMachineRunner);
         this.acceptor = new Acceptor(this.settings, components, this.context, (Learner) stateMachineRunner);
@@ -102,20 +102,20 @@ public class Squad implements EventDispatcher {
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable Void result) {
-                record(SquadMetrics.ProposalResult.SUCCESS);
+                record(JaxosMetrics.ProposalResult.SUCCESS);
             }
 
             @Override
             public void onFailure(Throwable t) {
                 if (t instanceof ProposalConflictException) {
-                    record(SquadMetrics.ProposalResult.CONFLICT);
+                    record(JaxosMetrics.ProposalResult.CONFLICT);
                 }
                 else {
-                    record(SquadMetrics.ProposalResult.OTHER);
+                    record(JaxosMetrics.ProposalResult.OTHER);
                 }
             }
 
-            private void record(SquadMetrics.ProposalResult result) {
+            private void record(JaxosMetrics.ProposalResult result) {
                 Squad.this.metrics.recordPropose(System.nanoTime() - startNano, result);
             }
 
@@ -277,7 +277,7 @@ public class Squad implements EventDispatcher {
         Instance last = ix.isEmpty() ? checkPoint.lastInstance() : ix.get(ix.size() - 1);
         //FIXME use learnresponse sender as leader works fine?
         this.context.recordChosenInfo(response.senderId(), last.id(), last.value().id(), last.proposal());
-        this.acceptor.reset();
+        //this.acceptor.reset();
 
         if(!checkPoint.isEmpty()){
             saveCheckPoint();
@@ -312,6 +312,10 @@ public class Squad implements EventDispatcher {
         this.components.getLogger().saveCheckPoint(checkPoint);
 
         logger.info("S{} Saved {} ", checkPoint.squadId(), checkPoint);
+    }
+
+    public String scrapeMetrics(){
+        return this.metrics.scrape();
     }
 
     public void restoreFromDB() {

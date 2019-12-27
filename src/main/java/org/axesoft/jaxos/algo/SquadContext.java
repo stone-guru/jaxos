@@ -13,39 +13,6 @@ import java.util.Date;
 public class SquadContext {
     private static final Logger logger = LoggerFactory.getLogger(SquadContext.class);
 
-    public static class SuccessRequestRecord {
-        private final int serverId;
-        private final long timestampMillis;
-        private final int proposal;
-
-        public SuccessRequestRecord(int serverId, long timestampMillis, int proposal) {
-            this.serverId = serverId;
-            this.timestampMillis = timestampMillis;
-            this.proposal = proposal;
-        }
-
-        public int serverId() {
-            return this.serverId;
-        }
-
-        public int proposal(){
-            return this.proposal;
-        }
-
-        public long timestampMillis() {
-            return this.timestampMillis;
-        }
-
-        @Override
-        public String toString() {
-            return "RequestInfo{" +
-                    "serverId=" + serverId +
-                    ", timestampMillis=" + new Date(timestampMillis) +
-                    '}';
-        }
-    }
-
-    private SquadMetrics jaxosMetrics = new SquadMetrics();
     private JaxosSettings config;
     private int squadId;
 
@@ -71,10 +38,6 @@ public class SquadContext {
 //            logger.trace("Record chosen info S{}, proposer {}, instance {}, ballotId {} at {}",
 //                    this.squadId, proposerId, chosenInstanceId, chosenBallotId, new Date(chosenTimestamp));
         //}
-    }
-
-    public SquadMetrics metrics() {
-        return this.jaxosMetrics;
     }
 
     public long chosenTimestamp(){

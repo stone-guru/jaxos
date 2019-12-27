@@ -112,6 +112,11 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         return resultFuture;
     }
 
+    @Override
+    public String scrapeMetrics() {
+        return JaxosMetrics.scrape();
+    }
+
     public void printMetrics() {
         long current = System.currentTimeMillis();
         for (Squad squad : this.squads) {

@@ -2,7 +2,6 @@ package org.axesoft.tans.server;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -20,6 +19,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
 import org.axesoft.jaxos.algo.ProposalConflictException;
 import org.axesoft.jaxos.algo.RedirectException;
+import org.axesoft.jaxos.algo.JaxosMetrics;
 import org.axesoft.jaxos.base.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +44,10 @@ public final class HttpApiService extends AbstractExecutionThreadService {
     private static final String ACQUIRE_PATH = "/acquire";
     private static final String KEY_ARG_NAME = "key";
     private static final String NUM_ARG_NAME = "n";
-    private static final String IGNORE_LEADER_ARG_NAME="ignoreleader";
+    private static final String IGNORE_LEADER_ARG_NAME = "ignoreleader";
 
     private static final String PARTITION_PATH = "/partition_number";
+    private static final String METRICS_PATH = "/metrics";
 
     private static final String ARG_KEY_REQUIRED_MSG = "argument of '" + KEY_ARG_NAME + "' is required";
 
@@ -63,16 +64,12 @@ public final class HttpApiService extends AbstractExecutionThreadService {
     private RequestQueue[] requestQueues;
     private Timer queueTimer;
 
-    private Derivator taskCounter;
-    private Derivator requestCounter;
-    private SlideWindowMetric requestSlideCounter;
+    private TansMetrics metrics;
 
     public HttpApiService(TansConfig config, TansService tansService) {
         this.tansService = tansService;
         this.config = config;
-        this.taskCounter = new Derivator();
-        this.requestCounter = new Derivator();
-        this.requestSlideCounter = new SlideWindowMetric(1, SlideWindowMetric.StatisticMethod.STATSUM, 1);
+        this.metrics = TansMetrics.buildInstance(config.serverId());
 
         super.addListener(new Listener() {
             @Override
@@ -166,19 +163,6 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
     }
 
-    public void printMetrics() {
-        long current = System.currentTimeMillis();
-        Pair<Double, Double> requestDelta = this.requestCounter.compute(current);
-        Pair<Double, Double> taskDelta = this.taskCounter.compute(this.threadPool.totalExecTimes(), current);
-        long w = this.threadPool.lastMinuteWaitingSize();
-
-        logger.info("More {} req, run {} times, req max {}/sec, avg {}/sec, proposal {}/sec, max waiting {}",
-                requestDelta.getLeft().intValue(), taskDelta.getLeft().intValue(),
-                requestSlideCounter.getMax(0), String.format("%.1f", requestDelta.getRight()),
-                String.format("%.1f", taskDelta.getRight()), w);
-    }
-
-
     private FullHttpResponse createResponse(HttpResponseStatus status, String v) {
         return new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.copiedBuffer(v + "\r\n", CharsetUtil.UTF_8));
     }
@@ -199,7 +183,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
 
     private void writeResponse(ChannelHandlerContext ctx, boolean keepAlive, FullHttpResponse response) {
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/csv; charset=UTF-8");
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
         response.headers().set(HttpHeaderNames.HOST, config.address());
         response.headers().set(HttpHeaderNames.FROM, Integer.toString(config.httpPort()));
         response.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
@@ -246,7 +230,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                         }
 
                         HttpAcquireRequest httpAcquireRequest = either.getRight();
-                        if(logger.isTraceEnabled()){
+                        if (logger.isTraceEnabled()) {
                             logger.trace("Got request {}", httpAcquireRequest.keyLong);
                         }
                         int i = tansService.squadIdOf(httpAcquireRequest.keyLong.key());
@@ -257,6 +241,12 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                         writeResponse(ctx, keepAlive,
                                 new DefaultFullHttpResponse(HTTP_1_1, OK,
                                         Unpooled.copiedBuffer(s + "\r\n", CharsetUtil.UTF_8)));
+                    }
+                    else if (METRICS_PATH.equals(rawUrl)) {
+                        String s1 = JaxosMetrics.scrape();
+                        String s2 = TansMetrics.scrape();
+                        writeResponse(ctx, false,
+                                new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(s1 + s2, CharsetUtil.UTF_8)));
                     }
                     else {
                         FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, HttpResponseStatus.NOT_FOUND,
@@ -309,13 +299,15 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
             boolean ignoreLeader = false;
             List<String> bx = params.get(IGNORE_LEADER_ARG_NAME);
-            if(bx != null && bx.size() > 0){
+            if (bx != null && bx.size() > 0) {
                 String flag = bx.get(0);
-                if("true".equalsIgnoreCase(flag)){
+                if ("true".equalsIgnoreCase(flag)) {
                     ignoreLeader = true;
-                } else if ("false".equalsIgnoreCase(flag)){
+                }
+                else if ("false".equalsIgnoreCase(flag)) {
                     ignoreLeader = false;
-                } else {
+                }
+                else {
                     return Either.left("Invalid ignore leader boolean value '" + flag + "'");
                 }
             }
@@ -341,12 +333,14 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         final boolean keepAlive;
         final boolean ignoreLeader;
         final ChannelHandlerContext ctx;
+        final long timestamp;
 
         public HttpAcquireRequest(String key, long v, boolean ignoreLeader, boolean keepAlive, ChannelHandlerContext ctx) {
             this.keyLong = new KeyLong(key, v);
             this.keepAlive = keepAlive;
             this.ignoreLeader = ignoreLeader;
             this.ctx = ctx;
+            this.timestamp = System.currentTimeMillis();
         }
     }
 
@@ -364,12 +358,11 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             this.tasks = new ArrayList<>(waitingSize);
         }
 
-        private synchronized void addRequest(HttpAcquireRequest request){
+        private synchronized void addRequest(HttpAcquireRequest request) {
             if (logger.isTraceEnabled()) {
                 logger.trace("S{} RequestQueue accept request {}", squadId, request);
             }
-            HttpApiService.this.requestCounter.inc();
-            HttpApiService.this.requestSlideCounter.recordForPresent(1);
+            HttpApiService.this.metrics.incRequestCount();
 
             this.tasks.add(request);
             if (this.tasks.size() == 1) {
@@ -399,9 +392,9 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         private void process(List<HttpAcquireRequest> tasks) {
             boolean ignoreLeader = false;
             List<KeyLong> kvx = new ArrayList<>(tasks.size());
-            for(HttpAcquireRequest req: tasks){
+            for (HttpAcquireRequest req : tasks) {
                 kvx.add(req.keyLong);
-                if(req.ignoreLeader){
+                if (req.ignoreLeader) {
                     ignoreLeader = true;
                 }
             }
@@ -414,6 +407,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             }
             catch (RedirectException e) {
                 otherLeaderId = e.getServerId();
+                HttpApiService.this.metrics.incRedirectCounter();
             }
             catch (ProposalConflictException e) {
                 errorResponse = createResponse(HttpResponseStatus.CONFLICT, "CONFLICT");
@@ -424,6 +418,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             }
 
             try {
+                long current = System.currentTimeMillis();
                 for (int i = 0; i < kvx.size(); i++) {
                     HttpAcquireRequest task = tasks.get(i);
 
@@ -438,13 +433,15 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                         LongRange r = rx.get(i);
                         String content = task.keyLong.key() + "," + r.low() + "," + r.high();
                         response = createResponse(OK, content);
-                        if(logger.isTraceEnabled()) {
+                        if (logger.isTraceEnabled()) {
                             logger.trace("S{} write response {},{},{},{}", squadId,
                                     task.keyLong.key(), task.keyLong.value(), r.low(), r.high());
                         }
                     }
 
                     writeResponse(task.ctx, task.keepAlive, response);
+
+                    HttpApiService.this.metrics.recordRequestElapsed(current - task.timestamp);
                 }
             }
             finally {
