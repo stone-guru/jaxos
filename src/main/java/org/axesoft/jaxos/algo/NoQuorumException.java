@@ -1,6 +1,6 @@
 package org.axesoft.jaxos.algo;
 
-public class NoQuorumException extends Exception {
+public class NoQuorumException extends RuntimeException {
     public NoQuorumException() {
     }
 

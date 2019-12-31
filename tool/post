@@ -11,12 +11,13 @@ IGNORE_LEADER_PARAM="&ignoreleader=true"
 
 i=0;
 while [ $i -lt $n ]; do
-    for url in `cat urls`; do
+    for url in `cat urls2`; do
 	echo
 	date
 	echo "$url"
 	curl "$url"
-	ab -n 1000 -c 10 -k -l "$url$IGNORE_LEADER_PARAM"
+	ab -q -S -n 3000 -c 6 -k -l "$url$IGNORE_LEADER_PARAM"
+	# 2>&1 > /dev/null
     done
     echo "================"
     let i=i+1

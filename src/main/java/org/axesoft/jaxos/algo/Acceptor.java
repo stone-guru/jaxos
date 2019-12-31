@@ -47,10 +47,20 @@ public class Acceptor {
             logger.trace("S{}: On prepare {} ", context.squadId(), request);
         }
 
-        if (this.faulty) {
-            return null;
+        Event.PrepareResponse resp = null;
+        if (!this.faulty) {
+            resp = doPrepare(request);
         }
 
+        if(logger.isTraceEnabled()){
+            this.traceState();
+            logger.trace("S{}: Gen {} ", context.squadId(), resp);
+        }
+
+        return resp;
+    }
+
+    public Event.PrepareResponse doPrepare(Event.PrepareRequest request) {
         long last = handleAcceptedNotifyLostMaybe(this.context.chosenInstanceId(), request.senderId(), request.instanceId(), request.chosenInfo());
 
         if (request.instanceId() <= last) {
@@ -110,12 +120,23 @@ public class Acceptor {
 
     public Event.AcceptResponse accept(Event.AcceptRequest request) {
         if (logger.isTraceEnabled()) {
-            logger.trace("On Accept {}", request);
-        }
-        if (faulty) {
-            return null;
+            logger.trace("S{} On Accept {}", context.squadId(), request);
         }
 
+        Event.AcceptResponse resp = null;
+        if(!this.faulty){
+            resp = doAccept(request);
+        }
+
+        if(logger.isTraceEnabled()){
+            this.traceState();
+            logger.trace("S{}: Gen {} ", context.squadId(), resp);
+        }
+
+        return resp;
+    }
+
+    public Event.AcceptResponse doAccept(Event.AcceptRequest request) {
         long last = handleAcceptedNotifyLostMaybe(this.context.chosenInstanceId(), request.senderId(), request.instanceId(), request.chosenInfo());
 
         if (request.instanceId() <= last) {
@@ -157,6 +178,11 @@ public class Acceptor {
         }
     }
 
+    public void traceState() {
+        logger.trace("S{} currentInstanceId={}, maxBallot={}, acceptedBallot={}, acceptedValue={}",
+                context.squadId(), currentInstanceId,  maxBallot, acceptedBallot,  acceptedValue);
+    }
+
     private boolean acceptValueMaybe(Event.AcceptRequest request) {
         if (request.ballot() >= this.maxBallot) {
             this.acceptedBallot = this.maxBallot = request.ballot();
@@ -194,8 +220,8 @@ public class Acceptor {
         if (this.faulty) {
             return;
         }
-        if(this.currentInstanceId != notify.instanceId()){
-            if(logger.isDebugEnabled()){
+        if (this.currentInstanceId != notify.instanceId()) {
+            if (logger.isDebugEnabled()) {
                 logger.debug("S{}: got mismatched chosen notify of instance {} while mine is {}",
                         context.squadId(), notify.instanceId(), this.currentInstanceId);
             }
@@ -204,7 +230,7 @@ public class Acceptor {
 
         long last = this.context.chosenInstanceId();
         if (notify.instanceId() == last + 1) {
-            if (notify.ballotId() != this.acceptedValue.id()) {
+            if (this.acceptedValue.id() != 0 && notify.ballotId() != this.acceptedValue.id()) {
                 logger.error("S{} I{} Got notify event with different ballot id {}, mine is {}  ", context.squadId(),
                         notify.instanceId(), notify.ballotId(), this.acceptedValue.id());
                 this.faulty = true;
@@ -245,6 +271,6 @@ public class Acceptor {
         context.recordChosenInfo(proposer, instanceId, this.acceptedValue.id(), proposal);
         // for multi paxos, prepare once and accept many, keep maxBallot unchanged
         // this.maxBallot = unchanged
-       this.reset(0);
+        this.reset(0);
     }
 }

@@ -53,7 +53,7 @@ public class TansService implements StateMachine {
 
     @Override
     public void consume(int squadId, long instanceId, ByteString proposal) {
-        List<TansNumber> nx = proposal.isEmpty()? Collections.emptyList() : fromProposal(proposal);
+        List<TansNumber> nx = proposal.isEmpty() ? Collections.emptyList() : fromProposal(proposal);
         if (logger.isTraceEnabled()) {
             logger.trace("TANS state machine consume {} event from instance {}.{}", nx.size(), squadId, instanceId);
         }
@@ -103,16 +103,11 @@ public class TansService implements StateMachine {
             throw new RuntimeException(e);
         }
         catch (ExecutionException e) {
-            logger.debug("Try acquire on key({}) abort by {}", requests, e.getCause().getMessage());
-
-            if (e.getCause() instanceof RedirectException) {
-                throw (RedirectException) e.getCause();
-            }
-            else if (e.getCause() instanceof ProposalConflictException) {
-                throw (ProposalConflictException) e.getCause();
+            if (e.getCause() instanceof RuntimeException) {
+                throw (RuntimeException) e.getCause();
             }
             else {
-                throw new IllegalArgumentException(e.getCause());
+                throw new RuntimeException(e.getCause());
             }
         }
     }
@@ -173,7 +168,7 @@ public class TansService implements StateMachine {
                     }
                 }
 
-                if(logger.isTraceEnabled()){
+                if (logger.isTraceEnabled()) {
                     logger.trace("Statemachine apply change {}", n1);
                 }
             }

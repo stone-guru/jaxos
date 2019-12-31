@@ -186,7 +186,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
                 }
                 else {
-                    logger.error("call connect fail", e);
+                    logger.warn("call connect fail", e);
                     if (!worker.isShuttingDown()) {
                         worker.schedule(() -> connect(peer), 1, TimeUnit.SECONDS);
                     }
@@ -201,7 +201,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                         return;
                     }
                     if (rateLimiterForPeer(peer.id()).tryAcquire()) {
-                        logger.error("Unable to connect to {} ", peer);
+                        logger.warn("Unable to connect to {} ", peer);
                     }
                     if (!worker.isShuttingDown()) {
                         worker.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);

@@ -17,6 +17,7 @@ import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
+import org.axesoft.jaxos.algo.NoQuorumException;
 import org.axesoft.jaxos.algo.ProposalConflictException;
 import org.axesoft.jaxos.algo.RedirectException;
 import org.axesoft.jaxos.algo.JaxosMetrics;
@@ -411,6 +412,9 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             }
             catch (ProposalConflictException e) {
                 errorResponse = createResponse(HttpResponseStatus.CONFLICT, "CONFLICT");
+            }
+            catch (NoQuorumException e) {
+                errorResponse = createResponse(HttpResponseStatus.CONFLICT, "SERVICE UNAVAILABLE");
             }
             catch (Exception e) {
                 logger.error("Process ", e);

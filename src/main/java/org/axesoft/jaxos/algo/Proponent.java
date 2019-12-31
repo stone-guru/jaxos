@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
 public interface Proponent {
+    boolean isRunning();
     ListenableFuture<Void> propose(int squadId, long instanceId, ByteString v, boolean ignoreLeader);
     String scrapeMetrics();
 }
