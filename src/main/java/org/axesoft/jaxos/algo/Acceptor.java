@@ -42,6 +42,10 @@ public class Acceptor {
         this.currentInstanceId = instanceId;
     }
 
+    public boolean isFaulty() {
+        return this.faulty;
+    }
+
     public Event.PrepareResponse prepare(Event.PrepareRequest request) {
         if (logger.isTraceEnabled()) {
             logger.trace("S{}: On prepare {} ", context.squadId(), request);
@@ -52,7 +56,7 @@ public class Acceptor {
             resp = doPrepare(request);
         }
 
-        if(logger.isTraceEnabled()){
+        if (logger.isTraceEnabled()) {
             this.traceState();
             logger.trace("S{}: Gen {} ", context.squadId(), resp);
         }
@@ -124,11 +128,11 @@ public class Acceptor {
         }
 
         Event.AcceptResponse resp = null;
-        if(!this.faulty){
+        if (!this.faulty) {
             resp = doAccept(request);
         }
 
-        if(logger.isTraceEnabled()){
+        if (logger.isTraceEnabled()) {
             this.traceState();
             logger.trace("S{}: Gen {} ", context.squadId(), resp);
         }
@@ -180,7 +184,7 @@ public class Acceptor {
 
     public void traceState() {
         logger.trace("S{} currentInstanceId={}, maxBallot={}, acceptedBallot={}, acceptedValue={}",
-                context.squadId(), currentInstanceId,  maxBallot, acceptedBallot,  acceptedValue);
+                context.squadId(), currentInstanceId, maxBallot, acceptedBallot, acceptedValue);
     }
 
     private boolean acceptValueMaybe(Event.AcceptRequest request) {
@@ -230,30 +234,18 @@ public class Acceptor {
 
         long last = this.context.chosenInstanceId();
         if (notify.instanceId() == last + 1) {
-            if (this.acceptedValue.id() != 0 && notify.ballotId() != this.acceptedValue.id()) {
-                logger.error("S{} I{} Got notify event with different ballot id {}, mine is {}  ", context.squadId(),
-                        notify.instanceId(), notify.ballotId(), this.acceptedValue.id());
-                this.faulty = true;
-                return;
-            }
-            chose(notify.senderId(), notify.instanceId(), notify.ballot());
-        }
-        else if (notify.instanceId() < last + 1) {
-            logger.debug("S{}: NOTIFY late notify message of chose notify({}), while my last instance id is {} ",
-                    context.squadId(), notify.instanceId(), last);
-        }
-        else { // > last + 1
-            if (notify.instanceId() == this.currentInstanceId && notify.ballot() == this.acceptedBallot) {
-                if (logger.isTraceEnabled()) {
-                    logger.trace("S{}: NOTIFY future notify message of chose notify({}) mine is {}, cache it ",
-                            context.squadId(), notify.instanceId(), last);
-                }
-                //learner.cacheChosenValue(context.squadId(), notify.instanceId(), this.acceptedBallot, this.acceptedValue);
+            if (notify.ballotId() == this.acceptedValue.id()) {
+                chose(notify.senderId(), notify.instanceId(), notify.ballot());
             }
             else {
-                logger.warn("S{}: NOTIFY: future notify message of chose notify({}), mine is {} ",
-                        context.squadId(), notify.instanceId(), last);
+                //ignore this instance, let future learn recover it
+                logger.warn("S{} I{} Got NOTIFY event with different ballot id {}, mine is {}  ", context.squadId(),
+                        notify.instanceId(), notify.ballotId(), this.acceptedValue.id());
             }
+        }
+        else {
+            logger.debug("S{}: Got NOTIFY message of mismatched instance({}), while my last instance id is {} ",
+                    context.squadId(), notify.instanceId(), last);
         }
     }
 

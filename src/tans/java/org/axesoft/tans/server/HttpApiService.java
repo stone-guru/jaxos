@@ -70,7 +70,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
     public HttpApiService(TansConfig config, TansService tansService) {
         this.tansService = tansService;
         this.config = config;
-        this.metrics = TansMetrics.buildInstance(config.serverId());
+        this.metrics = TansMetrics.buildInstance(config.serverId(),this.config.jaxConfig().partitionNumber(), this.tansService::keyCountOf);
 
         super.addListener(new Listener() {
             @Override

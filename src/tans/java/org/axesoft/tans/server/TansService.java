@@ -46,6 +46,13 @@ public class TansService implements StateMachine {
         }
     }
 
+    public Number keyCountOf(int squadId) {
+        if(squadId >= 0 && squadId < numberMaps.length){
+            return numberMaps[squadId].numbers.size();
+        }
+        return 0;
+    }
+
     @Override
     public long currentVersion(int squadId) {
         return this.numberMaps[squadId].currentVersion();
@@ -64,7 +71,6 @@ public class TansService implements StateMachine {
     public Pair<ByteString, Long> makeCheckPoint(int squadId) {
         Pair<Collection<TansNumber>, Long> p = this.numberMaps[squadId].getSnapshot();
         ByteString content = toCheckPoint(p.getLeft());
-        //return new CheckPoint(squadId, p.getRight(), timestamp, content);
         return Pair.of(content, p.getRight());
     }
 

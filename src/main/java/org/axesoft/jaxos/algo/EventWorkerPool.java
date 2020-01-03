@@ -2,6 +2,7 @@ package org.axesoft.jaxos.algo;
 
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
+import org.axesoft.jaxos.base.GroupedRateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,7 @@ public class EventWorkerPool implements EventTimer {
     private ExecutorService[] ballotExecutors;
     private Supplier<EventDispatcher> eventDispatcherSupplier;
     private HashedWheelTimer timer = new HashedWheelTimer(100, TimeUnit.MILLISECONDS);
+    private GroupedRateLimiter rateLimiter = new GroupedRateLimiter(1.0/10.0);
 
     public EventWorkerPool(int threadNum, Supplier<EventDispatcher> eventDispatcherSupplier) {
         this.eventDispatcherSupplier = eventDispatcherSupplier;
@@ -38,14 +40,14 @@ public class EventWorkerPool implements EventTimer {
         }
     }
 
-    public void queueBallotTask(int squadId, Runnable r) {
+    public void queueTask(int squadId, Runnable r) {
         int n = squadId % ballotExecutors.length;
-        this.ballotExecutors[n].submit(new RunnableWithLog(squadId, logger, r));
-    }
-
-
-    public void queueInstanceTask(Runnable r) {
-        this.ballotExecutors[0].submit(new RunnableWithLog(logger, r));
+        try {
+            this.ballotExecutors[n].submit(new RunnableWithLog(squadId, logger, r));
+        }
+        catch (RejectedExecutionException e) {
+            this.rateLimiter.execMaybe(n, () -> logger.warn("S{} task rejected by executor {}", squadId, n));
+        }
     }
 
     public void submitEventToSelf(Event event) {
@@ -53,16 +55,13 @@ public class EventWorkerPool implements EventTimer {
     }
 
     public void submitEvent(Event event, Consumer<Event> resultConsumer) {
-        int n = event.squadId() % ballotExecutors.length;
-        ExecutorService executor = this.ballotExecutors[n];
-
-        executor.submit(new RunnableWithLog(event.squadId(), logger,
+        queueTask(event.squadId(),
                 () -> {
                     Event result = this.eventDispatcherSupplier.get().processEvent(event);
                     if (result != null) {
                         resultConsumer.accept(result);
                     }
-                }));
+                });
     }
 
     public void directCallSelf(Event event) {

@@ -1,7 +1,6 @@
 package org.axesoft.jaxos.netty;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.RateLimiter;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -20,6 +19,7 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.axesoft.jaxos.algo.Event;
 import org.axesoft.jaxos.algo.EventWorkerPool;
+import org.axesoft.jaxos.base.GroupedRateLimiter;
 import org.axesoft.jaxos.network.CommunicatorFactory;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -68,7 +67,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         return new CompositeCommunicator(builder.build());
     }
 
-    private class CompositeCommunicator implements Communicator {
+    private static class CompositeCommunicator implements Communicator {
         private Communicator[] communicators;
 
         public CompositeCommunicator(List<Communicator> communicators) {
@@ -133,7 +132,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         private EventLoopGroup worker;
 
         private Map<Integer, ChannelId> channelIdMap = new ConcurrentHashMap<>();
-        private ConcurrentMap<Integer, RateLimiter> rateLimiterMap = new ConcurrentHashMap<>();
+        private GroupedRateLimiter rateLimiter = new GroupedRateLimiter(1.0/15.0);
 
         public ChannelGroupCommunicator(EventLoopGroup worker) {
             Bootstrap bootstrap;
@@ -200,7 +199,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                         logger.info("Abandon connecting due to bootstrap closed: {}", f.cause().getMessage());
                         return;
                     }
-                    if (rateLimiterForPeer(peer.id()).tryAcquire()) {
+                    if (rateLimiter.tryAcquireFor(peer.id())) {
                         logger.warn("Unable to connect to {} ", peer);
                     }
                     if (!worker.isShuttingDown()) {
@@ -295,9 +294,6 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             }
         }
 
-        private RateLimiter rateLimiterForPeer(int peerId) {
-            return rateLimiterMap.computeIfAbsent(peerId, id -> RateLimiter.create(1.0 / 15));
-        }
     }
 
     private class JaxosClientHandler extends ChannelInboundHandlerAdapter {

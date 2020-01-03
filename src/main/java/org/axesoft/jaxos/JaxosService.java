@@ -105,7 +105,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
         SettableFuture<Void> resultFuture = SettableFuture.create();
 
-        eventWorkerPool.queueBallotTask(squadId,
+        eventWorkerPool.queueTask(squadId,
                 () -> this.squads[squadId].propose(instanceId, v, ignoreLeader, resultFuture));
 
         return resultFuture;
@@ -323,7 +323,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
                 Pair<Integer, Long> p = Pair.of(squadId, instanceId);
                 Event.ChosenQueryResponse response = new Event.ChosenQueryResponse(serverId, ImmutableList.of(p));
-                components.getWorkerPool().queueInstanceTask(() ->
+                components.getWorkerPool().queueTask(0, () ->
                         JaxosService.this.squads[squadId].processEvent(response));
             }
         }

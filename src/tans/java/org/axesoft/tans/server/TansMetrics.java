@@ -1,6 +1,7 @@
 package org.axesoft.tans.server;
 
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
@@ -12,6 +13,8 @@ import io.micrometer.prometheus.PrometheusMeterRegistry;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author bison
@@ -20,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 public class TansMetrics {
     private static PrometheusMeterRegistry registry;
 
-    public static TansMetrics buildInstance(int serverId) { //FIXME not good smell for passing serverId like this
+    public static TansMetrics buildInstance(int serverId, int squadCount, Function<Integer, Number> keyCountFunction) { //FIXME not good smell for passing serverId like this
         if (registry == null) {
             synchronized (TansMetrics.class) {
                 if (registry == null) {
@@ -34,7 +37,7 @@ public class TansMetrics {
                 }
             }
         }
-        return new TansMetrics();
+        return new TansMetrics(squadCount, keyCountFunction);
     }
 
     public static String scrape() {
@@ -44,8 +47,9 @@ public class TansMetrics {
     private Counter requestCounter;
     private Counter redirectCounter;
     private Timer requestTimer;
+    private Gauge keyGauge;
 
-    public TansMetrics() {
+    public TansMetrics(int squadCount, Function<Integer, Number> keyCountFunction) {
         this.requestCounter = Counter.builder("tans.request.total")
                 .description("The total times of TANS request")
                 .register(registry);
@@ -60,6 +64,14 @@ public class TansMetrics {
                 .sla(Duration.ofMillis(3))
                 .minimumExpectedValue(Duration.ofNanos(200_000))
                 .register(registry);
+
+        for(int i = 0; i < squadCount; i++) {
+            final int squadId = i;
+            Gauge.builder("tans.key.count", () -> keyCountFunction.apply(squadId))
+                    .description("The count of keys in squad " + squadId)
+                    .tag("squad", Integer.toString(squadId))
+                    .register(registry);
+        }
     }
 
     public void incRequestCount() {
