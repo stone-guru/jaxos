@@ -183,7 +183,7 @@ public abstract class Event {
 
         @Override
         public String toString() {
-            return "BallotValue{" +  Long.toHexString(id)  + ", " + type + ", b[" + content.size() + "]}";
+            return "BallotValue{" +  Long.toHexString(id).toUpperCase()  + ", " + type + ", b[" + content.size() + "]}";
         }
     }
 

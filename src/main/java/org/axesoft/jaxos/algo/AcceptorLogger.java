@@ -13,13 +13,11 @@ public interface AcceptorLogger {
 
     Instance loadPromise(int squadId, long instanceId);
 
-    void saveCheckPoint(CheckPoint checkPoint);
+    void saveCheckPoint(CheckPoint checkPoint, boolean deleteOldInstances);
 
     CheckPoint loadLastCheckPoint(int squadId);
 
     void sync(boolean force);
 
     void close();
-
-    void printMetrics(long currentMillis);
 }

@@ -2,9 +2,7 @@ package org.axesoft.jaxos;
 
 import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.time.StopWatch;
-import org.axesoft.jaxos.algo.AcceptorLogger;
-import org.axesoft.jaxos.algo.Event;
-import org.axesoft.jaxos.algo.Instance;
+import org.axesoft.jaxos.algo.*;
 import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -28,7 +26,7 @@ public class AcceptorLoggerTest {
         if(!dir.exists()){
             dir.mkdir();
         }
-        logger = new LevelDbAcceptorLogger(DB_DIR, Duration.ofMillis(20));
+        logger = new LevelDbAcceptorLogger(DB_DIR, Duration.ofMillis(20), new DummyJaxosMetrics());
     }
 
     @AfterClass
@@ -56,5 +54,43 @@ public class AcceptorLoggerTest {
         assertEquals(1000 + n - 1, p.id());
         assertEquals(n, p.proposal());
         assertEquals("Hello" + (n - 1), p.value().content().toStringUtf8());
+    }
+
+    public static class DummyJaxosMetrics implements JaxosMetrics {
+
+        @Override
+        public SquadMetrics getOrCreateSquadMetrics(int squadId) {
+            return null;
+        }
+
+        @Override
+        public void recordLoggerLoadElapsed(long nanos) {
+
+        }
+
+        @Override
+        public void recordLoggerSaveElapsed(long nanos) {
+
+        }
+
+        @Override
+        public void recordLoggerSyncElapsed(long nanos) {
+
+        }
+
+        @Override
+        public void recordLoggerDeleteElapsedMillis(long millis) {
+
+        }
+
+        @Override
+        public void recordLoggerSaveCheckPointElapse(long millis) {
+
+        }
+
+        @Override
+        public String format() {
+            return null;
+        }
     }
 }

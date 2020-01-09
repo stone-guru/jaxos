@@ -335,7 +335,11 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            logger.error("error ", cause);
+            if("Connection reset by peer".equals(cause.getMessage())){
+                logger.warn("Connection to {} reseted by peer", ctx.channel().attr(ATTR_PEER).get());
+            } else {
+                logger.error("error ", cause);
+            }
             ctx.close();
         }
     }

@@ -15,16 +15,17 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
-import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
+import org.axesoft.jaxos.TerminatedException;
 import org.axesoft.jaxos.algo.NoQuorumException;
 import org.axesoft.jaxos.algo.ProposalConflictException;
 import org.axesoft.jaxos.algo.RedirectException;
-import org.axesoft.jaxos.algo.JaxosMetrics;
+import org.axesoft.jaxos.MicroMeterJaxosMetrics;
 import org.axesoft.jaxos.base.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -70,7 +71,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
     public HttpApiService(TansConfig config, TansService tansService) {
         this.tansService = tansService;
         this.config = config;
-        this.metrics = TansMetrics.buildInstance(config.serverId(),this.config.jaxConfig().partitionNumber(), this.tansService::keyCountOf);
+        this.metrics = new TansMetrics(config.serverId(), this.config.jaxConfig().partitionNumber(), this.tansService::keyCountOf);
 
         super.addListener(new Listener() {
             @Override
@@ -244,8 +245,8 @@ public final class HttpApiService extends AbstractExecutionThreadService {
                                         Unpooled.copiedBuffer(s + "\r\n", CharsetUtil.UTF_8)));
                     }
                     else if (METRICS_PATH.equals(rawUrl)) {
-                        String s1 = JaxosMetrics.scrape();
-                        String s2 = TansMetrics.scrape();
+                        String s1 = tansService.formatMetrics();
+                        String s2 = metrics.format();
                         writeResponse(ctx, false,
                                 new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(s1 + s2, CharsetUtil.UTF_8)));
                     }
@@ -323,8 +324,9 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            //TODO some exception like reset by peer can be ignored
-            logger.warn("Server channel got exception", cause);
+            if (!"Connection reset by peer".equals(cause.getMessage())) {
+                logger.warn("Server channel got exception", cause);
+            }
             ctx.close();
         }
     }
@@ -351,12 +353,14 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
         private long t0;
         private List<HttpAcquireRequest> tasks;
+        private RateLimiter logRateLimiter;
 
         public RequestQueue(int squadId, int waitingSize) {
             this.squadId = squadId;
             this.waitingSize = waitingSize;
             this.t0 = 0;
             this.tasks = new ArrayList<>(waitingSize);
+            this.logRateLimiter = RateLimiter.create(1.0 / 2.0);
         }
 
         private synchronized void addRequest(HttpAcquireRequest request) {
@@ -405,6 +409,12 @@ public final class HttpApiService extends AbstractExecutionThreadService {
             int otherLeaderId = -1;
             try {
                 rx = tansService.acquire(squadId, kvx, ignoreLeader);
+            }
+            catch (TerminatedException e) {
+                if (logRateLimiter.tryAcquire()) {
+                    logger.warn("Jaxos service stopped, ignore response");
+                }
+                return;
             }
             catch (RedirectException e) {
                 otherLeaderId = e.getServerId();

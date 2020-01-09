@@ -3,7 +3,6 @@ package org.axesoft.jaxos.algo;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
 import io.netty.util.Timeout;
-import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.JaxosSettings;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
@@ -26,17 +25,19 @@ public class Squad implements EventDispatcher {
     private Acceptor acceptor;
     private Proposer proposer;
     private SquadContext context;
-    private JaxosMetrics metrics;
+    private SquadMetrics metrics;
     private JaxosSettings settings;
     private StateMachineRunner stateMachineRunner;
     private Components components;
+
     private Timeout learnTimeout;
+    private long timestampOfLearnReq;
 
     public Squad(int squadId, JaxosSettings settings, Components components, StateMachine machine) {
         this.settings = settings;
         this.components = components;
         this.context = new SquadContext(squadId, this.settings);
-        this.metrics = new JaxosMetrics(settings.serverId(), squadId);
+        this.metrics = components.getJaxosMetrics().getOrCreateSquadMetrics(squadId);
         this.stateMachineRunner = new StateMachineRunner(squadId, machine);
         this.proposer = new Proposer(this.settings, components, this.context, (Learner) stateMachineRunner);
         this.acceptor = new Acceptor(this.settings, components, this.context, (Learner) stateMachineRunner);
@@ -102,20 +103,20 @@ public class Squad implements EventDispatcher {
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable Void result) {
-                record(JaxosMetrics.ProposalResult.SUCCESS);
+                record(SquadMetrics.ProposalResult.SUCCESS);
             }
 
             @Override
             public void onFailure(Throwable t) {
                 if (t instanceof ProposalConflictException) {
-                    record(JaxosMetrics.ProposalResult.CONFLICT);
+                    record(SquadMetrics.ProposalResult.CONFLICT);
                 }
                 else {
-                    record(JaxosMetrics.ProposalResult.OTHER);
+                    record(SquadMetrics.ProposalResult.OTHER);
                 }
             }
 
-            private void record(JaxosMetrics.ProposalResult result) {
+            private void record(SquadMetrics.ProposalResult result) {
                 Squad.this.metrics.recordPropose(System.nanoTime() - startNano, result);
             }
 
@@ -156,6 +157,7 @@ public class Squad implements EventDispatcher {
             }
             case ACCEPTED_NOTIFY: {
                 acceptor.onChosenNotify(((Event.ChosenNotify) event));
+                this.metrics.recordLeader(this.context.lastProposer());
                 return null;
             }
             case PROPOSAL_TIMEOUT: {
@@ -221,6 +223,7 @@ public class Squad implements EventDispatcher {
 
         this.learnTimeout = this.components.getEventTimer().createTimeout(1, TimeUnit.SECONDS,
                 new Event.LearnTimeout(settings.serverId(), context.squadId()));
+        this.timestampOfLearnReq = System.currentTimeMillis();
     }
 
 
@@ -259,11 +262,12 @@ public class Squad implements EventDispatcher {
     }
 
     private void onLearnResponse(Event.LearnResponse response) {
-        logger.info("S{} learn CheckPoint {} with instances from {} to {}",
+        logger.info("S{} learn CheckPoint {} with {} instances from {} to {}",
                 context.squadId(), response.checkPoint().instanceId(),
+                response.highInstanceId() - response.lowInstanceId() + 1,
                 response.lowInstanceId(), response.highInstanceId());
 
-        //sometimes the learn response will comeback lately
+        //sometimes the learn response will come back lately
         if (this.learnTimeout != null) {
             this.learnTimeout.cancel();
             this.learnTimeout = null;
@@ -273,7 +277,7 @@ public class Squad implements EventDispatcher {
         CheckPoint checkPoint = response.checkPoint();
 
         if (!checkPoint.isEmpty()) {
-            saveCheckPoint(checkPoint);
+            saveCheckPoint(checkPoint, false);
         }
 
         for (Instance i : ix) {
@@ -283,36 +287,19 @@ public class Squad implements EventDispatcher {
         this.stateMachineRunner.restoreFromCheckPoint(checkPoint, ix);
 
         Instance last = ix.isEmpty() ? checkPoint.lastInstance() : ix.get(ix.size() - 1);
-        //FIXME use learnresponse sender as leader works fine?
+        //FIXME use learn response sender as leader works fine?
         this.context.recordChosenInfo(response.senderId(), last.id(), last.value().id(), last.proposal());
-    }
 
-    public void computeAndPrintMetrics(long current) {
-        double seconds = (current - this.metrics.lastTime()) / 1000.0;
-        double successRate = this.metrics.successRate();
-        double conflictRate = this.metrics.conflictRate();
-        double otherRate = metrics.otherRate();
-        long proposalDelta = this.metrics.proposeDelta();
-        long acceptDelta = this.metrics.acceptDelta();
-
-        Pair<Double, Double> elapsed = this.metrics.compute(current);
-
-        String msg = String.format("S%d, L=%d, PT=%d, PE=%.3f, S=%.2f, C=%.2f, O=%.2f, AE=%.3f, AT=%d (%.0f s), TT=%d, SR=%.3f, LI=%d",
-                this.context.squadId(), context.lastProposer(),
-                proposalDelta, elapsed.getLeft(),
-                successRate, conflictRate, otherRate, elapsed.getRight(), acceptDelta, seconds,
-                this.metrics.proposeTimes(), this.metrics.totalSuccessRate(), this.context.chosenInstanceId()
-        );
-        logger.info(msg);
+        this.metrics.recordLearnMillis(System.currentTimeMillis() - this.timestampOfLearnReq);
     }
 
     public void saveCheckPoint() {
         CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint();
-        saveCheckPoint(checkPoint);
+        saveCheckPoint(checkPoint, true);
     }
 
-    public void saveCheckPoint(CheckPoint checkPoint){
-        this.components.getLogger().saveCheckPoint(checkPoint);
+    public void saveCheckPoint(CheckPoint checkPoint, boolean deleteOldInstances){
+        this.components.getLogger().saveCheckPoint(checkPoint, deleteOldInstances);
         logger.info("S{} Saved {} ", checkPoint.squadId(), checkPoint);
     }
 

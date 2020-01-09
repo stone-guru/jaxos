@@ -10,16 +10,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TansConfig {
     private JaxosSettings jaxosSettings;
     private Map<Integer, Integer> peerHttpPorts;
-    private int printMetricsIntervalSeconds;
     private int requestBatchSize;
 
     public TansConfig(JaxosSettings jaxosSettings,
                       Map<Integer, Integer> peerHttpPorts,
-                      int printMetricsIntervalSeconds,
                       int requestBatchSize) {
         this.jaxosSettings = checkNotNull(jaxosSettings);
         this.peerHttpPorts = checkNotNull(ImmutableMap.copyOf(peerHttpPorts));
-        this.printMetricsIntervalSeconds = printMetricsIntervalSeconds;
         this.requestBatchSize = requestBatchSize;
     }
 
@@ -41,10 +38,6 @@ public class TansConfig {
 
     public int getPeerHttpPort(int peerId){
         return peerHttpPorts.getOrDefault(peerId, 0);
-    }
-
-    public int printMetricsIntervalSeconds(){
-        return this.printMetricsIntervalSeconds;
     }
 
     public int requestBatchSize() {

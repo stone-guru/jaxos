@@ -35,13 +35,10 @@ public class ArgumentParser {
         @Parameter(names = {"-p"}, description = "Partition number")
         private Integer partitionNumber = 0;
 
-        @Parameter(names = {"-m"}, description = "Interval in seconds of print metrics")
-        private Integer printMetricsSeconds = null;
-
         @Parameter(names = {"-b"}, description = "batch size for HTTP request")
         private Integer requestBatchSize = 8;
 
-        @Parameter(names = {"-c"}, description = "Minutes interval of making checkpoint ")
+        @Parameter(names = {"-c"}, description = "Interval in minutes of saving checkpoint ")
         private Integer checkPointMinutes = 1;
     }
 
@@ -81,8 +78,7 @@ public class ArgumentParser {
 
         JaxosSettings config = buildJaxosConfig(args);
 
-        int printMetricsSec = (args.printMetricsSeconds != null) ? args.printMetricsSeconds : this.printMetricsSeconds;
-        return new TansConfig(config, this.peerHttpMap, printMetricsSec, args.requestBatchSize);
+        return new TansConfig(config, this.peerHttpMap, args.requestBatchSize);
     }
 
     public JaxosSettings parseJaxosSettings(String[] sx) {

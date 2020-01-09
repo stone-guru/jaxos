@@ -203,22 +203,29 @@ public class Acceptor {
     }
 
     private long handleAcceptedNotifyLostMaybe(long chosenInstanceId, int proposer, long requestInstanceId, Event.ChosenInfo chosenInfo) {
+        //When Notify message lost, the critical numbers may look like:
+        //my chosenInstanceId is 10001
+        //requestInstanceId from PREPARE or ACCEPT is 10003, and curried ChosenInfo.instanceId = 10002
+        //the currentInstanceId is 10002
         if (requestInstanceId == chosenInstanceId + 2) {
-            if (this.acceptedBallot > 0 && this.acceptedValue.id() == chosenInfo.ballotId()) {
+            if (this.currentInstanceId == chosenInfo.instanceId() && this.acceptedBallot > 0 && this.acceptedValue.id() == chosenInfo.ballotId()) {
                 logger.info("S{}: success handle notify lost, when handle prepare({}), mine is {}",
                         context.squadId(), requestInstanceId, chosenInstanceId);
 
-                chose(proposer, chosenInstanceId, this.maxBallot);
-                return chosenInstanceId + 1;
+                chose(proposer, this.currentInstanceId, this.acceptedBallot);
             }
         }
-        return chosenInstanceId;
+        return this.context.chosenInstanceId();
     }
 
     public void onChosenNotify(Event.ChosenNotify notify) {
         if (logger.isTraceEnabled()) {
             logger.trace("S{}: NOTIFY receive chose notify {}, value = {}",
                     context.squadId(), notify, this.acceptedValue);
+        }
+        if(notify.ballot() <= 0){
+            logger.warn("S{}: receive illegal ballot number {}", context.squadId(), notify);
+            return;
         }
 
         if (this.faulty) {
@@ -237,11 +244,14 @@ public class Acceptor {
             if (notify.ballotId() == this.acceptedValue.id()) {
                 chose(notify.senderId(), notify.instanceId(), notify.ballot());
             }
-            else {
+            else if (this.acceptedBallot > 0){
                 //ignore this instance, let future learn recover it
-                logger.warn("S{} I{} Got NOTIFY event with different ballot id {}, mine is {}  ", context.squadId(),
-                        notify.instanceId(), notify.ballotId(), this.acceptedValue.id());
+                String s0 = Long.toHexString(this.acceptedValue.id()).toUpperCase();
+                String s1 = Long.toHexString(notify.ballotId()).toUpperCase();
+                logger.warn("S{} I{} Got NOTIFY event with different message id {}, mine is {}  ", context.squadId(),
+                        notify.instanceId(), s1, s0);
             }
+            // else case is this.acceptedBallotId == 0, it means no accepted value
         }
         else {
             logger.debug("S{}: Got NOTIFY message of mismatched instance({}), while my last instance id is {} ",

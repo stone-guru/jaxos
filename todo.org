@@ -3,9 +3,9 @@
 * DONE Adopt JCommand to parse the settings from args 							:base:
 * DONE client close network gracefully 								     :network:
 * DONE use ProtoBuff.ByteString to store the general value 						:base:
-* DONE Proposal judge the majority 								   :algorithm:
-* DONE implement basic multi-paxos.instance 							   :algorithm:
-** DONE acceptor and adaptor use same instance context		  :algorithm:
+* DONE Proposal judge the majority 									:algo:
+* DONE implement basic multi-paxos.instance 								:algo:
+** DONE acceptor and adaptor use same instance context		  :algo:
 * DONE save proposal to localdb 									 :log:
 * DONE add accepted message 									     :network:
 * DONE add single learn request&response 							     :learner:
@@ -14,7 +14,7 @@
 * DONE save checkpoint 										:statemachine:
 * DONE add log reload 											 :log:
 * DONE optimize the thread model 									:base:
-* DONE  support timeout by TimeWheel 								     :network:
+* DONE support timeout by TimeWheel 								     :network:
 * DONE set a fixed gradle version 									 :dev:
 * DONE use settings file for peers' address 								:base:
 * DONE connect to other peers lazily 								     :network:
@@ -27,27 +27,31 @@ are by netty
 * DONE [#C] the proposer blocked at "executingSignal" 							:base:
 * DONE Implement a HTTP id service for each server 							:base:
 * DONE implement a HTTP client on netty 							     :network:
-* DONE Provide proposal BATCH strategy to improve the throughput 				   :algorithm:
+* DONE Provide proposal BATCH strategy to improve the throughput 					:algo:
 * DONE Ignore Exceptions from channel broken when shudown the server 				     :network:
-* TODO A case of Chosen notify message lost making that server hang 				     :network:
-* TODO Add full unit test case for algo package 						   :algorithm:
+* DONE A case of Chosen notify message lost making that server hang				     :network:
+* TODO Add full unit test case for algo package 							:algo:
 * DONE Add reject strategy for HTTP API server when not leader 					     :network:
 * DONE TANS service handle HTTP request in async way 						     :network:
-* DONE Add metrics for acceptor 								   :algorithm:
+* DONE Add metrics for acceptor 									:algo:
 * DONE metrics of process rate of TANS service should in each seconds 				     :network:
 * DONE Add metrics for logger 										 :log:
 * TODO add ring cache to logger 									 :log:
 * DONE delete logs after checkpoint created 								 :log:
-* DONE proposal give each value a unique message id for handling conflict			   :algorithm:
-* TODO Improve the Velometer component, let compute return pair of (t, elapsed) 		     :metrics:
+* DONE proposal give each value a unique message id for handling conflict 				:algo:
+* CANCELLED Improve the Velometer component, let compute return pair of (t, elapsed)		     :metrics:
+  - State "CANCELLED"  from "TODO"       [2020-01-08 Wed 16:07] \\
+    use micrometer instead
 * DONE send checkpoint to learner if required logs were deleted					     :learner:
 * TODO Change HTTP response format from text to JSON 						 :application:
 * DONE Add ignore leader parameter to HTTP request						 :application:
-* TODO Metrics support Promethus 								     :metrics:
-* TODO When a node crashed, other node should be leader of its partition			   :algorithm:
+* DONE Metrics support Promethus								     :metrics:
+* DONE When a node crashed, other node should be leader of its partition 				:algo:
 * TODO nextProposal function of 201 should get 203 if sever id is 3					:algo:
+* TODO The ballot number may grow up to excced the limit of integer					:algo:
 * Issues
 ** TODO [#C] Netty print ERROR message [[file:caselog/netty-error.log][logs]]
 ** TODO client hang when getting redirect to a not given server address 			      :client:
-** TODO conflict propose cause some log dropped [[file:caselog/version-error.log][version error]]					   :algorithm:
-** TODO sometime, raised an exception of propose not end, and most after save checkpoint [[file:caselog/propose-not-end.log][log]]	   :algorithm:
+** DONE conflict propose cause some log dropped [[file:caselog/version-error.log][version error]] 						:algo:
+** TODO sometime, raised an exception of propose not end, and most after save checkpoint [[file:caselog/propose-not-end.log][log]] 		:algo:
+** TODO app's virt memory grow to more 20G , while res is several m only and Xmx is set to 1G		:base:

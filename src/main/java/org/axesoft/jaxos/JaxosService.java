@@ -25,7 +25,6 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
     private static Logger logger = LoggerFactory.getLogger(JaxosService.class);
 
-
     private JaxosSettings settings;
     private StateMachine stateMachine;
     private AcceptorLogger acceptorLogger;
@@ -39,12 +38,14 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     private ScheduledExecutorService timerExecutor;
     private Components components;
     private BallotIdHolder ballotIdHolder;
+    private JaxosMetrics jaxosMetrics;
 
     public JaxosService(JaxosSettings settings, StateMachine stateMachine) {
         this.settings = checkNotNull(settings, "The param settings is null");
         this.stateMachine = checkNotNull(stateMachine, "The param stateMachine is null");
-        this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval());
         this.ballotIdHolder = new BallotIdHolder(this.settings.serverId());
+        this.jaxosMetrics = new MicroMeterJaxosMetrics(this.settings.serverId());
+        this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval(), jaxosMetrics);
 
         this.components = new Components() {
             @Override
@@ -65,6 +66,11 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             @Override
             public EventTimer getEventTimer() {
                 return JaxosService.this.eventWorkerPool;
+            }
+
+            @Override
+            public JaxosMetrics getJaxosMetrics() {
+                return JaxosService.this.jaxosMetrics;
             }
         };
 
@@ -88,7 +94,6 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         super.addListener(new JaxosServiceListener(), MoreExecutors.directExecutor());
     }
 
-
     @Override
     public ListenableFuture<Void> propose(int squadId, long instanceId, ByteString v, boolean ignoreLeader) {
         long ballotId = ballotIdHolder.nextIdOf(squadId);
@@ -97,7 +102,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
     private ListenableFuture<Void> propose(int squadId, long instanceId, Event.BallotValue v, boolean ignoreLeader) {
         if (!this.isRunning()) {
-            return Futures.immediateFailedFuture(new IllegalStateException(SERVICE_NAME + " is not running"));
+            return Futures.immediateFailedFuture(new TerminatedException(SERVICE_NAME + " is not running"));
         }
 
         checkArgument(squadId >= 0 && squadId < squads.length,
@@ -109,19 +114,6 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
                 () -> this.squads[squadId].propose(instanceId, v, ignoreLeader, resultFuture));
 
         return resultFuture;
-    }
-
-    @Override
-    public String scrapeMetrics() {
-        return JaxosMetrics.scrape();
-    }
-
-    public void printMetrics() {
-        long current = System.currentTimeMillis();
-        for (Squad squad : this.squads) {
-            squad.computeAndPrintMetrics(current);
-        }
-        this.components.getLogger().printMetrics(current);
     }
 
     @Override
@@ -228,6 +220,11 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
                 logger.error("Save checkpoint S{} error", squad.id());
             }
         }
+    }
+
+    @Override
+    public String formatMetrics() {
+        return this.jaxosMetrics.format();
     }
 
     private class Platoon implements EventDispatcher {

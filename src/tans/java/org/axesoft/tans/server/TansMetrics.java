@@ -21,35 +21,20 @@ import java.util.function.Supplier;
  * @sine 2019/12/26.
  */
 public class TansMetrics {
-    private static PrometheusMeterRegistry registry;
-
-    public static TansMetrics buildInstance(int serverId, int squadCount, Function<Integer, Number> keyCountFunction) { //FIXME not good smell for passing serverId like this
-        if (registry == null) {
-            synchronized (TansMetrics.class) {
-                if (registry == null) {
-                    registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-                    registry.config().commonTags("server", Integer.toString(serverId));
-                    new ClassLoaderMetrics().bindTo(registry);
-                    new JvmMemoryMetrics().bindTo(registry);
-                    new JvmGcMetrics().bindTo(registry);
-                    new ProcessorMetrics().bindTo(registry);
-                    new JvmThreadMetrics().bindTo(registry);
-                }
-            }
-        }
-        return new TansMetrics(squadCount, keyCountFunction);
-    }
-
-    public static String scrape() {
-        return registry.scrape();
-    }
-
+    private  PrometheusMeterRegistry registry;
     private Counter requestCounter;
     private Counter redirectCounter;
     private Timer requestTimer;
-    private Gauge keyGauge;
 
-    public TansMetrics(int squadCount, Function<Integer, Number> keyCountFunction) {
+    public TansMetrics(int serverId, int squadCount, Function<Integer, Number> keyCountFunction) {
+        this.registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        this.registry.config().commonTags("server", Integer.toString(serverId));
+        new ClassLoaderMetrics().bindTo(registry);
+        new JvmMemoryMetrics().bindTo(registry);
+        new JvmGcMetrics().bindTo(registry);
+        new ProcessorMetrics().bindTo(registry);
+        new JvmThreadMetrics().bindTo(registry);
+
         this.requestCounter = Counter.builder("tans.request.total")
                 .description("The total times of TANS request")
                 .register(registry);
@@ -84,5 +69,10 @@ public class TansMetrics {
 
     public void recordRequestElapsed(long millis) {
         requestTimer.record(Long.max(millis, 1), TimeUnit.MILLISECONDS);
+    }
+
+
+    public String format() {
+        return registry.scrape();
     }
 }

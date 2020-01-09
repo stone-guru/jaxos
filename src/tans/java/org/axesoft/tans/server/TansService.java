@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class TansService implements StateMachine {
+public class TansService implements StateMachine, HasMetrics {
     private static Logger logger = LoggerFactory.getLogger(TansService.class);
 
     private Supplier<Proponent> proponent;
@@ -135,6 +135,11 @@ public class TansService implements StateMachine {
             return 0;
         }
         return Math.abs(code) % this.numberMaps.length;
+    }
+
+    @Override
+    public String formatMetrics() {
+        return this.proponent.get().formatMetrics();
     }
 
     private static class TansNumberMap {

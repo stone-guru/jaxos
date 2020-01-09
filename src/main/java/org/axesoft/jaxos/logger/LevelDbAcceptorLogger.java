@@ -3,18 +3,15 @@ package org.axesoft.jaxos.logger;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.axesoft.jaxos.algo.AcceptorLogger;
-import org.axesoft.jaxos.algo.CheckPoint;
-import org.axesoft.jaxos.algo.Event;
-import org.axesoft.jaxos.algo.Instance;
-import org.axesoft.jaxos.base.Velometer;
+import org.axesoft.jaxos.algo.*;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
 import org.iq80.leveldb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
@@ -40,9 +37,9 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     private AtomicStampedReference<Long> syncTimestamp;
     private Duration syncInterval;
 
-    private Metrics metrics;
+    private JaxosMetrics metrics;
 
-    public LevelDbAcceptorLogger(String path, Duration syncInterval) {
+    public LevelDbAcceptorLogger(String path, Duration syncInterval, JaxosMetrics metrics) {
         this.path = path;
 
         tryCreateDir(path);
@@ -66,7 +63,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         persistTimestamp = new AtomicStampedReference<>(cur, 0);
         syncTimestamp = new AtomicStampedReference<>(cur, 0);
 
-        this.metrics = new Metrics(cur);
+        this.metrics = metrics;
     }
 
     private void tryCreateDir(String path) {
@@ -101,9 +98,9 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         db.write(writeBatch, writeOptions);
 
         long duration = System.nanoTime() - t0;
-        this.metrics.saveVelometer.record(duration);
+        this.metrics.recordLoggerSaveElapsed(duration);
         if (shouldSync) {
-            this.metrics.syncVelometer.record(duration);
+            this.metrics.recordLoggerSyncElapsed(duration);
         }
     }
 
@@ -141,18 +138,24 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
 
     @Override
     public Instance loadLastPromise(int squadId) {
-        byte[] last = keyOfSquadLast(squadId);
-        byte[] idx = db.get(last);
-        if (idx == null) {
-            return Instance.emptyOf(squadId);
-        }
+        long t0 = System.nanoTime();
 
-        byte[] bx = db.get(idx);
-        if (bx == null) {
-            return Instance.emptyOf(squadId);
-        }
+        try {
+            byte[] last = keyOfSquadLast(squadId);
+            byte[] idx = db.get(last);
+            if (idx == null) {
+                return Instance.emptyOf(squadId);
+            }
 
-        return toEntity(bx);
+            byte[] bx = db.get(idx);
+            if (bx == null) {
+                return Instance.emptyOf(squadId);
+            }
+
+            return toEntity(bx);
+        }finally {
+            this.metrics.recordLoggerLoadElapsed(System.nanoTime() - t0);
+        }
     }
 
     @Override
@@ -168,19 +171,23 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
             return Instance.emptyOf(squadId);
         }
         finally {
-            this.metrics.loadVelometer.record(System.nanoTime() - t0);
+            this.metrics.recordLoggerLoadElapsed(System.nanoTime() - t0);
         }
     }
 
     @Override
-    public void saveCheckPoint(CheckPoint checkPoint) {
+    public void saveCheckPoint(CheckPoint checkPoint, boolean deleteOldInstances) {
+        long t0 = System.nanoTime();
         byte[] key = keyOfCheckPoint(checkPoint.squadId());
         byte[] data = toByteArray(checkPoint);
 
         WriteOptions writeOptions = new WriteOptions().sync(true);
         db.put(key, data, writeOptions);
+        this.metrics.recordLoggerSaveCheckPointElapse(System.nanoTime() - t0);
 
-        deleteLogLessEqual(checkPoint.squadId(), checkPoint.instanceId());
+        if(deleteOldInstances) {
+            deleteLogLessEqual(checkPoint.squadId(), checkPoint.instanceId());
+        }
     }
 
     private void deleteLogLessEqual(int squadId, long instanceId){
@@ -213,7 +220,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         db.compactRange(null, null);
 
         double millis = (System.nanoTime() - t0)/1e+6;
-
+        this.metrics.recordLoggerDeleteElapsedMillis((long)millis);
         logger.info("S{} delete instances from {} to {}, elapsed {} ms", squadId, idLow + 1, idHigh, millis);
     }
 
@@ -240,7 +247,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         WriteBatch writeBatch = db.createWriteBatch();
         db.write(writeBatch, writeOptions);
 
-        this.metrics.syncVelometer.record(System.nanoTime() - t0);
+        this.metrics.recordLoggerSyncElapsed(System.nanoTime() - t0);
     }
 
     @Override
@@ -253,22 +260,12 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         }
     }
 
-    @Override
-    public void printMetrics(long currentMillis) {
-        this.metrics.compute(currentMillis);
-        String msg = String.format("ST=%d, SE=%.2f, LT=%d, LE=%.2f, CT=%d, CT=%.2f",
-                this.metrics.saveTimes, this.metrics.saveElapsed,
-                this.metrics.loadTimes, this.metrics.loadElapsed,
-                this.metrics.syncTimes, this.metrics.syncElapsed);
-        logger.info(msg);
-    }
-
-    public byte[] toByteArray(CheckPoint checkPoint) {
+    private byte[] toByteArray(CheckPoint checkPoint) {
         PaxosMessage.CheckPoint c = this.messageCoder.encodeCheckPoint(checkPoint);
         return c.toByteArray();
     }
 
-    public CheckPoint toCheckPoint(byte[] bytes) {
+    private CheckPoint toCheckPoint(byte[] bytes) {
         try {
             PaxosMessage.CheckPoint checkPoint = PaxosMessage.CheckPoint.parseFrom(bytes);
             return this.messageCoder.decodeCheckPoint(checkPoint);
@@ -278,7 +275,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         }
     }
 
-    public Instance toEntity(byte[] bytes) {
+    private Instance toEntity(byte[] bytes) {
         PaxosMessage.Instance i;
         try {
             i = PaxosMessage.Instance.parseFrom(bytes);
@@ -292,7 +289,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     }
 
 
-    public byte[] toByteArray(Instance v) {
+    private byte[] toByteArray(Instance v) {
         return PaxosMessage.Instance.newBuilder()
                 .setSquadId(v.squadId())
                 .setInstanceId(v.id())
@@ -331,33 +328,5 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         return key;
     }
 
-    public static class Metrics {
-        public final Velometer saveVelometer;
-        public final Velometer loadVelometer;
-        public final Velometer syncVelometer;
 
-        private long saveTimes = 0;
-        private double saveElapsed = 0;
-        private long loadTimes = 0;
-        private double loadElapsed = 0;
-        private long syncTimes = 0;
-        private double syncElapsed = 0;
-
-        public Metrics(long current) {
-            this.saveVelometer = new Velometer(current);
-            this.loadVelometer = new Velometer(current);
-            this.syncVelometer = new Velometer(current);
-        }
-
-        public void compute(long current) {
-            saveTimes = this.saveVelometer.timesDelta();
-            saveElapsed = this.saveVelometer.compute(current);
-
-            loadTimes = this.loadVelometer.timesDelta();
-            loadElapsed = this.loadVelometer.compute(current);
-
-            syncTimes = this.syncVelometer.timesDelta();
-            syncElapsed = this.syncVelometer.compute(current);
-        }
-    }
 }

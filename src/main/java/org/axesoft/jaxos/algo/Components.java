@@ -15,4 +15,6 @@ public interface Components {
     default EventTimer getEventTimer() {
         return getWorkerPool();
     }
+
+    JaxosMetrics getJaxosMetrics();
 }
