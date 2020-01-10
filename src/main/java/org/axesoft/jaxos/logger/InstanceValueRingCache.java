@@ -5,6 +5,7 @@ import org.axesoft.jaxos.algo.Instance;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -25,9 +26,13 @@ public class InstanceValueRingCache {
         int p0 = (this.pos - 1 + this.buff.length) % this.buff.length;
         Instance v0 = this.buff[p0];
         if (v0 != null) {
-            checkArgument(value.id() >  v0.id(),
-                    "added instance id(%d) should great than prev(%d)",
-                    value.id(), v0.id());
+            if (v0.id() == value.id()) {
+                this.buff[p0] = value;
+                return;
+            }
+            else if (value.id() != v0.id() + 1){
+                return;
+            }
         }
 
         this.buff[this.pos] = value;
@@ -39,6 +44,11 @@ public class InstanceValueRingCache {
             return pos;
         }
         return buff.length;
+    }
+
+    public synchronized Optional<Instance> getLast() {
+        int p0 = (this.pos - 1 + this.buff.length) % this.buff.length;
+        return Optional.ofNullable(this.buff[p0]);
     }
 
     public synchronized List<Instance> get(long idLow, long idHigh) {

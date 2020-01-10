@@ -264,7 +264,7 @@ public class Squad implements EventDispatcher {
     private void onLearnResponse(Event.LearnResponse response) {
         logger.info("S{} learn CheckPoint {} with {} instances from {} to {}",
                 context.squadId(), response.checkPoint().instanceId(),
-                response.highInstanceId() - response.lowInstanceId() + 1,
+                response.highInstanceId() == 0? 0 : response.highInstanceId() - response.lowInstanceId() + 1,
                 response.lowInstanceId(), response.highInstanceId());
 
         //sometimes the learn response will come back lately
@@ -281,6 +281,7 @@ public class Squad implements EventDispatcher {
         }
 
         for (Instance i : ix) {
+            //System.out.println("on lean response save " + i.toString());
             this.components.getLogger().savePromise(i.squadId(), i.id(), i.proposal(), i.value());
         }
 

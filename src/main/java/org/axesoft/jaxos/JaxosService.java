@@ -8,6 +8,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.algo.*;
 import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
 import org.axesoft.jaxos.algo.EventWorkerPool;
+import org.axesoft.jaxos.logger.MemoryAcceptorLogger;
 import org.axesoft.jaxos.netty.NettyCommunicatorFactory;
 import org.axesoft.jaxos.netty.NettyJaxosServer;
 import org.slf4j.Logger;
@@ -45,7 +46,8 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         this.stateMachine = checkNotNull(stateMachine, "The param stateMachine is null");
         this.ballotIdHolder = new BallotIdHolder(this.settings.serverId());
         this.jaxosMetrics = new MicroMeterJaxosMetrics(this.settings.serverId());
-        this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval(), jaxosMetrics);
+        //this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval(), jaxosMetrics);
+        this.acceptorLogger = new MemoryAcceptorLogger(1024 * 5);
 
         this.components = new Components() {
             @Override
@@ -148,7 +150,9 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
         this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync(false)),
                 1000, settings.syncInterval().toMillis() / 2, TimeUnit.MILLISECONDS);
-        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, 3, 3, TimeUnit.SECONDS);
+
+        long leaderInterval = this.settings.leaderLeaseSeconds() * 1000 / 3;
+        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, leaderInterval, leaderInterval, TimeUnit.MILLISECONDS);
 
         this.node.startup();
     }

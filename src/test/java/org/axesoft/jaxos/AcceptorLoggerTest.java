@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.time.StopWatch;
 import org.axesoft.jaxos.algo.*;
 import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
+import org.axesoft.jaxos.logger.MemoryAcceptorLogger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,7 +27,8 @@ public class AcceptorLoggerTest {
         if(!dir.exists()){
             dir.mkdir();
         }
-        logger = new LevelDbAcceptorLogger(DB_DIR, Duration.ofMillis(20), new DummyJaxosMetrics());
+        //logger = new LevelDbAcceptorLogger(DB_DIR, Duration.ofMillis(20), new DummyJaxosMetrics());
+        logger = new MemoryAcceptorLogger(12000);
     }
 
     @AfterClass
