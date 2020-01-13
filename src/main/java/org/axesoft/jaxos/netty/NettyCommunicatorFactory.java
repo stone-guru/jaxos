@@ -17,6 +17,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.concurrent.RejectedExecutionHandler;
 import org.axesoft.jaxos.algo.Event;
 import org.axesoft.jaxos.algo.EventWorkerPool;
 import org.axesoft.jaxos.base.GroupedRateLimiter;
@@ -193,27 +194,33 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                 return;
             }
 
-            future.addListener(f -> {
-                if (!f.isSuccess()) {
-                    if (f.cause() instanceof RejectedExecutionException) {
-                        logger.info("Abandon connecting due to bootstrap closed: {}", f.cause().getMessage());
-                        return;
+            try {
+                future.addListener(f -> {
+                    if (!f.isSuccess()) {
+                        if (f.cause() instanceof RejectedExecutionException) {
+                            logger.info("Abandon connecting due to bootstrap closed: {}", f.cause().getMessage());
+                            return;
+                        }
+                        if (rateLimiter.tryAcquireFor(peer.id())) {
+                            logger.warn("Unable to connect to {} ", peer);
+                        }
+                        if (!worker.isShuttingDown()) {
+                            worker.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
+                        }
                     }
-                    if (rateLimiter.tryAcquireFor(peer.id())) {
-                        logger.warn("Unable to connect to {} ", peer);
+                    else {
+                        logger.info("Connected to {}", peer);
+                        Channel c = ((ChannelFuture) f).channel();
+                        c.attr(ATTR_PEER).set(peer);
+                        channels.add(c);
+                        channelIdMap.put(peer.id(), c.id());
                     }
-                    if (!worker.isShuttingDown()) {
-                        worker.schedule(() -> connect(peer), 3, TimeUnit.SECONDS);
-                    }
+                });
+            }catch(RejectedExecutionException e){
+                if(!worker.isShuttingDown()){
+                    logger.error("Unable to attach listener for connection when connect to " + peer, e);
                 }
-                else {
-                    logger.info("Connected to {}", peer);
-                    Channel c = ((ChannelFuture) f).channel();
-                    c.attr(ATTR_PEER).set(peer);
-                    channels.add(c);
-                    channelIdMap.put(peer.id(), c.id());
-                }
-            });
+            }
         }
 
         @Override
