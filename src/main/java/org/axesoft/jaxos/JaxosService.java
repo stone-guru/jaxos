@@ -6,9 +6,8 @@ import com.google.protobuf.ByteString;
 import io.netty.util.Timeout;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.algo.*;
-import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
+import org.axesoft.jaxos.logger.RocksDbAcceptorLogger;
 import org.axesoft.jaxos.algo.EventWorkerPool;
-import org.axesoft.jaxos.logger.MemoryAcceptorLogger;
 import org.axesoft.jaxos.netty.NettyCommunicatorFactory;
 import org.axesoft.jaxos.netty.NettyJaxosServer;
 import org.slf4j.Logger;
@@ -46,8 +45,8 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         this.stateMachine = checkNotNull(stateMachine, "The param stateMachine is null");
         this.ballotIdHolder = new BallotIdHolder(this.settings.serverId());
         this.jaxosMetrics = new MicroMeterJaxosMetrics(this.settings.serverId());
-        //this.acceptorLogger = new LevelDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval(), jaxosMetrics);
-        this.acceptorLogger = new MemoryAcceptorLogger(1024 * 5);
+        this.acceptorLogger = new RocksDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval(), jaxosMetrics);
+        //this.acceptorLogger = new MemoryAcceptorLogger(1024 * 5);
 
         this.components = new Components() {
             @Override
@@ -221,7 +220,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
                     logger.info("Save checkpoint S{} interrupted", squad.id());
                     return;
                 }
-                logger.error("Save checkpoint S{} error", squad.id());
+                logger.error("S" + squad.id() + " save checkpoint error", e);
             }
         }
     }

@@ -6,7 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.axesoft.jaxos.algo.*;
 import org.axesoft.jaxos.network.protobuff.PaxosMessage;
 import org.axesoft.jaxos.network.protobuff.ProtoMessageCoder;
-import org.iq80.leveldb.*;
+import org.rocksdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,13 +15,15 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
-import static org.fusesource.leveldbjni.JniDBFactory.factory;
-
 /**
  * A paxos logger implementation based on the LevelDB and ProtoBuff message coder
  */
-public class LevelDbAcceptorLogger implements AcceptorLogger {
-    private static final Logger logger = LoggerFactory.getLogger(LevelDbAcceptorLogger.class);
+public class RocksDbAcceptorLogger implements AcceptorLogger {
+    static {
+        RocksDB.loadLibrary();
+    }
+
+    private static final Logger logger = LoggerFactory.getLogger(RocksDbAcceptorLogger.class);
 
     private static final int KEEP_OLD_LOG_NUM = 2000;
 
@@ -30,7 +32,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     private static final byte CATEGORY_SQUAD_CHECKPOINT = 3;
     private static final byte CATEGORY_OLDEST_INSTANCE_ID = 4;
 
-    private DB db;
+    private RocksDB db;
     private String path;
     private ProtoMessageCoder messageCoder;
     private AtomicStampedReference<Long> persistTimestamp;
@@ -39,20 +41,19 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
 
     private JaxosMetrics metrics;
 
-    public LevelDbAcceptorLogger(String path, Duration syncInterval, JaxosMetrics metrics) {
+    public RocksDbAcceptorLogger(String path, Duration syncInterval, JaxosMetrics metrics) {
         this.path = path;
 
         tryCreateDir(path);
 
         Options options = new Options()
-                .createIfMissing(true)
-                .compressionType(CompressionType.SNAPPY)
-                .cacheSize(32 * 1048576);//32M
+                .setCreateIfMissing(true)
+                .setCompressionType(CompressionType.NO_COMPRESSION);
 
         try {
-            db = factory.open(new File(path), options);
+            db = RocksDB.open(options, path);
         }
-        catch (IOException e) {
+        catch (RocksDBException e) {
             throw new RuntimeException(e);
         }
 
@@ -89,13 +90,18 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         long current = System.currentTimeMillis();
         recordSaveTimestamp(current);
         boolean shouldSync = computeShouldSync(current);
-        WriteOptions writeOptions = new WriteOptions().sync(shouldSync);
+        WriteOptions writeOptions = new WriteOptions().setSync(shouldSync);
 
-        WriteBatch writeBatch = db.createWriteBatch();
+        WriteBatch writeBatch = new WriteBatch();
         byte[] promiseKey = keyOfInstanceId(squadId, instanceId);
-        writeBatch.put(promiseKey, data);
-        writeBatch.put(keyOfSquadLast(squadId), promiseKey);
-        db.write(writeBatch, writeOptions);
+        try {
+            writeBatch.put(promiseKey, data);
+            writeBatch.put(keyOfSquadLast(squadId), promiseKey);
+            db.write(writeOptions, writeBatch);
+        }
+        catch (RocksDBException e) {
+            throw new RuntimeException(e);
+        }
 
         long duration = System.nanoTime() - t0;
         this.metrics.recordLoggerSaveElapsed(duration);
@@ -153,7 +159,11 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
             }
 
             return toEntity(bx);
-        }finally {
+        }
+        catch (RocksDBException e) {
+            throw new RuntimeException(e);
+        }
+        finally {
             this.metrics.recordLoggerLoadElapsed(System.nanoTime() - t0);
         }
     }
@@ -170,6 +180,9 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
             }
             return Instance.emptyOf(squadId);
         }
+        catch (RocksDBException e) {
+            throw new RuntimeException(e);
+        }
         finally {
             this.metrics.recordLoggerLoadElapsed(System.nanoTime() - t0);
         }
@@ -181,53 +194,70 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         byte[] key = keyOfCheckPoint(checkPoint.squadId());
         byte[] data = toByteArray(checkPoint);
 
-        WriteOptions writeOptions = new WriteOptions().sync(true);
-        db.put(key, data, writeOptions);
+        WriteOptions writeOptions = new WriteOptions().setSync(true);
+        try {
+            db.put(writeOptions, key, data);
+        }
+        catch (RocksDBException e) {
+            throw new RuntimeException(e);
+        }
         this.metrics.recordLoggerSaveCheckPointElapse(System.nanoTime() - t0);
 
-        if(deleteOldInstances) {
+        if (deleteOldInstances) {
             deleteLogLessEqual(checkPoint.squadId(), checkPoint.instanceId());
         }
     }
 
-    private void deleteLogLessEqual(int squadId, long instanceId){
-        if(instanceId <= 0){
+    private void deleteLogLessEqual(int squadId, long instanceId) {
+        if (instanceId <= 0) {
             return;
         }
 
         long t0 = System.nanoTime();
 
         long idLow = 0;
-        byte[] data = db.get(keyOfOldestInstanceId(squadId));
-        if(data != null){
-            idLow = Longs.fromByteArray(data);
+        long idHigh = 0;
+        try {
+            byte[] data = db.get(keyOfOldestInstanceId(squadId));
+            if (data != null) {
+                idLow = Longs.fromByteArray(data);
+            }
+
+            if (instanceId - idLow < KEEP_OLD_LOG_NUM) {
+                return;
+            }
+
+            idHigh = instanceId - KEEP_OLD_LOG_NUM;
+            WriteOptions writeOptions = new WriteOptions().setSync(false);
+            for (long id = idLow + 1; id <= idHigh; id++) {
+                db.delete(writeOptions, keyOfInstanceId(squadId, id));
+            }
+
+            WriteBatch writeBatch = new WriteBatch();
+            writeBatch.put(keyOfOldestInstanceId(squadId), Longs.toByteArray(idHigh));
+            db.write(new WriteOptions().setSync(true), writeBatch);
+
+            db.compactRange(null, null);
+        }
+        catch (RocksDBException e) {
+            throw new RuntimeException(e);
         }
 
-        if(instanceId - idLow < KEEP_OLD_LOG_NUM){
-            return;
-        }
-
-        long idHigh = instanceId - KEEP_OLD_LOG_NUM;
-        WriteOptions writeOptions = new WriteOptions().sync(false);
-        for(long id = idLow + 1; id <= idHigh; id++){
-            db.delete(keyOfInstanceId(squadId, id), writeOptions);
-        }
-
-        WriteBatch writeBatch = db.createWriteBatch();
-        writeBatch.put(keyOfOldestInstanceId(squadId), Longs.toByteArray(idHigh));
-        db.write(writeBatch, new WriteOptions().sync(true));
-
-        db.compactRange(null, null);
-
-        double millis = (System.nanoTime() - t0)/1e+6;
-        this.metrics.recordLoggerDeleteElapsedMillis((long)millis);
+        double millis = (System.nanoTime() - t0) / 1e+6;
+        this.metrics.recordLoggerDeleteElapsedMillis((long) millis);
         logger.info("S{} delete instances from {} to {}, elapsed {} ms", squadId, idLow + 1, idHigh, millis);
     }
 
     @Override
     public CheckPoint loadLastCheckPoint(int squadId) {
         byte[] key = keyOfCheckPoint(squadId);
-        byte[] data = db.get(key);
+        byte[] data ;
+        try {
+            data = db.get(key);
+        }
+        catch (RocksDBException e) {
+            throw new RuntimeException(e);
+        }
 
         if (data == null) {
             return CheckPoint.EMPTY;
@@ -243,9 +273,14 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
 
         long t0 = System.nanoTime();
 
-        WriteOptions writeOptions = new WriteOptions().sync(true);
-        WriteBatch writeBatch = db.createWriteBatch();
-        db.write(writeBatch, writeOptions);
+        WriteOptions writeOptions = new WriteOptions().setSync(true);
+        WriteBatch writeBatch = new WriteBatch();
+        try {
+            db.write(writeOptions, writeBatch);
+        }
+        catch (RocksDBException e) {
+            throw new RuntimeException(e);
+        }
 
         this.metrics.recordLoggerSyncElapsed(System.nanoTime() - t0);
     }
@@ -253,9 +288,10 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
     @Override
     public void close() {
         try {
-            this.db.close();
+            sync(true);
+            this.db.closeE();
         }
-        catch (IOException e) {
+        catch (RocksDBException e) {
             logger.error("Error when close db in " + this.path);
         }
     }
@@ -321,7 +357,7 @@ public class LevelDbAcceptorLogger implements AcceptorLogger {
         return key;
     }
 
-    private byte[] keyOfOldestInstanceId(int squadId){
+    private byte[] keyOfOldestInstanceId(int squadId) {
         byte[] key = new byte[5];
         key[0] = CATEGORY_OLDEST_INSTANCE_ID;
         System.arraycopy(Ints.toByteArray(squadId), 0, key, 1, 4);

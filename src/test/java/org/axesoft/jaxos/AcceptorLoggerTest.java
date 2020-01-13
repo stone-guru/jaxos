@@ -3,14 +3,12 @@ package org.axesoft.jaxos;
 import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.time.StopWatch;
 import org.axesoft.jaxos.algo.*;
-import org.axesoft.jaxos.logger.LevelDbAcceptorLogger;
 import org.axesoft.jaxos.logger.MemoryAcceptorLogger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static junit.framework.Assert.assertEquals;
