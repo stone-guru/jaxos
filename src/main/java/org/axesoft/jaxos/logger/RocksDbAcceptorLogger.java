@@ -11,12 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 /**
- * A paxos logger implementation based on the LevelDB and ProtoBuff message coder
+ * A paxos logger implementation based on the RocksDB and ProtoBuff message coder
  */
 public class RocksDbAcceptorLogger implements AcceptorLogger {
     static {

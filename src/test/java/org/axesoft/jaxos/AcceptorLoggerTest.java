@@ -17,7 +17,8 @@ import static junit.framework.Assert.assertNotNull;
 
 public class AcceptorLoggerTest {
     final static String DB_DIR = "/tmp/jaxosdb";
-    static AcceptorLogger logger;
+    private static AcceptorLogger logger;
+    final static int n = 4000;
 
     @BeforeClass
     public static void setup(){
@@ -26,17 +27,8 @@ public class AcceptorLoggerTest {
             dir.mkdir();
         }
         //logger = new LevelDbAcceptorLogger(DB_DIR, Duration.ofMillis(20), new DummyJaxosMetrics());
-        logger = new MemoryAcceptorLogger(12000);
-    }
+        logger = new MemoryAcceptorLogger(5000);
 
-    @AfterClass
-    public static void shutdown(){
-        logger.close();
-    }
-
-    @Test
-    public void testSave(){
-        final int n = 10000;
         StopWatch w = StopWatch.createStarted();
         for(int i = 0; i < n; i++) {
             logger.savePromise(1, 1000 + i, 1 + i, Event.BallotValue.appValue(i, ByteString.copyFromUtf8("Hello" + i)));
@@ -46,7 +38,15 @@ public class AcceptorLoggerTest {
         w.stop();
         double seconds = w.getTime(TimeUnit.MILLISECONDS)/1000.0;
         System.out.println(String.format("Insert %d records in %.2f s, OPS = %.2f", 2 * n, seconds, (2.0 * n)/seconds));
+    }
 
+    @AfterClass
+    public static void shutdown(){
+        logger.close();
+    }
+
+    @Test
+    public void testLoadLast(){
         Instance p = logger.loadLastPromise(1);
         assertNotNull(p);
 
@@ -54,6 +54,17 @@ public class AcceptorLoggerTest {
         assertEquals(1000 + n - 1, p.id());
         assertEquals(n, p.proposal());
         assertEquals("Hello" + (n - 1), p.value().content().toStringUtf8());
+    }
+
+    @Test
+    public void testLoad()  {
+        Instance p = logger.loadPromise(2, 1100);
+        assertNotNull(p);
+
+        assertEquals(2, p.squadId());
+        assertEquals(1100, p.id());
+        assertEquals(101, p.proposal());
+        assertEquals("Hello100", p.value().content().toStringUtf8());
     }
 
     public static class DummyJaxosMetrics implements JaxosMetrics {

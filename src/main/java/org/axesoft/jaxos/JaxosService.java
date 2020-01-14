@@ -80,7 +80,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         for (int i = 0; i < settings.partitionNumber(); i++) {
             final int n = i;
             this.squads[i] = new Squad(n, settings, this.components, stateMachine);
-            this.squads[i].restoreFromDB(); //FIXME it can run in parallel
+            this.squads[i].restoreFromDB();
         }
 
         this.platoon = new Platoon();
