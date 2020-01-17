@@ -10,4 +10,9 @@ public class RedirectException extends  RuntimeException {
     public int getServerId(){
         return this.serverId;
     }
+
+    @Override
+    public String getMessage() {
+        return "Redirect to " + this.serverId;
+    }
 }

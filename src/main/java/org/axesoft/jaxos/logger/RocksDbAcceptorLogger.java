@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 /**
@@ -24,25 +27,35 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
 
     private static final Logger logger = LoggerFactory.getLogger(RocksDbAcceptorLogger.class);
 
-    private static final int KEEP_OLD_LOG_NUM = 2000;
+    private static final int KEEP_OLD_LOG_NUM = 5000;
 
     private static final byte CATEGORY_SQUAD_LAST = 1;
     private static final byte CATEGORY_PROMISE = 2;
     private static final byte CATEGORY_SQUAD_CHECKPOINT = 3;
     private static final byte CATEGORY_OLDEST_INSTANCE_ID = 4;
 
-    private RocksDB db;
-    private String path;
+    private Duration syncInterval;
     private ProtoMessageCoder messageCoder;
+    private String path;
+    private int squadCount;
+
+    private RocksDB db;
+
     private AtomicStampedReference<Long> persistTimestamp;
     private AtomicStampedReference<Long> syncTimestamp;
-    private Duration syncInterval;
+
+    private ConcurrentMap<Integer, AtomicLong> oldestInstanceIdMap;
 
     private JaxosMetrics metrics;
 
-    public RocksDbAcceptorLogger(String path, Duration syncInterval, JaxosMetrics metrics) {
-        this.path = path;
 
+    public RocksDbAcceptorLogger(String path, int squadCount, Duration syncInterval, JaxosMetrics metrics) {
+        this.squadCount = squadCount;
+        this.path = path;
+        this.messageCoder = new ProtoMessageCoder();
+        this.syncInterval = syncInterval;
+
+        this.metrics = metrics;
         tryCreateDir(path);
 
         Options options = new Options()
@@ -51,19 +64,20 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
 
         try {
             db = RocksDB.open(options, path);
+            this.oldestInstanceIdMap = new ConcurrentHashMap<>();
+            for (int squadId = 0; squadId < squadCount; squadId++) {
+                Instance i = loadInstanceByIndex(keyOfOldestInstanceId(squadId), squadId);
+                //i maybe an empty instance
+                this.oldestInstanceIdMap.put(squadId, new AtomicLong(i.id()));
+            }
         }
         catch (RocksDBException e) {
             throw new RuntimeException(e);
         }
 
-        this.messageCoder = new ProtoMessageCoder();
-        this.syncInterval = syncInterval;
-
         long cur = System.currentTimeMillis();
-        persistTimestamp = new AtomicStampedReference<>(cur, 0);
-        syncTimestamp = new AtomicStampedReference<>(cur, 0);
-
-        this.metrics = metrics;
+        this.persistTimestamp = new AtomicStampedReference<>(cur, 0);
+        this.syncTimestamp = new AtomicStampedReference<>(cur, 0);
     }
 
     private void tryCreateDir(String path) {
@@ -81,7 +95,7 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
     }
 
     @Override
-    public void savePromise(int squadId, long instanceId, int proposal, Event.BallotValue value) {
+    public void saveInstance(int squadId, long instanceId, int proposal, Event.BallotValue value) {
         long t0 = System.nanoTime();
 
         byte[] data = toByteArray(new Instance(squadId, instanceId, proposal, value));
@@ -89,13 +103,16 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         long current = System.currentTimeMillis();
         recordSaveTimestamp(current);
         boolean shouldSync = computeShouldSync(current);
-        WriteOptions writeOptions = new WriteOptions().setSync(shouldSync);
 
-        WriteBatch writeBatch = new WriteBatch();
-        byte[] promiseKey = keyOfInstanceId(squadId, instanceId);
-        try {
-            writeBatch.put(promiseKey, data);
-            writeBatch.put(keyOfSquadLast(squadId), promiseKey);
+        byte[] instanceKey = keyOfInstanceId(squadId, instanceId);
+        try (final WriteBatch writeBatch = new WriteBatch();
+             WriteOptions writeOptions = new WriteOptions().setSync(shouldSync)) {
+            writeBatch.put(instanceKey, data);
+            writeBatch.put(keyOfSquadLast(squadId), instanceKey);
+            if (this.oldestInstanceIdMap.get(squadId).get() == 0) {
+                this.oldestInstanceIdMap.get(squadId).set(instanceId);
+                writeBatch.put(keyOfOldestInstanceId(squadId), instanceKey);
+            }
             db.write(writeOptions, writeBatch);
         }
         catch (RocksDBException e) {
@@ -142,22 +159,12 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
     }
 
     @Override
-    public Instance loadLastPromise(int squadId) {
+    public Instance loadLastInstance(int squadId) {
         long t0 = System.nanoTime();
 
         try {
-            byte[] last = keyOfSquadLast(squadId);
-            byte[] idx = db.get(last);
-            if (idx == null) {
-                return Instance.emptyOf(squadId);
-            }
-
-            byte[] bx = db.get(idx);
-            if (bx == null) {
-                return Instance.emptyOf(squadId);
-            }
-
-            return toEntity(bx);
+            byte[] indexKey = keyOfSquadLast(squadId);
+            return loadInstanceByIndex(indexKey, squadId);
         }
         catch (RocksDBException e) {
             throw new RuntimeException(e);
@@ -167,8 +174,22 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         }
     }
 
+    private Instance loadInstanceByIndex(byte[] indexKey, int squadId) throws RocksDBException {
+        byte[] idx = db.get(indexKey);
+        if (idx == null) {
+            return Instance.emptyOf(squadId);
+        }
+
+        byte[] bx = db.get(idx);
+        if (bx == null) {
+            return Instance.emptyOf(squadId);
+        }
+
+        return toEntity(bx);
+    }
+
     @Override
-    public Instance loadPromise(int squadId, long instanceId) {
+    public Instance loadInstance(int squadId, long instanceId) {
         long t0 = System.nanoTime();
         try {
             byte[] key = keyOfInstanceId(squadId, instanceId);
@@ -193,8 +214,8 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         byte[] key = keyOfCheckPoint(checkPoint.squadId());
         byte[] data = toByteArray(checkPoint);
 
-        WriteOptions writeOptions = new WriteOptions().setSync(true);
-        try {
+
+        try (final WriteOptions writeOptions = new WriteOptions().setSync(true)) {
             db.put(writeOptions, key, data);
         }
         catch (RocksDBException e) {
@@ -203,7 +224,7 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         this.metrics.recordLoggerSaveCheckPointElapse(System.nanoTime() - t0);
 
         if (deleteOldInstances) {
-            deleteLogLessEqual(checkPoint.squadId(), checkPoint.instanceId());
+            deleteLogLessEqual(checkPoint.squadId(), checkPoint.instanceId() - KEEP_OLD_LOG_NUM);
         }
     }
 
@@ -213,30 +234,12 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         }
 
         long t0 = System.nanoTime();
+        try (final WriteBatch writeBatch = new WriteBatch();
+             final WriteOptions opt = new WriteOptions().setSync(true)) {
+            writeBatch.deleteRange(keyOfInstanceId(squadId, 0), keyOfInstanceId(squadId, instanceId));
+            db.write(opt, writeBatch);
 
-        long idLow = 0;
-        long idHigh = 0;
-        try {
-            byte[] data = db.get(keyOfOldestInstanceId(squadId));
-            if (data != null) {
-                idLow = Longs.fromByteArray(data);
-            }
-
-            if (instanceId - idLow < KEEP_OLD_LOG_NUM) {
-                return;
-            }
-
-            idHigh = instanceId - KEEP_OLD_LOG_NUM;
-            WriteOptions writeOptions = new WriteOptions().setSync(false);
-            for (long id = idLow + 1; id <= idHigh; id++) {
-                db.delete(writeOptions, keyOfInstanceId(squadId, id));
-            }
-
-            WriteBatch writeBatch = new WriteBatch();
-            writeBatch.put(keyOfOldestInstanceId(squadId), Longs.toByteArray(idHigh));
-            db.write(new WriteOptions().setSync(true), writeBatch);
-
-            db.compactRange(null, null);
+            db.compactRange();
         }
         catch (RocksDBException e) {
             throw new RuntimeException(e);
@@ -244,13 +247,13 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
 
         double millis = (System.nanoTime() - t0) / 1e+6;
         this.metrics.recordLoggerDeleteElapsedMillis((long) millis);
-        logger.info("S{} delete instances from {} to {}, elapsed {} ms", squadId, idLow + 1, idHigh, millis);
+        logger.info("S{} delete instances before {}, elapsed {} ms", squadId, instanceId, millis);
     }
 
     @Override
     public CheckPoint loadLastCheckPoint(int squadId) {
         byte[] key = keyOfCheckPoint(squadId);
-        byte[] data ;
+        byte[] data;
         try {
             data = db.get(key);
         }
@@ -272,9 +275,8 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
 
         long t0 = System.nanoTime();
 
-        WriteOptions writeOptions = new WriteOptions().setSync(true);
-        WriteBatch writeBatch = new WriteBatch();
-        try {
+        try (final WriteOptions writeOptions = new WriteOptions().setSync(true);
+             final WriteBatch writeBatch = new WriteBatch()) {
             db.write(writeOptions, writeBatch);
         }
         catch (RocksDBException e) {

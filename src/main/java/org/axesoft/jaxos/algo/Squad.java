@@ -247,7 +247,7 @@ public class Squad implements EventDispatcher {
         ImmutableList.Builder<Instance> builder = ImmutableList.builder();
 
         for (long id = low; id <= high; id++) {
-            Instance p = this.components.getLogger().loadPromise(context.squadId(), id);
+            Instance p = this.components.getLogger().loadInstance(context.squadId(), id);
             if (p.isEmpty()) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("S{} Making learn response, Server {} lack instance {} ", context.squadId(), settings.serverId(), id);
@@ -282,7 +282,7 @@ public class Squad implements EventDispatcher {
 
         for (Instance i : ix) {
             //System.out.println("on lean response save " + i.toString());
-            this.components.getLogger().savePromise(i.squadId(), i.id(), i.proposal(), i.value());
+            this.components.getLogger().saveInstance(i.squadId(), i.id(), i.proposal(), i.value());
         }
 
         this.stateMachineRunner.restoreFromCheckPoint(checkPoint, ix);
@@ -306,11 +306,12 @@ public class Squad implements EventDispatcher {
 
     public void restoreFromDB() {
         CheckPoint checkPoint = this.components.getLogger().loadLastCheckPoint(context.squadId());
-        Instance last = this.components.getLogger().loadLastPromise(context.squadId());
+        Instance last = this.components.getLogger().loadLastInstance(context.squadId());
 
+       //When last is empty(id is 0), this loop do nothing
         List<Instance> ix = new ArrayList<>();
         for (long i = checkPoint.instanceId() + 1; i <= last.id(); i++) {
-            Instance instance = this.components.getLogger().loadPromise(context.squadId(), i);
+            Instance instance = this.components.getLogger().loadInstance(context.squadId(), i);
             if (instance.isEmpty()) {
                 String msg = String.format("Instance %d.%d not found in DB, with checkPoint(%d) last(%d) ",
                         context.squadId(), i, checkPoint.instanceId(), last.id());

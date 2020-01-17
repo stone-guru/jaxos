@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
 import com.google.protobuf.ByteString;
 import io.netty.util.Timeout;
+import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.tuple.Pair;
 import org.axesoft.jaxos.algo.*;
 import org.axesoft.jaxos.logger.RocksDbAcceptorLogger;
@@ -13,8 +14,7 @@ import org.axesoft.jaxos.netty.NettyJaxosServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -30,6 +30,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     private AcceptorLogger acceptorLogger;
     private Communicator communicator;
     private NettyJaxosServer node;
+    private RequestExecutor requestExecutor;
 
     private EventWorkerPool eventWorkerPool;
     private Squad[] squads;
@@ -40,13 +41,14 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     private BallotIdHolder ballotIdHolder;
     private JaxosMetrics jaxosMetrics;
 
-    public JaxosService(JaxosSettings settings, StateMachine stateMachine) {
+    public JaxosService(JaxosSettings settings, StateMachine stateMachine, RequestExecutor requestExecutor) {
         this.settings = checkNotNull(settings, "The param settings is null");
         this.stateMachine = checkNotNull(stateMachine, "The param stateMachine is null");
         this.ballotIdHolder = new BallotIdHolder(this.settings.serverId());
         this.jaxosMetrics = new MicroMeterJaxosMetrics(this.settings.serverId());
-        this.acceptorLogger = new RocksDbAcceptorLogger(this.settings.dbDirectory(), this.settings.syncInterval(), jaxosMetrics);
-        //this.acceptorLogger = new MemoryAcceptorLogger(1024 * 5);
+        this.acceptorLogger = new RocksDbAcceptorLogger(this.settings.dbDirectory(), this.settings.partitionNumber(),
+                this.settings.syncInterval(), jaxosMetrics);
+        this.requestExecutor = requestExecutor;
 
         this.components = new Components() {
             @Override
@@ -150,8 +152,8 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync(false)),
                 1000, settings.syncInterval().toMillis() / 2, TimeUnit.MILLISECONDS);
 
-        long leaderInterval = this.settings.leaderLeaseSeconds() * 1000 / 3;
-        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, leaderInterval, leaderInterval, TimeUnit.MILLISECONDS);
+        long leaderInterval = this.settings.leaderLeaseSeconds() * 1000 / 4;
+        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, this.settings.leaderLeaseSeconds() * 1000, leaderInterval, TimeUnit.MILLISECONDS);
 
         this.node.startup();
     }
@@ -161,53 +163,75 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     }
 
     private void runForLeader() {
-        int mySquadCount = 0;
-        int responsibility = this.squads.length / this.settings.peerCount();
-        if (responsibility == 0) {
-            responsibility = 1;
-        }
-        int extra = this.squads.length - (responsibility * this.settings.peerCount()) > 0 ? 1 : 0;
-
-        for (int i = 0; i < this.squads.length; i++) {
-            SquadContext context = squads[i].context();
-            if (context.isLeader()) {
-                mySquadCount++;
-                if (System.currentTimeMillis() - context.chosenTimestamp() >= this.settings.leaderLeaseSeconds() * 800) {
-                    proposeForLeader(i);
-                }
+        long current = System.currentTimeMillis();
+        LeaderStatus status = collectLeaderStatus();
+        List<Integer> mySquads = status.squadsOf(settings.serverId());
+        for(int squadId: mySquads){
+            if(current - squads[squadId].context().chosenTimestamp() >= this.settings.leaderLeaseSeconds() * 1000 * 3 / 4){
+                logger.info("S{} Emphasis leader", squadId);
+                proposeForLeader(squadId);
             }
         }
 
-        int j = 0;
-        while (mySquadCount < responsibility + extra && j < this.squads.length) {
-            if (!squads[j].context().isOtherLeaderActive()) {
-                proposeForLeader(j);
-                mySquadCount++;
-            }
-            j++;
+        Range<Integer> squadCountRange = calcuResposibility();
+
+        Iterator<Integer> it = status.getCandidates(settings.serverId(), squadCountRange.getMaximum()).iterator();
+        int i = mySquads.size();
+        while(i < squadCountRange.getMaximum() && it.hasNext()){
+            int squadId = it.next();
+            logger.info("S{} compete for it", squadId);
+            proposeForLeader(squadId);
         }
     }
 
+    private LeaderStatus collectLeaderStatus(){
+        LeaderStatus status = new LeaderStatus();
+
+        long current = System.currentTimeMillis();
+        for (int i = 0; i < this.squads.length; i++) {
+            SquadContext context = squads[i].context();
+            status.recordSquad(i, context.isLeaderLeaseExpired(current)? 0 : context.lastProposer());
+        }
+
+        return status;
+    }
+
+    private Range<Integer> calcuResposibility(){
+        int avg = this.squads.length / this.settings.peerCount();
+        int extra = this.squads.length - (avg * this.settings.peerCount()) > 0 ? 1 : 0;
+
+        return Range.between(avg, avg + extra);
+    }
+
     private void proposeForLeader(int squadId) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("S{} propose for leader", squadId);
+        }
+
+        this.requestExecutor.submit(squadId, () -> execProposeForLeader(squadId));
+    }
+
+    private void execProposeForLeader(int squadId) {
         long ballotId = ballotIdHolder.nextIdOf(squadId);
         Event.BallotValue v = new Event.BallotValue(ballotId, Event.ValueType.NOTHING, ByteString.EMPTY);
-        final ListenableFuture<Void> future = this.propose(squadId, squads[squadId].lastChosenInstanceId() + 1, v, false);
-        future.addListener(() -> {
-            try {
-                future.get();
-                if (logger.isTraceEnabled()) {
-                    logger.trace("S{} Emphasis leader again", squadId);
-                }
+        final ListenableFuture<Void> future = this.propose(squadId, squads[squadId].lastChosenInstanceId() + 1, v, true);
+
+        try {
+            future.get();
+            if (logger.isDebugEnabled()) {
+                logger.debug("S{} got leader again", squadId);
             }
-            catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+        catch (ExecutionException e) {
+            if(logger.isDebugEnabled()) {
+                Throwable cause = e.getCause() == null ? e : e.getCause();
+                logger.debug("S{} Failed to be leader due to '{} {}'", squadId, cause, cause.getMessage());
             }
-            catch (ExecutionException e) {
-                String msg = e.getCause() == null? e.getMessage() : e.getCause().getMessage();
-                logger.debug("S{} Failed to be leader due to '{}'", squadId, msg);
-            }
-        }, MoreExecutors.directExecutor());
+        }
     }
 
     private void saveCheckPoint() {
@@ -347,6 +371,33 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         }
     }
 
+    private class LeaderStatus {
+        private Map<Integer, List<Integer>> leaderSquadCountMap = new HashMap<>();
+
+        public void recordSquad(int squadId, int serverId) {
+            leaderSquadCountMap.compute(serverId, (i, sx0) -> sx0 == null ? new ArrayList<>() : sx0)
+                    .add(squadId);
+        }
+
+        public List<Integer> squadsOf(int serverId){
+            return leaderSquadCountMap.getOrDefault(serverId, Collections.emptyList());
+        }
+
+        public List<Integer> getCandidates(int selfId, int maxSquads){
+            ImmutableList.Builder<Integer> builder = ImmutableList.builder();
+            builder.addAll(squadsOf(0));//no leader squads
+            for(Map.Entry<Integer, List<Integer>> entry : this.leaderSquadCountMap.entrySet()){
+                int count = entry.getValue().size();
+                if(entry.getKey() != 0 &&  count > maxSquads){
+                    Iterator<Integer> it = entry.getValue().iterator();
+                    for(int i = 0; i < count - maxSquads; i++){
+                        builder.add(it.next());
+                    }
+                }
+            }
+            return builder.build();
+        }
+    }
 
     public static class BallotIdHolder {
 
@@ -373,7 +424,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             this.serverId = serverId;
         }
 
-        public long nextIdOf(int squadId){
+        public long nextIdOf(int squadId) {
             Item item = itemMap.computeIfAbsent(squadId, i -> new Item((serverId << 16) | squadId));
             return item.nextId();
         }

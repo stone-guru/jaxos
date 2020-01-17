@@ -27,17 +27,17 @@ public class MemoryAcceptorLogger implements AcceptorLogger {
         return cacheMap.computeIfAbsent(squadId, i -> new InstanceValueRingCache(cacheSize));
     }
     @Override
-    public void savePromise(int squadId, long instanceId, int proposal, Event.BallotValue value) {
+    public void saveInstance(int squadId, long instanceId, int proposal, Event.BallotValue value) {
         getCache(squadId).put(new Instance(squadId, instanceId, proposal, value));
     }
 
     @Override
-    public Instance loadLastPromise(int squadId) {
+    public Instance loadLastInstance(int squadId) {
         return getCache(squadId).getLast().orElse(Instance.emptyOf(squadId));
     }
 
     @Override
-    public Instance loadPromise(int squadId, long instanceId) {
+    public Instance loadInstance(int squadId, long instanceId) {
         List<Instance> ix = getCache(squadId).get(instanceId, instanceId);
         return ix.isEmpty()? Instance.emptyOf(squadId) : ix.get(0);
     }

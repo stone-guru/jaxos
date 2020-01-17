@@ -4,8 +4,6 @@ import org.axesoft.jaxos.JaxosSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
-
 /**
  * @author gaoyuan
  * @sine 2019/9/2.
@@ -46,18 +44,18 @@ public class SquadContext {
 
     public boolean isOtherLeaderActive() {
         return proposerId > 0 && proposerId != config.serverId()
-                && !leaderLeaseExpired(chosenTimestamp);
+                && !isLeaderLeaseExpired(chosenTimestamp);
     }
 
     public boolean isLeader() {
-        return (this.proposerId == config.serverId()) && !leaderLeaseExpired(this.chosenTimestamp);
+        return (this.proposerId == config.serverId()) && !isLeaderLeaseExpired(this.chosenTimestamp);
     }
 
     public int squadId() {
         return this.squadId;
     }
 
-    private boolean leaderLeaseExpired(long timestampMillis) {
+    public boolean isLeaderLeaseExpired(long timestampMillis) {
         return (System.currentTimeMillis() - timestampMillis) / 1000.0 > config.leaderLeaseSeconds();
     }
 

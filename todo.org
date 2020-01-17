@@ -49,9 +49,14 @@ are by netty
 * DONE When a node crashed, other node should be leader of its partition 				:algo:
 * TODO nextProposal function of 201 should get 203 if sever id is 3					:algo:
 * TODO The ballot number may grow up to excced the limit of integer					:algo:
+* TODO Add token for protocol interfaces							     :network:
+* TODO Add user and password for HTTP API							     :network:
+* TODO Change config file from properties format to YAML format					 :application:
 * Issues
 ** TODO [#C] Netty print ERROR message [[file:caselog/netty-error.log][logs]]
 ** TODO client hang when getting redirect to a not given server address 			      :client:
 ** DONE conflict propose cause some log dropped [[file:caselog/version-error.log][version error]] 						:algo:
-** TODO sometime, raised an exception of propose not end, and most after save checkpoint [[file:caselog/propose-not-end.log][log]] 		:algo:
-** TODO app's virt memory grow to more 20G , while res is several m only and Xmx is set to 1G		:base:
+** TODO sometime, raised an exception of *Propose not end*, and most after save checkpoint [[file:caselog/propose-not-end.log][log]] 		:algo:
+** DONE app's virt memory grow to more 20G , while res is several m only and Xmx is set to 1G		:base:
+   It's issue of leveldbjni package and solved by change log lib to RocksDB
+

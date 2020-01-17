@@ -31,8 +31,8 @@ public class AcceptorLoggerTest {
 
         StopWatch w = StopWatch.createStarted();
         for(int i = 0; i < n; i++) {
-            logger.savePromise(1, 1000 + i, 1 + i, Event.BallotValue.appValue(i, ByteString.copyFromUtf8("Hello" + i)));
-            logger.savePromise(2, 1000 + i, 1 + i, Event.BallotValue.appValue(i, ByteString.copyFromUtf8("Hello" + i)));
+            logger.saveInstance(1, 1000 + i, 1 + i, Event.BallotValue.appValue(i, ByteString.copyFromUtf8("Hello" + i)));
+            logger.saveInstance(2, 1000 + i, 1 + i, Event.BallotValue.appValue(i, ByteString.copyFromUtf8("Hello" + i)));
         }
 
         w.stop();
@@ -47,7 +47,7 @@ public class AcceptorLoggerTest {
 
     @Test
     public void testLoadLast(){
-        Instance p = logger.loadLastPromise(1);
+        Instance p = logger.loadLastInstance(1);
         assertNotNull(p);
 
         assertEquals(1, p.squadId());
@@ -58,7 +58,7 @@ public class AcceptorLoggerTest {
 
     @Test
     public void testLoad()  {
-        Instance p = logger.loadPromise(2, 1100);
+        Instance p = logger.loadInstance(2, 1100);
         assertNotNull(p);
 
         assertEquals(2, p.squadId());

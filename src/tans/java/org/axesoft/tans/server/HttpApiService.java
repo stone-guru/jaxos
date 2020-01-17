@@ -20,15 +20,11 @@ import org.axesoft.jaxos.TerminatedException;
 import org.axesoft.jaxos.algo.NoQuorumException;
 import org.axesoft.jaxos.algo.ProposalConflictException;
 import org.axesoft.jaxos.algo.RedirectException;
-import org.axesoft.jaxos.MicroMeterJaxosMetrics;
 import org.axesoft.jaxos.base.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -68,9 +64,10 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
     private TansMetrics metrics;
 
-    public HttpApiService(TansConfig config, TansService tansService) {
+    public HttpApiService(TansConfig config, TansService tansService, PartedThreadPool requestThreadPool) {
         this.tansService = tansService;
         this.config = config;
+        this.threadPool = requestThreadPool;
         this.metrics = new TansMetrics(config.serverId(), this.config.jaxConfig().partitionNumber(), this.tansService::keyCountOf);
 
         super.addListener(new Listener() {
@@ -98,7 +95,7 @@ public final class HttpApiService extends AbstractExecutionThreadService {
 
     @Override
     protected void run() throws Exception {
-        this.threadPool = new PartedThreadPool(this.config.jaxConfig().partitionNumber());
+        //this.threadPool = new PartedThreadPool(this.config.jaxConfig().partitionNumber(), "API Thread");
 
         this.requestQueues = new RequestQueue[config.jaxConfig().partitionNumber()];
         for (int i = 0; i < requestQueues.length; i++) {
@@ -466,78 +463,4 @@ public final class HttpApiService extends AbstractExecutionThreadService {
         }
     }
 
-    private static class PartedThreadPool {
-        private TansExecutor[] executors;
-
-        private PartedThreadPool(int threadNum) {
-            this.executors = new TansExecutor[threadNum];
-            for (int i = 0; i < threadNum; i++) {
-                this.executors[i] = new TansExecutor(i);
-            }
-        }
-
-        private ListenableFuture<Void> submit(int i, Runnable r) {
-            return this.executors[i].submit(() -> {
-                r.run();
-                return null;
-            });
-        }
-
-        private <T> ListenableFuture<T> submit(int i, Callable<T> task) {
-            return this.executors[i].submit(task);
-        }
-
-        private int totalExecTimes() {
-            int t = 0;
-            for (TansExecutor executor : this.executors) {
-                t += executor.totalExecTimes();
-            }
-            return t;
-        }
-
-        private int lastMinuteWaitingSize() {
-            int t = 0;
-            for (TansExecutor executor : this.executors) {
-                t = Math.max(executor.lastMinuteWaitingSize(), t);
-            }
-            return t;
-        }
-    }
-
-    private static class TansExecutor {
-        private ThreadPoolExecutor threadPool;
-        private ListeningExecutorService executor;
-        private SlideWindowMetric waitingTaskCounter;
-        private AtomicInteger execTimes;
-
-        private TansExecutor(int i) {
-            this.threadPool = new ThreadPoolExecutor(1, 1,
-                    0L, TimeUnit.MILLISECONDS,
-                    new LinkedBlockingQueue<>(),
-                    (r) -> {
-                        String name = "API Service Thread-" + i;
-                        Thread thread = new Thread(r, name);
-                        thread.setDaemon(true);
-                        return thread;
-                    });
-            this.executor = MoreExecutors.listeningDecorator(this.threadPool);
-            this.waitingTaskCounter = new SlideWindowMetric(1, SlideWindowMetric.StatisticMethod.STATMAX, 1);
-            this.execTimes = new AtomicInteger(0);
-        }
-
-        private <T> ListenableFuture<T> submit(Callable<T> task) {
-            ListenableFuture<T> f = this.executor.submit(task);
-            this.execTimes.incrementAndGet();
-            this.waitingTaskCounter.recordForPresent(this.threadPool.getQueue().size());
-            return f;
-        }
-
-        private int totalExecTimes() {
-            return this.execTimes.get();
-        }
-
-        private int lastMinuteWaitingSize() {
-            return this.waitingTaskCounter.getMax(0);
-        }
-    }
 }

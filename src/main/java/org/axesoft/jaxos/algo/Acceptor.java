@@ -86,7 +86,7 @@ public class Acceptor {
             if (request.ballot() > this.maxBallot) {
                 this.maxBallot = request.ballot();
                 success = true;
-                this.config.getLogger().savePromise(this.context.squadId(), request.instanceId(), request.ballot(), this.acceptedValue);
+                this.config.getLogger().saveInstance(this.context.squadId(), request.instanceId(), request.ballot(), this.acceptedValue);
             }
 
             if (!success && logger.isDebugEnabled()) {
@@ -113,7 +113,7 @@ public class Acceptor {
     }
 
     private Event.PrepareResponse outdatedPrepareResponse(Event.PrepareRequest request) {
-        Instance i0 = this.config.getLogger().loadPromise(this.context.squadId(), request.instanceId());
+        Instance i0 = this.config.getLogger().loadInstance(this.context.squadId(), request.instanceId());
         return new Event.PrepareResponse.Builder(settings.serverId(), this.context.squadId(), request.instanceId(), request.round())
                 .setResult(Event.RESULT_REJECT)
                 .setMaxProposal(Integer.MAX_VALUE)
@@ -191,7 +191,7 @@ public class Acceptor {
         if (request.ballot() >= this.maxBallot) {
             this.acceptedBallot = this.maxBallot = request.ballot();
             this.acceptedValue = request.value();
-            this.config.getLogger().savePromise(this.context.squadId(), request.instanceId(), this.maxBallot, this.acceptedValue);
+            this.config.getLogger().saveInstance(this.context.squadId(), request.instanceId(), this.maxBallot, this.acceptedValue);
             return true;
         }
         return false;

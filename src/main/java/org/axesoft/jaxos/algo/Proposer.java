@@ -73,7 +73,10 @@ public class Proposer {
 
     public ListenableFuture<Void> propose(long instanceId, Event.BallotValue value, SettableFuture<Void> resultFuture) {
         if (!resultFutureRef.compareAndSet(null, resultFuture)) {
-            resultFuture.setException(new ConcurrentModificationException("Previous propose not end"));
+            String currentMsg = String.format("I%d %s", this.instanceId, this.proposeValue.toString());
+            String requestMsg = String.format("S%d I%d %s", context.squadId(), instanceId, value.toString());
+            resultFuture.setException(new ConcurrentModificationException("Previous propose not end (" + currentMsg +
+                    ") for " + requestMsg));
             return resultFuture;
         }
 
@@ -133,16 +136,16 @@ public class Proposer {
         if (this.stage != Stage.NONE && event.squadId() == context.squadId() && event.instanceId() == this.instanceId) {
             endAs(new TimeoutException(String.format("S%d I%d whole proposal timeout", context.squadId(), this.instanceId)));
         }
-        else if (logger.isDebugEnabled()){
+        else if (logger.isDebugEnabled()) {
             logger.debug("Ignore unnecessary {}", event);
         }
     }
 
     private void startPrepare(int proposal0) {
         Instance i0 = this.learner.getLastChosenInstance(this.context.squadId());
-        if(this.instanceId == i0.id()){
+        if (this.instanceId == i0.id()) {
             //other server help me finish this value
-            if(i0.value().id() == this.proposeValue.id()){
+            if (i0.value().id() == this.proposeValue.id()) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("S{} I{} Other proposer help finish when startPrepare", context.squadId(), this.instanceId);
                 }
@@ -180,7 +183,8 @@ public class Proposer {
                 this.prepareTimeout.cancel();
                 endPrepare();
             }
-        } else if (logger.isDebugEnabled()){
+        }
+        else if (logger.isDebugEnabled()) {
             logger.debug("S{} abandon unexpected response {}", context.squadId(), response);
         }
     }
@@ -251,9 +255,9 @@ public class Proposer {
 
     private void startAccept(Event.BallotValue value, int proposal) {
         Instance i0 = this.learner.getLastChosenInstance(this.context.squadId());
-        if(this.instanceId == i0.id()){
+        if (this.instanceId == i0.id()) {
             //other server help me finish this value
-            if(i0.value().id() == this.proposeValue.id()){
+            if (i0.value().id() == this.proposeValue.id()) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("S{} I{} Other proposer help finish when startAccept", context.squadId(), this.instanceId);
                 }
@@ -326,9 +330,10 @@ public class Proposer {
             }
         }
         else if (this.acceptActor.isInstanceChosen()) {
-            if(this.acceptActor.chosenBallotId == this.proposeValue.id()){
+            if (this.acceptActor.chosenBallotId == this.proposeValue.id()) {
                 endAs(null);
-            } else {
+            }
+            else {
                 endAs(new ProposalConflictException("Chosen by other at accept"));
             }
         }
