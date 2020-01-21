@@ -14,11 +14,11 @@ public class SquadContext {
     private JaxosSettings config;
     private int squadId;
 
-    private int proposerId = 0;
-    private long chosenInstanceId = 0;
-    private long chosenBallotId = 0;
-    private int chosenProposal = 0;
-    private long chosenTimestamp = 0;
+    private volatile int proposerId = 0;
+    private volatile long chosenInstanceId = 0;
+    private volatile long chosenBallotId = 0;
+    private volatile int chosenProposal = 0;
+    private volatile long chosenTimestamp = 0;
 
     public SquadContext(int squadId, JaxosSettings config) {
         this.config = config;
@@ -44,19 +44,19 @@ public class SquadContext {
 
     public boolean isOtherLeaderActive() {
         return proposerId > 0 && proposerId != config.serverId()
-                && !isLeaderLeaseExpired(chosenTimestamp);
+                && !isLeaderLeaseExpired(System.currentTimeMillis());
     }
 
     public boolean isLeader() {
-        return (this.proposerId == config.serverId()) && !isLeaderLeaseExpired(this.chosenTimestamp);
+        return (this.proposerId == config.serverId()) && !isLeaderLeaseExpired(System.currentTimeMillis());
     }
 
     public int squadId() {
         return this.squadId;
     }
 
-    public boolean isLeaderLeaseExpired(long timestampMillis) {
-        return (System.currentTimeMillis() - timestampMillis) / 1000.0 > config.leaderLeaseSeconds();
+    public boolean isLeaderLeaseExpired(long currentMillis) {
+        return (currentMillis - this.chosenTimestamp) / 1000.0 >= config.leaderLeaseSeconds() * 1.1;
     }
 
     public long chosenInstanceId() {

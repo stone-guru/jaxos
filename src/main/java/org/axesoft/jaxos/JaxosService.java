@@ -14,6 +14,7 @@ import org.axesoft.jaxos.netty.NettyJaxosServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -21,9 +22,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class JaxosService extends AbstractExecutionThreadService implements Proponent {
-    static final String SERVICE_NAME = "Jaxos service";
+    private static final String SERVICE_NAME = "Jaxos service";
 
-    private static Logger logger = LoggerFactory.getLogger(JaxosService.class);
+    private static final Logger logger = LoggerFactory.getLogger(JaxosService.class);
+    private static final Duration LEADER_CHECK_DURATION = Duration.ofMillis(100);
 
     private JaxosSettings settings;
     private StateMachine stateMachine;
@@ -87,7 +89,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
         this.platoon = new Platoon();
 
-        this.timerExecutor = Executors.newScheduledThreadPool(1, (r) -> {
+        this.timerExecutor = Executors.newScheduledThreadPool(2, (r) -> {
             String name = "scheduledTaskThread";
             Thread thread = new Thread(r, name);
             thread.setDaemon(true);
@@ -148,12 +150,12 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         this.communicator = factory.createCommunicator();
 
         this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, settings.checkPointMinutes(), settings.checkPointMinutes(), TimeUnit.MINUTES);
-        this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
+        //this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
         this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync(false)),
                 1000, settings.syncInterval().toMillis() / 2, TimeUnit.MILLISECONDS);
 
-        long leaderInterval = this.settings.leaderLeaseSeconds() * 1000 / 4;
-        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, this.settings.leaderLeaseSeconds() * 1000, leaderInterval, TimeUnit.MILLISECONDS);
+
+        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, (this.settings.leaderLeaseSeconds() + 2)* 1000, LEADER_CHECK_DURATION.toMillis(), TimeUnit.MILLISECONDS);
 
         this.node.startup();
     }
@@ -167,20 +169,20 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         LeaderStatus status = collectLeaderStatus();
         List<Integer> mySquads = status.squadsOf(settings.serverId());
         for(int squadId: mySquads){
-            if(current - squads[squadId].context().chosenTimestamp() >= this.settings.leaderLeaseSeconds() * 1000 * 3 / 4){
-                logger.info("S{} Emphasis leader", squadId);
+            if(current - squads[squadId].context().chosenTimestamp() >= this.settings.leaderLeaseSeconds() * 1000 - LEADER_CHECK_DURATION.toMillis()){
                 proposeForLeader(squadId);
             }
         }
 
-        Range<Integer> squadCountRange = calcuResposibility();
+        Range<Integer> squadCountRange = calcResponsibility(status.activePeerCount(this.settings.serverId()));
 
         Iterator<Integer> it = status.getCandidates(settings.serverId(), squadCountRange.getMaximum()).iterator();
         int i = mySquads.size();
         while(i < squadCountRange.getMaximum() && it.hasNext()){
             int squadId = it.next();
-            logger.info("S{} compete for it", squadId);
+            logger.info("S{} compete for leader", squadId);
             proposeForLeader(squadId);
+            i++;
         }
     }
 
@@ -190,15 +192,21 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         long current = System.currentTimeMillis();
         for (int i = 0; i < this.squads.length; i++) {
             SquadContext context = squads[i].context();
-            status.recordSquad(i, context.isLeaderLeaseExpired(current)? 0 : context.lastProposer());
+            int serverId = context.lastProposer();
+            if(serverId != 0 && context.isLeaderLeaseExpired(current)){
+                logger.info("S{} Older leader {} expired", i, serverId);
+                status.recordSquad(i, 0);
+            } else {
+                status.recordSquad(i, serverId);
+            }
         }
 
         return status;
     }
 
-    private Range<Integer> calcuResposibility(){
-        int avg = this.squads.length / this.settings.peerCount();
-        int extra = this.squads.length - (avg * this.settings.peerCount()) > 0 ? 1 : 0;
+    private Range<Integer> calcResponsibility(int activePeerCount){
+        int avg = this.squads.length / activePeerCount;
+        int extra = this.squads.length - (avg * activePeerCount) > 0 ? 1 : 0;
 
         return Range.between(avg, avg + extra);
     }
@@ -371,7 +379,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         }
     }
 
-    private class LeaderStatus {
+    private static class LeaderStatus {
         private Map<Integer, List<Integer>> leaderSquadCountMap = new HashMap<>();
 
         public void recordSquad(int squadId, int serverId) {
@@ -383,12 +391,19 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             return leaderSquadCountMap.getOrDefault(serverId, Collections.emptyList());
         }
 
+        public int activePeerCount(int selfId){
+            Set<Integer> s = new TreeSet<>(leaderSquadCountMap.keySet());
+            s.remove(0);
+            s.add(selfId);
+            return s.size();
+        }
+
         public List<Integer> getCandidates(int selfId, int maxSquads){
             ImmutableList.Builder<Integer> builder = ImmutableList.builder();
             builder.addAll(squadsOf(0));//no leader squads
             for(Map.Entry<Integer, List<Integer>> entry : this.leaderSquadCountMap.entrySet()){
                 int count = entry.getValue().size();
-                if(entry.getKey() != 0 &&  count > maxSquads){
+                if(entry.getKey() != 0 &&  entry.getKey() != selfId && count > maxSquads){
                     Iterator<Integer> it = entry.getValue().iterator();
                     for(int i = 0; i < count - maxSquads; i++){
                         builder.add(it.next());
