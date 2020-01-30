@@ -11,10 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 /**
@@ -34,6 +36,9 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
     private static final byte CATEGORY_SQUAD_CHECKPOINT = 3;
     private static final byte CATEGORY_OLDEST_INSTANCE_ID = 4;
 
+    private static final byte[] EMPTY_KEY = new byte[]{0};
+    private static final byte[] EMPTY_VALUE = new byte[]{0};
+
     private Duration syncInterval;
     private ProtoMessageCoder messageCoder;
     private String path;
@@ -41,13 +46,21 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
 
     private RocksDB db;
 
-    private AtomicStampedReference<Long> persistTimestamp;
-    private AtomicStampedReference<Long> syncTimestamp;
-
-    private ConcurrentMap<Integer, AtomicLong> oldestInstanceIdMap;
-
     private JaxosMetrics metrics;
 
+    private ConcurrentMap<Integer, ColumnFamilyHandle> columnFamilyHandleMap = new ConcurrentHashMap<>();
+
+    private static class SquadSyncTimestamp {
+        public final AtomicStampedReference<Long> persistRef;
+        public final AtomicStampedReference<Long> syncRef;
+
+        public SquadSyncTimestamp(long cur) {
+            this.persistRef = new AtomicStampedReference<>(cur, 0);
+            this.syncRef = new AtomicStampedReference<>(cur, 0);
+        }
+    }
+
+    private ConcurrentMap<Integer, SquadSyncTimestamp> squadSyncTimestampMap = new ConcurrentHashMap<>();
 
     public RocksDbAcceptorLogger(String path, int squadCount, Duration syncInterval, JaxosMetrics metrics) {
         this.squadCount = squadCount;
@@ -58,26 +71,37 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         this.metrics = metrics;
         tryCreateDir(path);
 
-        Options options = new Options()
-                .setCreateIfMissing(true)
-                .setCompressionType(CompressionType.NO_COMPRESSION);
+        DBOptions options = new DBOptions()
+                .setCreateIfMissing(true);
 
+        long cur = System.currentTimeMillis();
+        List<ColumnFamilyDescriptor> descriptors = new ArrayList<>();
+        descriptors.add(new ColumnFamilyDescriptor(("default").getBytes(Charset.forName("UTF-8"))));
+        for (int i = 0; i < squadCount; i++) {
+            descriptors.add(new ColumnFamilyDescriptor(("S" + i).getBytes(Charset.forName("UTF-8"))));
+            squadSyncTimestampMap.put(i, new SquadSyncTimestamp(cur));
+        }
+
+        List<ColumnFamilyHandle> handlers = new ArrayList<>();
         try {
-            db = RocksDB.open(options, path);
-            this.oldestInstanceIdMap = new ConcurrentHashMap<>();
-            for (int squadId = 0; squadId < squadCount; squadId++) {
-                Instance i = loadInstanceByIndex(keyOfOldestInstanceId(squadId), squadId);
-                //i maybe an empty instance
-                this.oldestInstanceIdMap.put(squadId, new AtomicLong(i.id()));
+            db = RocksDB.open(options, path, descriptors, handlers);
+
+            for (int i = 0; i < squadCount; i++) {
+                ColumnFamilyDescriptor desc = new ColumnFamilyDescriptor(("S" + i).getBytes(Charset.forName("UTF-8")));
+                columnFamilyHandleMap.put(i, db.createColumnFamily(desc));
             }
+
         }
         catch (RocksDBException e) {
             throw new RuntimeException(e);
         }
+    }
 
-        long cur = System.currentTimeMillis();
-        this.persistTimestamp = new AtomicStampedReference<>(cur, 0);
-        this.syncTimestamp = new AtomicStampedReference<>(cur, 0);
+    private ColumnFamilyHandle getColumnFamilyHandle(int i) {
+        return columnFamilyHandleMap.computeIfAbsent(i, k -> {
+            String msg = String.format("Column Family Handle for %d not exist", k);
+            throw new RuntimeException(msg);
+        });
     }
 
     private void tryCreateDir(String path) {
@@ -101,18 +125,15 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         byte[] data = toByteArray(new Instance(squadId, instanceId, proposal, value));
 
         long current = System.currentTimeMillis();
-        recordSaveTimestamp(current);
-        boolean shouldSync = computeShouldSync(current);
+        recordSaveTimestamp(squadId, current);
+        boolean shouldSync = computeShouldSync(squadId, current);
 
         byte[] instanceKey = keyOfInstanceId(squadId, instanceId);
         try (final WriteBatch writeBatch = new WriteBatch();
              WriteOptions writeOptions = new WriteOptions().setSync(shouldSync)) {
-            writeBatch.put(instanceKey, data);
-            writeBatch.put(keyOfSquadLast(squadId), instanceKey);
-            if (this.oldestInstanceIdMap.get(squadId).get() == 0) {
-                this.oldestInstanceIdMap.get(squadId).set(instanceId);
-                writeBatch.put(keyOfOldestInstanceId(squadId), instanceKey);
-            }
+            ColumnFamilyHandle handle = getColumnFamilyHandle(squadId);
+            writeBatch.put(handle, instanceKey, data);
+            writeBatch.put(handle, keyOfSquadLast(squadId), instanceKey);
             db.write(writeOptions, writeBatch);
         }
         catch (RocksDBException e) {
@@ -126,21 +147,24 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         }
     }
 
-    private void recordSaveTimestamp(long t) {
+    private void recordSaveTimestamp(int squadId, long t) {
+        SquadSyncTimestamp squadStamp = squadSyncTimestampMap.get(squadId);
         for (; ; ) {
-            int stamp = persistTimestamp.getStamp();
-            Long t0 = persistTimestamp.getReference();
+            int stamp = squadStamp.persistRef.getStamp();
+            Long t0 = squadStamp.persistRef.getReference();
 
-            if (persistTimestamp.compareAndSet(t0, Math.max(t0, t), stamp, stamp + 1)) {
+            if (squadStamp.persistRef.compareAndSet(t0, Math.max(t0, t), stamp, stamp + 1)) {
                 return;
             }
         }
     }
 
-    private boolean computeShouldSync(long current) {
-        int pt = persistTimestamp.getStamp();
-        int st = syncTimestamp.getStamp();
-        Long t0 = syncTimestamp.getReference();
+    private boolean computeShouldSync(int squad, long current) {
+        SquadSyncTimestamp stamp = squadSyncTimestampMap.get(squad);
+
+        int pt = stamp.persistRef.getStamp();
+        int st = stamp.syncRef.getStamp();
+        Long t0 = stamp.syncRef.getReference();
         //logger.trace("PT={}, ST={}, T0={}, CUR={}", pt, st, t0, current);
 
         if (st >= pt) {
@@ -151,9 +175,9 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
             return false;
         }
 
-        boolean ret = syncTimestamp.compareAndSet(t0, current, st, pt);
+        boolean ret = stamp.syncRef.compareAndSet(t0, current, st, pt);
         if (ret && logger.isTraceEnabled()) {
-            logger.trace("should do sync");
+            logger.trace("should do syncRef");
         }
         return ret || syncInterval.isZero();
     }
@@ -175,7 +199,7 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
     }
 
     private Instance loadInstanceByIndex(byte[] indexKey, int squadId) throws RocksDBException {
-        byte[] idx = db.get(indexKey);
+        byte[] idx = db.get(getColumnFamilyHandle(squadId), indexKey);
         if (idx == null) {
             return Instance.emptyOf(squadId);
         }
@@ -193,7 +217,7 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         long t0 = System.nanoTime();
         try {
             byte[] key = keyOfInstanceId(squadId, instanceId);
-            byte[] bx = db.get(key);
+            byte[] bx = db.get(getColumnFamilyHandle(squadId), key);
 
             if (bx != null) {
                 return toEntity(bx);
@@ -216,7 +240,7 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
 
 
         try (final WriteOptions writeOptions = new WriteOptions().setSync(true)) {
-            db.put(writeOptions, key, data);
+            db.put(getColumnFamilyHandle(checkPoint.squadId()), writeOptions, key, data);
         }
         catch (RocksDBException e) {
             throw new RuntimeException(e);
@@ -236,7 +260,9 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         long t0 = System.nanoTime();
         try (final WriteBatch writeBatch = new WriteBatch();
              final WriteOptions opt = new WriteOptions().setSync(true)) {
-            writeBatch.deleteRange(keyOfInstanceId(squadId, 0), keyOfInstanceId(squadId, instanceId));
+            writeBatch.deleteRange(getColumnFamilyHandle(squadId),
+                    keyOfInstanceId(squadId, 0),
+                    keyOfInstanceId(squadId, instanceId));
             db.write(opt, writeBatch);
 
             db.compactRange();
@@ -255,7 +281,7 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
         byte[] key = keyOfCheckPoint(squadId);
         byte[] data;
         try {
-            data = db.get(key);
+            data = db.get(getColumnFamilyHandle(squadId), key);
         }
         catch (RocksDBException e) {
             throw new RuntimeException(e);
@@ -269,7 +295,13 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
 
     @Override
     public void sync(boolean force) {
-        if (!force && !computeShouldSync(System.currentTimeMillis())) {
+        for(int i = 0; i < this.squadCount; i++){
+            this.sync(i, force);
+        }
+    }
+
+    private void sync(int squadId, boolean force){
+        if (!force && !computeShouldSync(squadId, System.currentTimeMillis())) {
             return;
         }
 
@@ -277,6 +309,7 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
 
         try (final WriteOptions writeOptions = new WriteOptions().setSync(true);
              final WriteBatch writeBatch = new WriteBatch()) {
+            writeBatch.put(getColumnFamilyHandle(squadId), EMPTY_KEY, EMPTY_VALUE);
             db.write(writeOptions, writeBatch);
         }
         catch (RocksDBException e) {

@@ -86,7 +86,7 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
                 .sla(Duration.ofMillis(3))
                 .register(registry);
 
-        this.loggerSyncTimer = Timer.builder("logger.sync.elapsed")
+        this.loggerSyncTimer = Timer.builder("logger.syncRef.elapsed")
                 .description("The time for each propose")
                 .publishPercentiles(0.10, 0.20, 0.5, 0.80, 0.90)
                 .sla(Duration.ofMillis(3))

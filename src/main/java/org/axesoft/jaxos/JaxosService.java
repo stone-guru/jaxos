@@ -180,7 +180,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         int i = mySquads.size();
         while(i < squadCountRange.getMaximum() && it.hasNext()){
             int squadId = it.next();
-            logger.info("S{} compete for leader", squadId);
+            //logger.info("S{} compete for leader", squadId);
             proposeForLeader(squadId);
             i++;
         }
@@ -194,7 +194,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             SquadContext context = squads[i].context();
             int serverId = context.lastProposer();
             if(serverId != 0 && context.isLeaderLeaseExpired(current)){
-                logger.info("S{} Older leader {} expired", i, serverId);
+                //logger.info("S{} Older leader {} expired", i, serverId);
                 status.recordSquad(i, 0);
             } else {
                 status.recordSquad(i, serverId);
