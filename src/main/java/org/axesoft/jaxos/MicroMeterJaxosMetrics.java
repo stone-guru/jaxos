@@ -49,23 +49,23 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
     }
 
     @Override
-    public void recordLoggerLoadElapsed(long nanos){
+    public void recordLoggerLoadElapsed(long nanos) {
         this.loggerLoadTimer.record(nanos, TimeUnit.NANOSECONDS);
     }
 
     @Override
-    public void recordLoggerSaveElapsed(long nanos){
+    public void recordLoggerSaveElapsed(long nanos) {
         this.loggerSaveTimer.record(nanos, TimeUnit.NANOSECONDS);
     }
 
     @Override
-    public void recordLoggerSyncElapsed(long nanos){
+    public void recordLoggerSyncElapsed(long nanos) {
         this.loggerSyncTimer.record(nanos, TimeUnit.NANOSECONDS);
     }
 
     @Override
-    public void recordLoggerDeleteElapsedMillis(long millis){
-        this.loggerDeleteTimer.record(millis, TimeUnit.MILLISECONDS);
+    public void recordLoggerDeleteElapsed(long nanos) {
+        this.loggerDeleteTimer.record(nanos, TimeUnit.NANOSECONDS);
     }
 
     @Override
@@ -73,35 +73,34 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
         this.loggerCheckPointTimer.record(nanos, TimeUnit.NANOSECONDS);
     }
 
-    private void initLoggerMetrics(){
-        this.loggerLoadTimer = Timer.builder("logger.load.elapsed")
-                .description("The time for each propose")
-                .publishPercentiles(0.10, 0.20, 0.5, 0.80, 0.90)
-                .sla(Duration.ofMillis(3))
+    private static Timer.Builder setGlobalTimerConfigs(Timer.Builder builder) {
+        return builder.publishPercentiles(0.5, 0.85, 0.99, 0.99)
+                .sla(Duration.ofMillis(3), Duration.ofMillis(10), Duration.ofMillis(50), Duration.ofMillis(100), Duration.ofSeconds(1))
+                .distributionStatisticExpiry(Duration.ofSeconds(5))
+                .distributionStatisticBufferLength(3);
+    }
+
+    private void initLoggerMetrics() {
+        this.loggerLoadTimer = setGlobalTimerConfigs(Timer.builder("logger.load.duration")
+                .description("The time for each propose"))
                 .register(registry);
 
-        this.loggerSaveTimer = Timer.builder("logger.save.elapsed")
-                .description("The time for each propose")
-                .publishPercentiles(0.10, 0.20, 0.5, 0.80, 0.90)
-                .sla(Duration.ofMillis(3))
+        this.loggerSaveTimer = setGlobalTimerConfigs(Timer.builder("logger.save.duration")
+                .description("The time for each propose"))
                 .register(registry);
 
-        this.loggerSyncTimer = Timer.builder("logger.syncRef.elapsed")
-                .description("The time for each propose")
-                .publishPercentiles(0.10, 0.20, 0.5, 0.80, 0.90)
-                .sla(Duration.ofMillis(3))
+        this.loggerSyncTimer = setGlobalTimerConfigs(Timer.builder("logger.sync.duration")
+                .description("The time for each propose"))
                 .register(registry);
 
-        this.loggerDeleteTimer = Timer.builder("logger.delete.elapsed")
-                .description("The time for each propose")
-                .publishPercentiles(0.10, 0.20, 0.5, 0.80, 0.90)
-                .sla(Duration.ofMillis(3))
+        this.loggerDeleteTimer = setGlobalTimerConfigs(Timer.builder("logger.delete.duration")
+                .description("The time for each propose"))
                 .register(registry);
 
-        this.loggerCheckPointTimer = Timer.builder("logger.checkPoint.elapsed")
-                .description("The time for saving checkpoint")
-                .publishPercentiles(0.10, 0.20, 0.5, 0.80, 0.90)
-                .sla(Duration.ofMillis(3))
+        this.loggerCheckPointTimer = setGlobalTimerConfigs(Timer.builder("logger.checkPoint.duration")
+                .description("The time for saving checkpoint"))
+                .distributionStatisticExpiry(Duration.ofMillis(10))
+                .distributionStatisticBufferLength(3)
                 .register(registry);
     }
 
@@ -112,6 +111,7 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
         private Counter successCounter;
         private Counter conflictCounter;
         private Counter otherCounter;
+        private Counter peerTimeoutCounter;
         private Timer proposeTimer;
         private Timer acceptTimer;
         private Timer learnTimer;
@@ -140,28 +140,25 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
                     .tags("squad", Integer.toString(this.squadId))
                     .register(registry);
 
-            this.proposeTimer = Timer.builder("propose.elapsed")
+            this.peerTimeoutCounter = Counter.builder("peer.timeout")
+                    .description("The times of propose timeout")
+                    .tags("squad", Integer.toString(this.squadId))
+                    .register(registry);
+
+            this.proposeTimer = setGlobalTimerConfigs(Timer.builder("propose.duration")
                     .description("The time for each propose")
-                    .tags("squad", Integer.toString(this.squadId))
-                    .publishPercentiles(0.10, 0.20, 0.5, 0.80, 0.90)
-                    .sla(Duration.ofMillis(3))
-                    .minimumExpectedValue(Duration.ofNanos(200_000))
+                    .tags("squad", Integer.toString(this.squadId)))
                     .register(registry);
 
-            this.acceptTimer = Timer.builder("accept.elapsed")
+
+            this.acceptTimer = setGlobalTimerConfigs(Timer.builder("accept.duration")
                     .description("The time for each accept")
-                    .tags("squad", Integer.toString(this.squadId))
-                    .publishPercentiles(0.10, 0.20, 0.5, 0.80, 0.90)
-                    .sla(Duration.ofMillis(3))
-                    .minimumExpectedValue(Duration.ofNanos(200_000))
+                    .tags("squad", Integer.toString(this.squadId)))
                     .register(registry);
 
-            this.learnTimer = Timer.builder("learn.duration")
+            this.learnTimer = setGlobalTimerConfigs(Timer.builder("learn.duration")
                     .description("The time between sent learn request and processed response")
-                    .tags("squad", Integer.toString(this.squadId))
-                    .publishPercentiles(0.10, 0.20, 0.5, 0.80, 0.90)
-                    .sla(Duration.ofMillis(3))
-                    .minimumExpectedValue(Duration.ofNanos(200_000))
+                    .tags("squad", Integer.toString(this.squadId)))
                     .register(registry);
 
             this.leaderId = new AtomicInteger(0);
@@ -170,6 +167,7 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
                     .tags("squad", Integer.toString(this.squadId))
                     .register(registry);
         }
+
 
         public void recordAccept(long nanos) {
             acceptTimer.record(nanos, TimeUnit.NANOSECONDS);
@@ -197,9 +195,14 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
 
         @Override
         public void recordLeader(int serverId) {
-            if(this.leaderId.get() != serverId) {
+            if (this.leaderId.get() != serverId) {
                 this.leaderId.set(serverId);
             }
+        }
+
+        @Override
+        public void incPeerTimeoutCounter() {
+            this.peerTimeoutCounter.increment();
         }
     }
 }

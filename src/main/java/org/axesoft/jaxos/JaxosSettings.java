@@ -7,6 +7,8 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.function.Function;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * @author gaoyuan
  * @sine 2019/8/24.
@@ -64,6 +66,7 @@ public class JaxosSettings {
         private long conflictSleepMillis = 50;
         private int leaderLeaseSeconds = 3;
         private int algoThreadNumber = 3;
+        private Duration learnTimeout = Duration.ofMillis(1500);
 
         private Function<ByteString, String> valueVerboser;
 
@@ -120,7 +123,7 @@ public class JaxosSettings {
         }
 
         public Builder setSyncInterval(Duration syncInterval) {
-            this.syncInterval = syncInterval;
+            this.syncInterval = checkNotNull(syncInterval, "param syncInterval is null");
             return this;
         }
 
@@ -136,6 +139,11 @@ public class JaxosSettings {
 
         public Builder setAlgoThreadNumber(int algoThreadNumber) {
             this.algoThreadNumber = algoThreadNumber;
+            return this;
+        }
+
+        public Builder setLearnTimeout(Duration learnTimeout) {
+            this.learnTimeout = checkNotNull(learnTimeout, "Param learnTimeout is null");
             return this;
         }
 
@@ -155,6 +163,7 @@ public class JaxosSettings {
             config.syncInterval = this.syncInterval;
             config.conflictSleepMillis = this.conflictSleepMillis;
             config.algoThreadNumber = this.algoThreadNumber;
+            config.learnTimeout = this.learnTimeout;
             return config;
         }
     }
@@ -172,6 +181,7 @@ public class JaxosSettings {
     private Duration syncInterval;
     private long conflictSleepMillis;
     private int algoThreadNumber;
+    private Duration learnTimeout;
 
     private Function<ByteString, String> valueVerboser;
 
@@ -250,6 +260,10 @@ public class JaxosSettings {
         return this.algoThreadNumber;
     }
 
+    public Duration learnTimeout(){
+        return this.learnTimeout;
+    }
+
     @Override
     public String toString() {
         return "JaxosSettings{" +
@@ -265,6 +279,7 @@ public class JaxosSettings {
                 ", algoThreadNumber=" + algoThreadNumber +
                 ", conflictSleepMillis=" + conflictSleepMillis +
                 ", checkPointMinutes=" + checkPointMinutes +
+                ", loggerSyncInterval=" + syncInterval +
                 '}';
     }
 }

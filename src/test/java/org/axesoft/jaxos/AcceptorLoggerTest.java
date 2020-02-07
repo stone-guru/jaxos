@@ -90,7 +90,7 @@ public class AcceptorLoggerTest {
         }
 
         @Override
-        public void recordLoggerDeleteElapsedMillis(long millis) {
+        public void recordLoggerDeleteElapsed(long millis) {
 
         }
 

@@ -1,12 +1,12 @@
 #!/bin/bash
-SERVERS=("localhost:8081" "localhost:8082" "localhost:8083")
+SERVERS=("sheep1:8081" "sheep2:8082" "sheep3:8083")
 
 # $1 the serial number
 # $2 is the keyname
 # $3 is the number of required key, default is 1
 function detect_url(){
     let k=$1%${#SERVERS[@]}
-    echo "d=$1, k=$k" 1>&2
+    #echo "d=$1, k=$k" 1>&2
     url="http://${SERVERS[$k]}/acquire?key=$2&n=${3:=1}"
     echo $url 1>&2
     result=$(curl -s -i $url)
@@ -29,7 +29,7 @@ function detect_url(){
 
 REQ_COUNT=1000
 PAR_COUNT=7
-sleep_seconds=17
+sleep_seconds=7
 
 n=${1:-1000}
 
@@ -43,8 +43,9 @@ while [ true ]; do
     division="division$division_no"
 
     while [ $i -lt $n ]; do
+	let j=$i%200+1
 	let num=$i%5+1
-	url=$(detect_url $i "$army.$division.soldier$i.id" "$num")
+	url=$(detect_url $i "$army.$division.soldier$j.id" "$num")
 	if [ -n "$url" ]; then
 	    ab -q -S -n $REQ_COUNT -c $PAR_COUNT -k -l "$url"
 	fi

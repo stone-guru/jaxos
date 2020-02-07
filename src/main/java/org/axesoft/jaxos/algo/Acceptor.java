@@ -73,8 +73,8 @@ public class Acceptor {
             return outdatedPrepareResponse(request);
         }
         else if (request.instanceId() > last + 1) {
-            logger.warn("S{}: PrepareResponse: future instance id in prepare(instance id = {}), request instance id = {}",
-                    context.squadId(), last, request.instanceId());
+            logger.warn("S{}: PrepareResponse: future instance id in prepare(instance id = {}), last instance id = {}",
+                    context.squadId(), request.instanceId(), last);
             return standByPrepareResponse(request);
         }
         else { // request.instanceId == last + 1

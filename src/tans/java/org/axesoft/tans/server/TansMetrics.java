@@ -43,9 +43,9 @@ public class TansMetrics {
                 .description("The success times of propose request")
                 .register(registry);
 
-        this.requestTimer = Timer.builder("tans.request.elapsed")
+        this.requestTimer = Timer.builder("tans.request.duration")
                 .description("The time for each request")
-                .publishPercentiles(0.10, 0.20, 0.5, 0.80, 0.90)
+                .publishPercentiles(0.5, 0.85, 0.99)
                 .sla(Duration.ofMillis(3))
                 .minimumExpectedValue(Duration.ofNanos(200_000))
                 .register(registry);

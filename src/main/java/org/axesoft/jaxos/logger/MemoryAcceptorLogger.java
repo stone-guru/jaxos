@@ -53,7 +53,7 @@ public class MemoryAcceptorLogger implements AcceptorLogger {
     }
 
     @Override
-    public void sync(boolean force) {
+    public void sync() {
 
     }
 

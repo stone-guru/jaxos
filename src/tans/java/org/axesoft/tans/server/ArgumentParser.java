@@ -9,6 +9,7 @@ import org.axesoft.jaxos.JaxosSettings;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,7 @@ public class ArgumentParser {
         private Integer requestBatchSize = 8;
 
         @Parameter(names = {"-c"}, description = "Interval in minutes of saving checkpoint ")
-        private Integer checkPointMinutes = 1;
+        private Integer checkPointMinutes = null;
     }
 
     private Properties properties;
@@ -56,7 +57,10 @@ public class ArgumentParser {
                 new LeaderLeaseItemParser("leader.lease.seconds", 1, Integer.MAX_VALUE),
                 new PrintMetricsSecondsItemParser("metrics.print.seconds", 1, Integer.MAX_VALUE),
                 new IgnoreLeaderItemParser("leader.ignore"),
-                new AlgoThreadItemParser("algo.thread.number", 1, 32)
+                new AlgoThreadItemParser("core.thread.number", 1, 32),
+                new LearnTimeoutParser("core.learn.timeout"),
+                new LoggerSyncIntervalParser("logger.sync.interval"),
+                new PeerTimeoutParser("core.peer.timeout")
         };
         this.configItemMap = Arrays.stream(items).collect(Collectors.toMap(ItemParser::itemName, i -> i));
     }
@@ -65,6 +69,7 @@ public class ArgumentParser {
      * @param properties provided properties will take over the property file
      */
     public ArgumentParser(Properties properties) {
+        this();
         this.properties = checkNotNull(properties);
     }
 
@@ -112,8 +117,8 @@ public class ArgumentParser {
         //second: command arguments may overwrite it
         JaxosSettings.Builder builder = loadConfigFromFile(this.properties, args.id)
                 .setServerId(args.id)
-                .setDbDirectory(args.dbDirectory)
-                .setCheckPointMinutes(args.checkPointMinutes);
+                .setDbDirectory(args.dbDirectory);
+                //.setCheckPointMinutes(args.checkPointMinutes);
 
         if (args.ignoreLeader != null) {
             builder.setLeaderOnly(args.ignoreLeader);
@@ -123,6 +128,9 @@ public class ArgumentParser {
             builder.setPartitionNumber(args.partitionNumber);
         }
 
+        if (args.checkPointMinutes != null){
+            builder.setCheckPointMinutes(args.checkPointMinutes);
+        }
         return builder.build();
     }
 
@@ -158,7 +166,7 @@ public class ArgumentParser {
                 if(parser != null){
                     parser.parse(v, builder);
                 } else {
-                    System.err.println("Ignore known config item '" + k + "'");
+                    System.err.println("Ignore unknown config item '" + k + "'");
                 }
             }
         }
@@ -184,6 +192,78 @@ public class ArgumentParser {
 
         abstract void parse(String value, JaxosSettings.Builder builder);
     }
+
+    private static abstract class DurationItemParser extends ItemParser {
+        private static Map<Character, Integer> unitMap = ImmutableMap.of(
+                'm', 1, //milli second
+                's', 1000, //second
+                'M', 60 * 1000, //minute
+                'h', 60 * 60 * 1000);//hour
+
+
+        public DurationItemParser(String itemName) {
+            super(itemName);
+        }
+
+        @Override
+        void parse(String value, JaxosSettings.Builder builder) {
+            if(value == null || value.length() < 2){
+                throw new IllegalArgumentException("'" + value + "' is not a valid time duration");
+            }
+            char u = value.charAt(value.length() - 1);
+            if(!unitMap.containsKey(u)){
+                throw new IllegalArgumentException("Unknown duration unit " + u);
+            }
+
+            String s = value.substring(0, value.length() - 1);
+            int v;
+            try {
+                v = Integer.parseInt(s);
+            }
+            catch (NumberFormatException e) {
+                throw new IllegalArgumentException("value " + s + " of " + itemName() + " is not valid duration num");
+            }
+
+            this.accept(Duration.ofMillis(v * unitMap.get(u)), builder);
+        }
+
+        abstract void accept(Duration d, JaxosSettings.Builder builder);
+    }
+
+    private static class LearnTimeoutParser extends DurationItemParser {
+        public LearnTimeoutParser(String itemName) {
+            super(itemName);
+        }
+
+        @Override
+        void accept(Duration d, JaxosSettings.Builder builder) {
+            builder.setLearnTimeout(d);
+        }
+    }
+
+    private static class LoggerSyncIntervalParser extends DurationItemParser {
+        public LoggerSyncIntervalParser(String itemName) {
+            super(itemName);
+        }
+
+        @Override
+        void accept(Duration d, JaxosSettings.Builder builder) {
+            builder.setSyncInterval(d);
+        }
+    }
+
+    private static class PeerTimeoutParser extends DurationItemParser {
+        public PeerTimeoutParser(String itemName) {
+            super(itemName);
+        }
+
+        @Override
+        void accept(Duration d, JaxosSettings.Builder builder) {
+            builder.setPrepareTimeoutMillis(d.toMillis());
+            builder.setAcceptTimeoutMillis(d.toMillis());
+        }
+    }
+
 
     private static abstract class IntItemParser extends ItemParser {
         private int low;

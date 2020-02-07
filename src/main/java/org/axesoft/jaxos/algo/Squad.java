@@ -188,11 +188,8 @@ public class Squad implements EventDispatcher {
                 return null;
             }
             case LEARN_TIMEOUT: {
-                if (learnTimeout != null) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("S{} learn timeout", context.squadId());
-                    }
-
+                if (this.learnTimeout != null) {
+                    logger.warn("S{} learn timeout", context.squadId());
                     this.learnTimeout = null;
                 }
                 return null;
@@ -221,7 +218,7 @@ public class Squad implements EventDispatcher {
             logger.info("S{} Sent learn request {} to server {}", context.squadId(), learn, senderId);
         });
 
-        this.learnTimeout = this.components.getEventTimer().createTimeout(1, TimeUnit.SECONDS,
+        this.learnTimeout = this.components.getEventTimer().createTimeout(settings.learnTimeout().toMillis(), TimeUnit.MILLISECONDS,
                 new Event.LearnTimeout(settings.serverId(), context.squadId()));
         this.timestampOfLearnReq = System.currentTimeMillis();
     }

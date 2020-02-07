@@ -1,6 +1,7 @@
 package org.axesoft.jaxos.algo;
 
 import com.google.protobuf.ByteString;
+import org.axesoft.jaxos.base.DateFormater;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -52,12 +53,12 @@ public class CheckPoint implements Serializable {
 
     @Override
     public String toString() {
-        return "CheckPoint{" +
+        return String.format("CheckPoint{" +
                 "squadId=" + squadId +
                 ", version=" + instanceId +
-                ", timestamp=" + new Date(timestamp)+
+                ", timestamp=" + new DateFormater().format(new Date(timestamp))+
                 ", content=BX[" + content.size() + "]" +
                 ", lastInstance=" + this.lastInstance +
-                '}';
+                '}');
     }
 }

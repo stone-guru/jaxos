@@ -10,7 +10,7 @@ public interface JaxosMetrics {
     void recordLoggerLoadElapsed(long nanos);
     void recordLoggerSaveElapsed(long nanos);
     void recordLoggerSyncElapsed(long nanos);
-    void recordLoggerDeleteElapsedMillis(long millis);
-    void recordLoggerSaveCheckPointElapse(long millis);
+    void recordLoggerDeleteElapsed(long nanos);
+    void recordLoggerSaveCheckPointElapse(long nanos);
     String format();
 }

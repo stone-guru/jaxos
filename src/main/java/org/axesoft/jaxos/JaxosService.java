@@ -42,14 +42,17 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
     private Components components;
     private BallotIdHolder ballotIdHolder;
     private JaxosMetrics jaxosMetrics;
+    private SquadSelector checkPointSquadSelector;
 
     public JaxosService(JaxosSettings settings, StateMachine stateMachine, RequestExecutor requestExecutor) {
+        checkArgument(settings.partitionNumber() >= 0, "Invalid partition number %d", settings.partitionNumber());
+
         this.settings = checkNotNull(settings, "The param settings is null");
         this.stateMachine = checkNotNull(stateMachine, "The param stateMachine is null");
         this.ballotIdHolder = new BallotIdHolder(this.settings.serverId());
         this.jaxosMetrics = new MicroMeterJaxosMetrics(this.settings.serverId());
         this.acceptorLogger = new RocksDbAcceptorLogger(this.settings.dbDirectory(), this.settings.partitionNumber(),
-                this.settings.syncInterval(), jaxosMetrics);
+                this.settings.syncInterval().toMillis() < 100, jaxosMetrics);
         this.requestExecutor = requestExecutor;
 
         this.components = new Components() {
@@ -79,13 +82,14 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             }
         };
 
-        checkArgument(settings.partitionNumber() >= 0, "Invalid partition number %d", settings.partitionNumber());
+
         this.squads = new Squad[settings.partitionNumber()];
         for (int i = 0; i < settings.partitionNumber(); i++) {
             final int n = i;
             this.squads[i] = new Squad(n, settings, this.components, stateMachine);
             this.squads[i].restoreFromDB();
         }
+        this.checkPointSquadSelector = new SquadSelector(settings.partitionNumber(), Duration.ofMinutes(settings.checkPointMinutes()));
 
         this.platoon = new Platoon();
 
@@ -95,6 +99,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             thread.setDaemon(true);
             return thread;
         });
+
 
         super.addListener(new JaxosServiceListener(), MoreExecutors.directExecutor());
     }
@@ -149,13 +154,16 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, this.eventWorkerPool);
         this.communicator = factory.createCommunicator();
 
-        this.timerExecutor.scheduleWithFixedDelay(this::saveCheckPoint, settings.checkPointMinutes(), settings.checkPointMinutes(), TimeUnit.MINUTES);
-        //this.timerExecutor.scheduleWithFixedDelay(platoon::startChosenQuery, 10, 10, TimeUnit.SECONDS);
-        this.timerExecutor.scheduleWithFixedDelay(new RunnableWithLog(logger, () -> this.acceptorLogger.sync(false)),
-                1000, settings.syncInterval().toMillis() / 2, TimeUnit.MILLISECONDS);
+        if(settings.syncInterval().toMillis() >= 100) {
+            this.timerExecutor.scheduleWithFixedDelay(() -> new RunnableWithLog(logger, components.getLogger()::sync).run(),
+                    settings.syncInterval().toMillis(), settings.syncInterval().toMillis(), TimeUnit.MILLISECONDS);
+        } else {
+            logger.info("Regard sync interval of " + settings.syncInterval() + " as always do sync ");
+        }
 
+        this.timerExecutor.scheduleWithFixedDelay(this::checkAndSaveCheckPoint, settings.checkPointMinutes() * 60, 10, TimeUnit.SECONDS);
 
-        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, (this.settings.leaderLeaseSeconds() + 2)* 1000, LEADER_CHECK_DURATION.toMillis(), TimeUnit.MILLISECONDS);
+        this.timerExecutor.scheduleWithFixedDelay(this::runForLeader, (this.settings.leaderLeaseSeconds() + 2) * 1000, LEADER_CHECK_DURATION.toMillis(), TimeUnit.MILLISECONDS);
 
         this.node.startup();
     }
@@ -168,8 +176,8 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         long current = System.currentTimeMillis();
         LeaderStatus status = collectLeaderStatus();
         List<Integer> mySquads = status.squadsOf(settings.serverId());
-        for(int squadId: mySquads){
-            if(current - squads[squadId].context().chosenTimestamp() >= this.settings.leaderLeaseSeconds() * 1000 - LEADER_CHECK_DURATION.toMillis()){
+        for (int squadId : mySquads) {
+            if (current - squads[squadId].context().chosenTimestamp() >= this.settings.leaderLeaseSeconds() * 1000 - LEADER_CHECK_DURATION.toMillis()) {
                 proposeForLeader(squadId);
             }
         }
@@ -178,7 +186,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
         Iterator<Integer> it = status.getCandidates(settings.serverId(), squadCountRange.getMaximum()).iterator();
         int i = mySquads.size();
-        while(i < squadCountRange.getMaximum() && it.hasNext()){
+        while (i < squadCountRange.getMaximum() && it.hasNext()) {
             int squadId = it.next();
             //logger.info("S{} compete for leader", squadId);
             proposeForLeader(squadId);
@@ -186,17 +194,18 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         }
     }
 
-    private LeaderStatus collectLeaderStatus(){
+    private LeaderStatus collectLeaderStatus() {
         LeaderStatus status = new LeaderStatus();
 
         long current = System.currentTimeMillis();
         for (int i = 0; i < this.squads.length; i++) {
             SquadContext context = squads[i].context();
             int serverId = context.lastProposer();
-            if(serverId != 0 && context.isLeaderLeaseExpired(current)){
+            if (serverId != 0 && context.isLeaderLeaseExpired(current)) {
                 //logger.info("S{} Older leader {} expired", i, serverId);
                 status.recordSquad(i, 0);
-            } else {
+            }
+            else {
                 status.recordSquad(i, serverId);
             }
         }
@@ -204,7 +213,7 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         return status;
     }
 
-    private Range<Integer> calcResponsibility(int activePeerCount){
+    private Range<Integer> calcResponsibility(int activePeerCount) {
         int avg = this.squads.length / activePeerCount;
         int extra = this.squads.length - (avg * activePeerCount) > 0 ? 1 : 0;
 
@@ -235,26 +244,27 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
             throw new RuntimeException(e);
         }
         catch (ExecutionException e) {
-            if(logger.isDebugEnabled()) {
+            if (logger.isDebugEnabled()) {
                 Throwable cause = e.getCause() == null ? e : e.getCause();
                 logger.debug("S{} Failed to be leader due to '{} {}'", squadId, cause, cause.getMessage());
             }
         }
     }
 
-    private void saveCheckPoint() {
-        for (Squad squad : this.squads) {
+    private void checkAndSaveCheckPoint() {
+        this.checkPointSquadSelector.selectOne(System.currentTimeMillis()).ifPresent(id -> {
             try {
-                squad.saveCheckPoint();
+                this.squads[id].saveCheckPoint();
             }
             catch (Exception e) {
                 if (e.getCause() instanceof InterruptedException) {
-                    logger.info("Save checkpoint S{} interrupted", squad.id());
+                    logger.info("Save checkpoint S{} interrupted", id);
                     return;
                 }
-                logger.error("S" + squad.id() + " save checkpoint error", e);
+                logger.error("S" + id + " save checkpoint error", e);
             }
-        }
+
+        });
     }
 
     @Override
@@ -387,25 +397,25 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
                     .add(squadId);
         }
 
-        public List<Integer> squadsOf(int serverId){
+        public List<Integer> squadsOf(int serverId) {
             return leaderSquadCountMap.getOrDefault(serverId, Collections.emptyList());
         }
 
-        public int activePeerCount(int selfId){
+        public int activePeerCount(int selfId) {
             Set<Integer> s = new TreeSet<>(leaderSquadCountMap.keySet());
             s.remove(0);
             s.add(selfId);
             return s.size();
         }
 
-        public List<Integer> getCandidates(int selfId, int maxSquads){
+        public List<Integer> getCandidates(int selfId, int maxSquads) {
             ImmutableList.Builder<Integer> builder = ImmutableList.builder();
             builder.addAll(squadsOf(0));//no leader squads
-            for(Map.Entry<Integer, List<Integer>> entry : this.leaderSquadCountMap.entrySet()){
+            for (Map.Entry<Integer, List<Integer>> entry : this.leaderSquadCountMap.entrySet()) {
                 int count = entry.getValue().size();
-                if(entry.getKey() != 0 &&  entry.getKey() != selfId && count > maxSquads){
+                if (entry.getKey() != 0 && entry.getKey() != selfId && count > maxSquads) {
                     Iterator<Integer> it = entry.getValue().iterator();
-                    for(int i = 0; i < count - maxSquads; i++){
+                    for (int i = 0; i < count - maxSquads; i++) {
                         builder.add(it.next());
                     }
                 }
@@ -442,6 +452,28 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
         public long nextIdOf(int squadId) {
             Item item = itemMap.computeIfAbsent(squadId, i -> new Item((serverId << 16) | squadId));
             return item.nextId();
+        }
+    }
+
+    private static class SquadSelector {
+        private Duration interval;
+        private int squadCount;
+        private Map<Integer, Long> lastSelectMap = new HashMap<>();
+
+        public SquadSelector(int squadCount, Duration interval) {
+            this.interval = interval;
+            this.squadCount = squadCount;
+        }
+
+        public synchronized Optional<Integer> selectOne(long current) {
+            for (int i = 0; i < squadCount; i++) {
+                Long lastStamp = lastSelectMap.get(i);
+                if (lastStamp == null || (current - lastStamp >= interval.toMillis())) {
+                    lastSelectMap.put(i, current);
+                    return Optional.of(i);
+                }
+            }
+            return Optional.empty();
         }
     }
 }

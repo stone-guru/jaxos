@@ -195,6 +195,7 @@ public class Proposer {
         }
 
         if (eventMatchRequest(event, Stage.PREPARING)) {
+            this.config.getJaxosMetrics().getOrCreateSquadMetrics(context.squadId()).incPeerTimeoutCounter();
             endPrepare();
         }
         else {
@@ -301,6 +302,7 @@ public class Proposer {
             logger.trace("{}", event);
         }
         if (eventMatchRequest(event, Stage.ACCEPTING)) {
+            this.config.getJaxosMetrics().getOrCreateSquadMetrics(context.squadId()).incPeerTimeoutCounter();
             endAccept();
         }
         else {

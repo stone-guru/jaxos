@@ -131,7 +131,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         private ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         private Bootstrap bootstrap;
         private EventLoopGroup worker;
-
+        private volatile boolean closed;
         private Map<Integer, ChannelId> channelIdMap = new ConcurrentHashMap<>();
         private GroupedRateLimiter rateLimiter = new GroupedRateLimiter(1.0/15.0);
 
@@ -163,6 +163,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
             catch (Exception e) {
                 throw new RuntimeException(e);
             }
+            this.closed = false;
             this.worker = worker;
             this.bootstrap = bootstrap;
         }
@@ -176,13 +177,17 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         }
 
         private void connect(JaxosSettings.Peer peer) {
+            if(this.closed){
+                return;
+            }
+
             ChannelFuture future;
             try {
                 future = bootstrap.connect(new InetSocketAddress(peer.address(), peer.port()));
             }
             catch (Exception e) {
-                if (e instanceof RejectedExecutionException) {
-                    logger.info("Abandon connecting due to bootstrap closed: {}", e.getMessage());
+                if (this.closed) {
+                    logger.info("Abandon connecting due to communicator closed: {}", e.getMessage());
 
                 }
                 else {
@@ -217,7 +222,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
                     }
                 });
             }catch(RejectedExecutionException e){
-                if(!worker.isShuttingDown()){
+                if(!this.closed){
                     logger.error("Unable to attach listener for connection when connect to " + peer, e);
                 }
             }
@@ -290,6 +295,7 @@ public class NettyCommunicatorFactory implements CommunicatorFactory {
         @Override
         public void close() {
             try {
+                closed = true;
                 channels.close().sync();
                 worker.shutdownGracefully().sync();
             }
