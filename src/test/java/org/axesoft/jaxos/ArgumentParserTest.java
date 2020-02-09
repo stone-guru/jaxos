@@ -15,6 +15,7 @@ import static org.junit.Assert.*;
 public class ArgumentParserTest {
     @Test
     public void testParse1() throws Exception {
+        System.out.println(Integer.MAX_VALUE + "," + Long.MAX_VALUE);
         Properties properties = new Properties();
         properties.put("peer.1", "127.0.0.1:110:119");
         properties.put("peer.2", "127.0.0.1:120:129");

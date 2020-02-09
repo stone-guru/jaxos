@@ -25,7 +25,7 @@ public class RocksDbAcceptorLogger implements AcceptorLogger {
 
     private static final Logger logger = LoggerFactory.getLogger(RocksDbAcceptorLogger.class);
 
-    private static final int KEEP_OLD_LOG_NUM = 5000;
+    private static final int KEEP_OLD_LOG_NUM = 10000;
 
     private static final byte CATEGORY_LAST = 1;
     private static final byte CATEGORY_PROMISE = 2;
