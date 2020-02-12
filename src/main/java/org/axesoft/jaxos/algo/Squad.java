@@ -326,7 +326,7 @@ public class Squad implements EventDispatcher {
             Instance instance = this.components.getLogger().loadInstance(context.squadId(), i);
             //It happens rarely
             if (instance.isEmpty()) {
-                logger.warn("Instance %d.%d not found in DB, with checkPoint(%d) last(%d) ", context.squadId(), i, checkPoint.instanceId(), expectedLast.id());
+                logger.warn("S{} Instance {} not found in DB, with checkPoint({}) last({}) ", context.squadId(), i, checkPoint.instanceId(), expectedLast.id());
                 break;
             }
             last = instance;
