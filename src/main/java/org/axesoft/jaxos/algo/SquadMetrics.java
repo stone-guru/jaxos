@@ -10,7 +10,8 @@ public interface SquadMetrics {
     }
     void recordAccept(long nanos);
     void recordPropose(long nanos, ProposalResult result);
-    void recordLearnMillis(long nanos);
+    void recordLearnMillis(long millis);
+    void recordTeachNanos(long nanos);
     void recordLeader(int serverId);
     void incPeerTimeoutCounter();
 }

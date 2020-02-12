@@ -2,8 +2,12 @@ package org.axesoft.tans.server;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ServiceManager;
+import org.apache.commons.cli.*;
 import org.axesoft.jaxos.JaxosService;
+import org.axesoft.jaxos.JaxosSettings;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -43,7 +47,8 @@ public class ServerApp {
     }
 
     public static void main(String[] args) throws Exception {
-        TansConfig config = new ArgumentParser().parse(args);
+        TansConfig config = parseArgument(args);
+
         //set for logback to store log in different files
         System.setProperty("node-id", Integer.toString(config.serverId()));
 
@@ -52,5 +57,32 @@ public class ServerApp {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> app.shutdown()));
 
         app.start();
+    }
+
+    private static TansConfig parseArgument(String[] args) throws FileNotFoundException, ParseException {
+        Options options = new Options();
+
+        options.addOption("c", "config-file", true, "config file");
+        SettingsParser parser = new SettingsParser();
+        for(String s : parser.argNames()){
+            if(!"peers".equals(s)) {
+                options.addOption(null, s, true, s);
+            }
+        }
+
+        CommandLineParser cliParser = new DefaultParser();
+        CommandLine cli = cliParser.parse(options, args);
+
+        String configFile = cli.getOptionValue('c', "./config/settings.yml");
+
+        parser.parse(new FileInputStream(configFile));
+
+        for(String s : parser.argNames()){
+            if(cli.hasOption(s)){
+                parser.parseString(s, cli.getOptionValue(s));
+            }
+        }
+
+        return new TansConfig(parser.jaxosSettingsBuilder().build(), parser.peerHttpPortMap(), parser.requestBatchSize());
     }
 }

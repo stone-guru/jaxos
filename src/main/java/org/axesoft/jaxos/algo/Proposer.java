@@ -429,7 +429,7 @@ public class Proposer {
                 logger.trace("S{}: On PREPARE reply {}", context.squadId(), response);
             }
             if (repliedNodes.get(response.senderId())) {
-                logger.warn("Abandon duplicated response {}", response);
+                logger.warn("S{} Abandon duplicated response {}", context.squadId(), response);
                 return;
             }
 

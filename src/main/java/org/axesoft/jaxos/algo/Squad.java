@@ -157,7 +157,7 @@ public class Squad implements EventDispatcher {
             }
             case ACCEPTED_NOTIFY: {
                 acceptor.onChosenNotify(((Event.ChosenNotify) event));
-                this.metrics.recordLeader(this.context.lastProposer());
+                this.metrics.recordLeader(event.senderId());
                 return null;
             }
             case PROPOSAL_TIMEOUT: {
@@ -181,7 +181,12 @@ public class Squad implements EventDispatcher {
                 return null;
             }
             case LEARN_REQUEST: {
-                return this.onLearnRequest((Event.Learn) event);
+                if(event.senderId() == this.settings.serverId()){
+                    logger.warn("S{} got learn request {} from self", this.context.squadId(), event);
+                } else {
+                    this.components.getWorkerPool().submitBackendTask(() -> this.onLearnRequest((Event.Learn) event));
+                }
+                return null;
             }
             case LEARN_RESPONSE: {
                 this.onLearnResponse((Event.LearnResponse) event);
@@ -224,20 +229,29 @@ public class Squad implements EventDispatcher {
     }
 
 
-    private Event onLearnRequest(Event.Learn request) {
+    private void onLearnRequest(Event.Learn request) {
+        long n0 = System.nanoTime();
+        Event result = null;
         long high = this.context.chosenInstanceId();
-        Optional<List<Instance>> ix0 = loadInstances(request.lowInstanceId(), high);
+        long requiredInstanceCount = high - request.lowInstanceId() + 1;
+        Optional<List<Instance>> ix0 = requiredInstanceCount <= this.settings.learnInstanceLimit() ?
+                loadInstances(request.lowInstanceId(), Long.min(high, request.lowInstanceId() + this.settings.sendInstanceLimit()))
+                : Optional.empty();
 
         if (ix0.isEmpty()) {
             CheckPoint checkPoint = this.stateMachineRunner.makeCheckPoint();
-            return new Event.LearnResponse(settings.serverId(), context.squadId(), Collections.emptyList(), checkPoint);
+            result = new Event.LearnResponse(settings.serverId(), context.squadId(), Collections.emptyList(), checkPoint);
         }
         else {
             Event.LearnResponse resp = new Event.LearnResponse(settings.serverId(), context.squadId(), ix0.get(), CheckPoint.EMPTY);
             logger.info("S{} prepared learn response from {} to {} for server {}", context.squadId(),
                     resp.lowInstanceId(), resp.highInstanceId(), request.senderId());
-            return resp;
+            result = resp;
         }
+
+        this.components.getCommunicator().send(result, request.senderId());
+
+        this.metrics.recordTeachNanos(System.nanoTime() - n0);
     }
 
     private Optional<List<Instance>> loadInstances(long low, long high) {
@@ -261,7 +275,7 @@ public class Squad implements EventDispatcher {
     private void onLearnResponse(Event.LearnResponse response) {
         logger.info("S{} learn CheckPoint {} with {} instances from {} to {}",
                 context.squadId(), response.checkPoint().instanceId(),
-                response.highInstanceId() == 0? 0 : response.highInstanceId() - response.lowInstanceId() + 1,
+                response.highInstanceId() == 0 ? 0 : response.highInstanceId() - response.lowInstanceId() + 1,
                 response.lowInstanceId(), response.highInstanceId());
 
         //sometimes the learn response will come back lately
@@ -296,24 +310,26 @@ public class Squad implements EventDispatcher {
         saveCheckPoint(checkPoint, true);
     }
 
-    public void saveCheckPoint(CheckPoint checkPoint, boolean deleteOldInstances){
+    public void saveCheckPoint(CheckPoint checkPoint, boolean deleteOldInstances) {
         this.components.getLogger().saveCheckPoint(checkPoint, deleteOldInstances);
         logger.info("S{} Saved {} ", checkPoint.squadId(), checkPoint);
     }
 
     public void restoreFromDB() {
         CheckPoint checkPoint = this.components.getLogger().loadLastCheckPoint(context.squadId());
-        Instance last = this.components.getLogger().loadLastInstance(context.squadId());
+        Instance last = checkPoint.lastInstance();
+        Instance expectedLast = this.components.getLogger().loadLastInstance(context.squadId());
 
-       //When last is empty(id is 0), this loop do nothing
+        //When last is empty(id is 0), this loop do nothing
         List<Instance> ix = new ArrayList<>();
-        for (long i = checkPoint.instanceId() + 1; i <= last.id(); i++) {
+        for (long i = checkPoint.instanceId() + 1; i <= expectedLast.id(); i++) {
             Instance instance = this.components.getLogger().loadInstance(context.squadId(), i);
+            //It happens rarely
             if (instance.isEmpty()) {
-                String msg = String.format("Instance %d.%d not found in DB, with checkPoint(%d) last(%d) ",
-                        context.squadId(), i, checkPoint.instanceId(), last.id());
-                throw new IllegalStateException(msg);
+                logger.warn("Instance %d.%d not found in DB, with checkPoint(%d) last(%d) ", context.squadId(), i, checkPoint.instanceId(), expectedLast.id());
+                break;
             }
+            last = instance;
             ix.add(instance);
         }
 

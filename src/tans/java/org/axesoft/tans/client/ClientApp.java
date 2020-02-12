@@ -3,9 +3,8 @@
  */
 package org.axesoft.tans.client;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import io.netty.util.concurrent.Future;
+import org.apache.commons.cli.*;
 import org.apache.commons.lang3.time.StopWatch;
 import org.axesoft.jaxos.base.LongRange;
 
@@ -16,31 +15,57 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ClientApp {
 
     public static class Args {
-        @Parameter(names = {"-s"}, description = "server addresses in syntax of 'addr1:port1;addr2:port2'")
         private String servers = "localhost:8081;localhost:8082;localhost:8083";
-
-        @Parameter(names = {"-c"}, description = "Num of clients")
-        private Integer clientNumber = 1;
-
-        @Parameter(names = {"-n"}, description = "How many round of 1000")
-        private Integer round = 1;
-
-        @Parameter(names = {"-e"}, description = "Print every result or not")
-        private Boolean printEveryResult = false;
-
-        @Parameter(names = {"-l"}, description = "ignore the leader")
+        private int clientNumber = 1;
+        private int round = 1;
+        private int printInterval = 100;
         private boolean ignoreLeader = false;
     }
 
+    private static Args parseArgs(String[] params){
+        Options options = new Options();
+        options.addRequiredOption("s", "servers", true, "server addresses in syntax of 'addr1:port1;addr2:port2'");
+        options.addOption("c", "client-number", true, "Num of parallel clients, default is 1");
+        options.addOption("k", "kilo", true, "How many kilo requests, default is 100");
+        options.addOption("i", "ignore-leader", false, "Ignore the leader, default is false");
+        options.addOption("p", "print-interval", true,"Print result every given times, default 0 means never");
+
+        CommandLineParser parser = new DefaultParser();
+        CommandLine line = null;
+        try {
+            line = parser.parse(options, params);
+        }
+        catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+
+        Args args = new Args();
+        if(line.hasOption('s')){
+            args.servers = line.getOptionValue('s');
+        }
+
+        if(line.hasOption('c')){
+            args.clientNumber = Integer.parseInt(line.getOptionValue('c'));
+        }
+
+        if(line.hasOption('k')){
+            args.round = Integer.parseInt(line.getOptionValue('k'));
+        }
+
+        if(line.hasOption('i')){
+            args.ignoreLeader = true;
+        }
+
+        if(line.hasOption('p')){
+            args.printInterval = Integer.parseInt(line.getOptionValue('p'));
+        }
+
+        return args;
+    }
     public static void main(String[] args) throws Exception {
         System.setProperty("node-id", "client");
 
-        Args arg = new Args();
-
-        JCommander.newBuilder()
-                .addObject(arg)
-                .build()
-                .parse(args);
+        Args arg = parseArgs(args);
 
         int n = 1000;
 
@@ -62,7 +87,7 @@ public class ClientApp {
                             .setServers(arg.servers)
                             .setK(arg.round)
                             .setN(n)
-                            .setPrintEveryResult(arg.printEveryResult)
+                            .setPrintInterval(arg.printInterval)
                             .setStartLatch(startLatch)
                             .setChecker(checker)
                             .setMillis(millis)
@@ -101,7 +126,7 @@ public class ClientApp {
         private String servers;
         private int k;
         private int n;
-        private boolean printEveryResult;
+        private int printInterval;
         private boolean ignoreLeader;
         private CountDownLatch startLatch;
         private ResultChecker checker;
@@ -111,7 +136,7 @@ public class ClientApp {
         public void execute() throws Exception {
             TansClientBootstrap cb = new TansClientBootstrap(servers);
             final TansClient client = cb.getClient();
-            final int printInterval = 200 + (int) (Math.random() * 100);
+            final int interval = this.printInterval > 10 ? this.printInterval + (int) (Math.random() * 100) : this.printInterval;
 
             Thread.sleep(1000);
             startLatch.await();
@@ -126,7 +151,7 @@ public class ClientApp {
                         Future<LongRange> future = client.acquire(key, 1 + (i % 10), this.ignoreLeader);
                         LongRange r = future.get();
                         checker.accept(key, r.low(), r.high());
-                        if (count % printInterval == 0 || printEveryResult) {
+                        if (interval != 0  && count % interval == 0) {
                             System.out.println(String.format("[%s], %d, %s, %s", Thread.currentThread().getName(), count, key, r.toString()));
                         }
                     }
@@ -161,8 +186,8 @@ public class ClientApp {
             return this;
         }
 
-        public TansClientRunner setPrintEveryResult(boolean printEveryResult) {
-            this.printEveryResult = printEveryResult;
+        public TansClientRunner setPrintInterval(int printInterval) {
+            this.printInterval = printInterval;
             return this;
         }
 

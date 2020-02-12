@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -85,13 +86,12 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
         this.squads = new Squad[settings.partitionNumber()];
         for (int i = 0; i < settings.partitionNumber(); i++) {
-            final int n = i;
-            this.squads[i] = new Squad(n, settings, this.components, stateMachine);
-            this.squads[i].restoreFromDB();
+            this.squads[i] = new Squad(i, settings, this.components, stateMachine);
         }
         this.checkPointSquadSelector = new SquadSelector(settings.partitionNumber(), Duration.ofMinutes(settings.checkPointMinutes()));
-
         this.platoon = new Platoon();
+        this.eventWorkerPool = new EventWorkerPool(settings.algoThreadNumber(), () -> this.platoon);
+
 
         this.timerExecutor = Executors.newScheduledThreadPool(2, (r) -> {
             String name = "scheduledTaskThread";
@@ -102,6 +102,43 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
 
         super.addListener(new JaxosServiceListener(), MoreExecutors.directExecutor());
+
+        restoreFromDb();
+    }
+
+    private void restoreFromDb() {
+        long t0 = System.currentTimeMillis();
+
+        AtomicReference<Exception> exceptionRef = new AtomicReference<>(null);
+        CountDownLatch latch = new CountDownLatch(settings.partitionNumber());
+        for (int i = 0; i < settings.partitionNumber(); i++) {
+            final int n = i;
+            this.eventWorkerPool.queueTask(n, () -> {
+                try {
+                    this.squads[n].restoreFromDB();
+                }
+                catch (Exception e) {
+                    exceptionRef.set(e);
+                }
+                finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        try {
+            latch.await();
+            if(exceptionRef.get() != null){
+                throw new RuntimeException(exceptionRef.get());
+            }
+        }
+        catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        long elapsed = System.currentTimeMillis() - t0;
+        this.jaxosMetrics.recordRestoreElapsedMillis(elapsed);
+        logger.info("Restore from DB in {} sec", String.format("%.3f", elapsed/1000.0));
     }
 
     @Override
@@ -148,16 +185,16 @@ public class JaxosService extends AbstractExecutionThreadService implements Prop
 
     @Override
     protected void run() throws Exception {
-        this.eventWorkerPool = new EventWorkerPool(settings.algoThreadNumber(), () -> this.platoon);
         this.node = new NettyJaxosServer(this.settings, this.eventWorkerPool);
 
         NettyCommunicatorFactory factory = new NettyCommunicatorFactory(settings, this.eventWorkerPool);
         this.communicator = factory.createCommunicator();
 
-        if(settings.syncInterval().toMillis() >= 100) {
+        if (settings.syncInterval().toMillis() >= 100) {
             this.timerExecutor.scheduleWithFixedDelay(() -> new RunnableWithLog(logger, components.getLogger()::sync).run(),
                     settings.syncInterval().toMillis(), settings.syncInterval().toMillis(), TimeUnit.MILLISECONDS);
-        } else {
+        }
+        else {
             logger.info("Regard sync interval of " + settings.syncInterval() + " as always do sync ");
         }
 

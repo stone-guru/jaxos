@@ -75,6 +75,11 @@ public class AcceptorLoggerTest {
         }
 
         @Override
+        public void recordRestoreElapsedMillis(long millis) {
+
+        }
+
+        @Override
         public void recordLoggerLoadElapsed(long nanos) {
 
         }

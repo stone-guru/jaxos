@@ -34,9 +34,11 @@ public class StateMachineRunner implements Learner {
             if(checkPoint.squadId() != this.squadId){
                 throw new IllegalArgumentException(checkPoint + " not match mine " + this.squadId );
             }
-            this.machine.restoreFromCheckPoint(checkPoint.squadId(), checkPoint.instanceId(), checkPoint.content());
-            this.lastChosen = checkPoint.lastInstance();
-            logger.info("S{} Restore of {}", checkPoint.squadId(), checkPoint);
+            if(checkPoint.instanceId() > this.lastChosen.id()) {
+                this.machine.restoreFromCheckPoint(checkPoint.squadId(), checkPoint.instanceId(), checkPoint.content());
+                this.lastChosen = checkPoint.lastInstance();
+                logger.info("S{} accept checkpoint of {}", checkPoint.squadId(), checkPoint);
+            }
         }
 
         Iterator<Instance> it = ix.iterator();
@@ -49,12 +51,16 @@ public class StateMachineRunner implements Learner {
             }
         }
 
-        while (i2 != null) {
-            this.innerLearn(i2);
-            i2 = it.hasNext()? it.next() : null;
+        Instance i = i2;
+        while (i != null) {
+            this.innerLearn(i);
+            i = it.hasNext()? it.next() : null;
+        }
+
+        if(i2 != null){
+            logger.info("S{} accept {} instances from {} to {}", this.squadId, this.lastChosen.id() - i2.id() + 1, i2.id(), this.lastChosen.id());
         }
     }
-
 
     public synchronized CheckPoint makeCheckPoint() {
         long timestamp = System.currentTimeMillis();

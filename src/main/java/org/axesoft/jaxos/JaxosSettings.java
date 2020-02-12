@@ -67,6 +67,8 @@ public class JaxosSettings {
         private int leaderLeaseSeconds = 3;
         private int algoThreadNumber = 3;
         private Duration learnTimeout = Duration.ofMillis(1500);
+        private long learnInstanceLimit = 50000;
+        private long sendInstanceLimit = 20000;
 
         private Function<ByteString, String> valueVerboser;
 
@@ -147,6 +149,16 @@ public class JaxosSettings {
             return this;
         }
 
+        public Builder setLearnInstanceLimit(long learnInstanceLimit) {
+            this.learnInstanceLimit = learnInstanceLimit;
+            return this;
+        }
+
+        public Builder setSendInstanceLimit(long sendInstanceLimit) {
+            this.sendInstanceLimit = sendInstanceLimit;
+            return this;
+        }
+
         public JaxosSettings build(){
             JaxosSettings config = new JaxosSettings();
             config.serverId = this.serverId;
@@ -164,6 +176,8 @@ public class JaxosSettings {
             config.conflictSleepMillis = this.conflictSleepMillis;
             config.algoThreadNumber = this.algoThreadNumber;
             config.learnTimeout = this.learnTimeout;
+            config.learnInstanceLimit = this.learnInstanceLimit;
+            config.sendInstanceLimit = this.sendInstanceLimit;
             return config;
         }
     }
@@ -182,7 +196,8 @@ public class JaxosSettings {
     private long conflictSleepMillis;
     private int algoThreadNumber;
     private Duration learnTimeout;
-
+    private long learnInstanceLimit = 50000;
+    private long sendInstanceLimit = 20000;
     private Function<ByteString, String> valueVerboser;
 
     private JaxosSettings() {
@@ -264,6 +279,14 @@ public class JaxosSettings {
         return this.learnTimeout;
     }
 
+    public long learnInstanceLimit(){
+        return this.learnInstanceLimit;
+    }
+
+    public long sendInstanceLimit(){
+        return this.sendInstanceLimit;
+    }
+
     @Override
     public String toString() {
         return "JaxosSettings{" +
@@ -280,6 +303,8 @@ public class JaxosSettings {
                 ", conflictSleepMillis=" + conflictSleepMillis +
                 ", checkPointMinutes=" + checkPointMinutes +
                 ", loggerSyncInterval=" + syncInterval +
+                ", learnInstanceLimit=" + learnInstanceLimit +
+                ", sendInstanceLimit=" + sendInstanceLimit +
                 '}';
     }
 }

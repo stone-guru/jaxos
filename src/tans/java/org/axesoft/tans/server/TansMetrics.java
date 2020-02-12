@@ -25,6 +25,8 @@ public class TansMetrics {
     private Counter requestCounter;
     private Counter redirectCounter;
     private Timer requestTimer;
+    private Gauge uptimeGauge;
+    private final long startTimestamp = System.currentTimeMillis();
 
     public TansMetrics(int serverId, int squadCount, Function<Integer, Number> keyCountFunction) {
         this.registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
@@ -34,6 +36,10 @@ public class TansMetrics {
         new JvmGcMetrics().bindTo(registry);
         new ProcessorMetrics().bindTo(registry);
         new JvmThreadMetrics().bindTo(registry);
+
+        this.uptimeGauge = Gauge.builder("tans.uptime.seconds", () -> (System.currentTimeMillis() - startTimestamp)/1000)
+                .description("Server uptime in seconds")
+                .register(registry);
 
         this.requestCounter = Counter.builder("tans.request.total")
                 .description("The total times of TANS request")
@@ -46,7 +52,7 @@ public class TansMetrics {
         this.requestTimer = Timer.builder("tans.request.duration")
                 .description("The time for each request")
                 .publishPercentiles(0.5, 0.85, 0.99)
-                .sla(Duration.ofMillis(3))
+                .sla(Duration.ofMillis(3), Duration.ofMillis(5), Duration.ofMillis(10), Duration.ofMillis(100))
                 .minimumExpectedValue(Duration.ofNanos(200_000))
                 .register(registry);
 

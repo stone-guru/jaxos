@@ -22,6 +22,7 @@ public class EventWorkerPool implements EventTimer {
     private Supplier<EventDispatcher> eventDispatcherSupplier;
     private HashedWheelTimer timer = new HashedWheelTimer(100, TimeUnit.MILLISECONDS);
     private GroupedRateLimiter rateLimiter = new GroupedRateLimiter(1.0/10.0);
+    private ExecutorService backendExecutor;
 
     public EventWorkerPool(int threadNum, Supplier<EventDispatcher> eventDispatcherSupplier) {
         this.eventDispatcherSupplier = eventDispatcherSupplier;
@@ -38,6 +39,20 @@ public class EventWorkerPool implements EventTimer {
                         return thread;
                     });
         }
+
+        this.backendExecutor = new ThreadPoolExecutor(2, 2,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(THREAD_QUEUE_CAPACITY),
+                (r) -> {
+                    String name = "EventWorkerBackendThread";
+                    Thread thread = new Thread(r, name);
+                    thread.setDaemon(true);
+                    return thread;
+                });
+    }
+
+    public void submitBackendTask(Runnable r){
+        this.backendExecutor.submit(r);
     }
 
     public void queueTask(int squadId, Runnable r) {

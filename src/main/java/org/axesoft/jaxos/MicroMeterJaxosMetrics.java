@@ -26,6 +26,8 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
     private Timer loggerLoadTimer;
     private Timer loggerDeleteTimer;
     private Timer loggerCheckPointTimer;
+    private Gauge restoreTimeGauge;
+    private double restoreTimeSeconds;
     private Map<Integer, SquadMetrics> squadMetricsMap;
 
     public MicroMeterJaxosMetrics(int serverId) {
@@ -46,6 +48,11 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
     @Override
     public SquadMetrics getOrCreateSquadMetrics(int squadId) {
         return this.squadMetricsMap.computeIfAbsent(squadId, k -> new MicroMeterSquadMetrics(k, this.registry));
+    }
+
+    @Override
+    public void recordRestoreElapsedMillis(long millis) {
+        this.restoreTimeSeconds = millis/1000.0;
     }
 
     @Override
@@ -102,6 +109,10 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
                 .distributionStatisticExpiry(Duration.ofMillis(10))
                 .distributionStatisticBufferLength(3)
                 .register(registry);
+
+        this.restoreTimeGauge = Gauge.builder("tans.restore.seconds", () -> this.restoreTimeSeconds)
+                .description("The seconds of restoring whole state from database")
+                .register(registry);
     }
 
     private static class MicroMeterSquadMetrics implements SquadMetrics {
@@ -115,6 +126,7 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
         private Timer proposeTimer;
         private Timer acceptTimer;
         private Timer learnTimer;
+        private Timer teachTimer;
         private AtomicInteger leaderId;
 
         public MicroMeterSquadMetrics(int squadId, PrometheusMeterRegistry registry) {
@@ -161,6 +173,11 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
                     .tags("squad", Integer.toString(this.squadId)))
                     .register(registry);
 
+            this.teachTimer = setGlobalTimerConfigs(Timer.builder("teach.duration")
+                    .description("The duration for prepare a learn response")
+                    .tags("squad", Integer.toString(this.squadId)))
+                    .register(registry);
+
             this.leaderId = new AtomicInteger(0);
             Gauge.builder("squad.leader", this.leaderId::get)
                     .description("The leader id of this squad")
@@ -191,6 +208,11 @@ public class MicroMeterJaxosMetrics implements JaxosMetrics {
         @Override
         public void recordLearnMillis(long millis) {
             this.learnTimer.record(millis, TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void recordTeachNanos(long nanos) {
+            this.teachTimer.record(nanos, TimeUnit.NANOSECONDS);
         }
 
         @Override

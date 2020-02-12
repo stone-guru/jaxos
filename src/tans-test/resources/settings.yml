@@ -1,0 +1,29 @@
+core:
+  id: 1
+  threadNumber: 3
+  learnTimeout: 5s
+  peerTimeout: 200m
+  partitionNumber: 6
+  checkPointMinutes: 7
+  allowIgnoreLeader: false
+  leaderLease: 2s
+  syncInterval: 2s
+  learInstanceLimit: 50000
+  sendInstanceLimit: 10000
+  dataPath: ./data
+
+peers:
+  - id: 1
+    hostname: sheep1
+    port: 8081
+  - id: 2
+    hostname: sheep2
+    port: 8082
+  - id: 3
+    hostname: sheep3
+    port: 9093
+
+tans:
+  httpPort: 8088
+  batchSize: 16
+

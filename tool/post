@@ -1,5 +1,5 @@
 #!/bin/bash
-SERVERS=("sheep1:8081" "sheep2:8082" "sheep3:8083")
+SERVERS=("localhost:8081" "localhost:8082" "localhost:8083")
 
 # $1 the serial number
 # $2 is the keyname
