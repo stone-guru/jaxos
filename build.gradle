@@ -60,7 +60,7 @@ dependencies {
     implementation group: 'org.pcollections', name: 'pcollections', version: '2.1.2'
     implementation group: 'org.rocksdb', name: 'rocksdbjni', version: '6.5.2'
     implementation group: "org.yaml", name: 'snakeyaml', version: '1.17'
-    implementation 'io.micrometer:micrometer-registry-prometheus:latest.release'
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.3.5'
     implementation  group: 'commons-cli', name: 'commons-cli', version: '1.4'
     // Use JUnit test framework
     testImplementation 'junit:junit:4.10'

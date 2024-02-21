@@ -238,7 +238,9 @@ public class TansClientBootstrap {
 
             Promise<Either<String, LongRange>> p = this.ctx.executor().newPromise();
             if (promises.offer(p)) {
+                HttpConnector client = this.ctx.channel().attr(ATTR_CONNECTOR).get();
                 ctx.writeAndFlush(request);
+                logger.info("sent req {}} req to {} ", req, client.host);
             }
             else {
                 p.setFailure(new BufferOverflowException());
@@ -262,8 +264,8 @@ public class TansClientBootstrap {
         }
 
         private synchronized HttpConnector redirect(String key, String location) {
-            if(logger.isDebugEnabled()) {
-                logger.debug("Handler redirect of {} for {}", location, key);
+            if(logger.isInfoEnabled()) {
+                logger.info("Handler redirect of {} for {}", location, key);
             }
             URI uri;
             try {
